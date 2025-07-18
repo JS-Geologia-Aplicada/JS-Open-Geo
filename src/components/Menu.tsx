@@ -27,7 +27,7 @@ interface MenuProps {
 
 function Menu({
   onFileSelect,
-  onExtractTexts,
+  // onExtractTexts,
   extractedTexts,
   onStartAreaSelection,
   onDeleteArea,

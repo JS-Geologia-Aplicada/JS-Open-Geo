@@ -11,7 +11,6 @@ import {
   updateAreaCoordinates,
 } from "../utils/areaUtils";
 import MenuCard from "./MenuCard";
-import HelpModal from "./HelpModal";
 
 function Grid() {
   // ref do pdfviewer para poder chamar função

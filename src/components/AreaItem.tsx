@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Check, Eraser, Pencil, TextSelect, Trash, X } from "lucide-react";
+import { Check, Eraser, TextSelect, Trash, X } from "lucide-react";
 import type { SelectionArea } from "../types";
 
 interface AreaItemProps {
