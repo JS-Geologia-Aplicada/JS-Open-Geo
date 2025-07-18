@@ -1,6 +1,7 @@
-import {
+import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -15,17 +16,22 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 import { Document, Page } from "react-pdf";
 
+import type { Area, SelectionArea } from "../types";
+import {
+  clamp,
+  convertCoordinates,
+  filterTextContent,
+} from "../utils/pdfHelpers";
+import SelectedAreas from "./SelectedAreas";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+
 interface PdfViewerProps {
   file: File | null;
   onTextsExtracted: (texts: ExtractedText[]) => void;
-}
-
-// Objeto de seleção de área retangular
-interface SelectionArea {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  isSelectingActive: boolean;
+  activeAreaId: string | null;
+  onFinishSelection: (coords: SelectionArea) => void;
+  areas: Area[];
 }
 
 // Referências para chamar funções a partir de outros componentes
@@ -40,8 +46,21 @@ interface ExtractedText {
   text: string;
 }
 
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 3;
+
 const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
-  ({ file, onTextsExtracted }, ref) => {
+  (
+    {
+      file,
+      onTextsExtracted,
+      isSelectingActive,
+      activeAreaId,
+      onFinishSelection,
+      areas,
+    },
+    ref
+  ) => {
     const documentRef = useRef<any>(null);
 
     // constantes para virar páginas
@@ -49,11 +68,9 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     const [pageNumber, setPageNumber] = useState<number>(1);
 
     // Constantes para seleção de área
-    const [selectionArea, setSelectionArea] = useState<SelectionArea | null>(
-      null
-    );
-    const [isSelecting, setIsSelecting] = useState<boolean>(false);
-    const [startPoint, setStartPoint] = useState<{
+
+    const [startedSelection, setStartedSelection] = useState<boolean>(false);
+    const [selectionStartPoint, setSelectionStartPoint] = useState<{
       x: number;
       y: number;
     } | null>(null);
@@ -61,6 +78,32 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       useState<SelectionArea | null>(null);
 
     const pdfRef = useRef<HTMLDivElement>(null);
+
+    // Lidando com Zoom
+    const [zoomScale, setZoomScale] = useState<number>(1);
+    const [pendingPan, setPendingPan] = useState<{
+      x: number;
+      y: number;
+    } | null>(null);
+
+    const zoomIn = () => {
+      setZoomScale((prev) => Math.min(prev + 0.25, MAX_ZOOM));
+      pan(0, 0);
+    };
+    const zoomOut = () => {
+      pan(0, 0);
+      setZoomScale((prev) => Math.max(prev - 0.25, MIN_ZOOM));
+    };
+
+    const [pdfOffset, setPdfOffset] = useState<{ x: number; y: number }>({
+      x: 0,
+      y: 0,
+    });
+    const [panStartPoint, setPanStartPoint] = useState<{
+      x: number;
+      y: number;
+    } | null>(null);
+    const [isPanning, setIsPanning] = useState<boolean>(false);
 
     // Conjunto de funções para virar a página
     function changePage(offset: number) {
@@ -79,49 +122,194 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
      * - Mover o mouse altera a área sendo selecionada
      * - Clicar novamente completa a seleção
      */
-    const handleMouseDown = useCallback(
-      (e: React.MouseEvent) => {
+    const toggleSelecting = (e: React.MouseEvent) => {
+      if (!pdfRef.current) return;
+      if (
+        startedSelection &&
+        currentSelection &&
+        currentSelection.x >= 10 &&
+        currentSelection.y >= 10
+      ) {
+        setStartedSelection(false);
+        setCurrentSelection(null);
+        onFinishSelection(currentSelection);
+      } else if (!startedSelection) {
+        const rect = pdfRef.current.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / zoomScale;
+        const y = (e.clientY - rect.top) / zoomScale;
+        setSelectionStartPoint({ x, y });
+        setStartedSelection(true);
+        setCurrentSelection(null);
+      }
+    };
+
+    const startPanning = (e: React.MouseEvent) => {
+      if (!pdfRef.current) return;
+
+      const rect = pdfRef.current.getBoundingClientRect();
+
+      setPanStartPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      setIsPanning(true);
+      return;
+    };
+
+    const handlePointerDown = useCallback(
+      (e: React.PointerEvent) => {
         if (!pdfRef.current) return;
-        if (
-          isSelecting &&
-          currentSelection &&
-          currentSelection.x >= 10 &&
-          currentSelection.y >= 10
-        ) {
-          setSelectionArea(currentSelection);
-          setIsSelecting(false);
-          setCurrentSelection(null);
-        } else if (!isSelecting) {
-          const rect = pdfRef.current.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          setSelectionArea(null);
-          setStartPoint({ x, y });
-          setIsSelecting(true);
-          setCurrentSelection(null);
+        e.currentTarget.setPointerCapture(e.pointerId);
+
+        if (isSelectingActive) {
+          toggleSelecting(e);
+        } else {
+          startPanning(e);
         }
       },
-      [isSelecting, currentSelection]
+      [startedSelection, currentSelection, zoomScale, isSelectingActive]
     );
-    const handleMouseMove = useCallback(
-      (e: React.MouseEvent) => {
-        if (!isSelecting || !startPoint || !pdfRef.current) return;
-
+    const handlePointerMove = useCallback(
+      (e: React.PointerEvent) => {
+        if (!pdfRef.current) return;
         const rect = pdfRef.current.getBoundingClientRect();
-        const currentX = e.clientX - rect.left;
-        const currentY = e.clientY - rect.top;
+
+        if (isPanning) {
+          if (isPanning && panStartPoint) {
+            const deltaX = e.clientX - rect.left - panStartPoint.x;
+            const deltaY = e.clientY - rect.top - panStartPoint.y;
+            pan(deltaX, deltaY);
+          }
+
+          return;
+        }
+
+        if (!startedSelection || !selectionStartPoint) return;
+
+        const currentX = (e.clientX - rect.left) / zoomScale;
+        const currentY = (e.clientY - rect.top) / zoomScale;
 
         const selection: SelectionArea = {
-          x: Math.min(startPoint.x, currentX),
-          y: Math.min(startPoint.y, currentY),
-          width: Math.abs(startPoint.x - currentX),
-          height: Math.abs(startPoint.y - currentY),
+          x: Math.min(selectionStartPoint.x, currentX),
+          y: Math.min(selectionStartPoint.y, currentY),
+          width: Math.abs(selectionStartPoint.x - currentX),
+          height: Math.abs(selectionStartPoint.y - currentY),
         };
 
         setCurrentSelection(selection);
       },
-      [isSelecting, startPoint]
+      [startedSelection, selectionStartPoint, isPanning, panStartPoint]
     );
+    const handlePointerUp = useCallback(
+      (e: React.PointerEvent) => {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        if (isPanning) {
+          setIsPanning(false);
+        }
+      },
+      [isPanning, startPanning]
+    );
+
+    useEffect(() => {
+      if (!isSelectingActive) {
+        clearCurrentSelection();
+      }
+    }, [isSelectingActive]);
+
+    const clearCurrentSelection = () => {
+      setStartedSelection(false);
+      setCurrentSelection(null);
+      setSelectionStartPoint(null);
+    };
+
+    const pan = useCallback((deltaX: number, deltaY: number) => {
+      const containerElement = document.querySelector(
+        ".pdf-container"
+      ) as HTMLElement;
+      const containerWidth =
+        containerElement?.getBoundingClientRect().width || 600;
+      const containerHeight = containerElement
+        ? parseInt(getComputedStyle(containerElement).height)
+        : 800;
+
+      const pdfWidth =
+        pdfRef.current
+          ?.querySelector(".react-pdf__Page")
+          ?.getBoundingClientRect().width || containerWidth;
+      const pdfHeight =
+        pdfRef.current
+          ?.querySelector(".react-pdf__Page")
+          ?.getBoundingClientRect().height || containerHeight;
+      const pdfNavHeight =
+        document.querySelector(".pdf-nav")?.getBoundingClientRect().height ||
+        40;
+      const larger = pdfWidth >= containerWidth;
+      const taller = pdfHeight >= containerHeight - pdfNavHeight;
+      const maxOffsetX = Math.max(0, pdfWidth - containerWidth);
+      const maxOffsetY = Math.max(
+        0,
+        pdfHeight - containerHeight + pdfNavHeight
+      );
+
+      setPdfOffset((prev) => {
+        return {
+          x: larger ? clamp(prev.x + deltaX, -maxOffsetX, 0) : 0,
+          y: taller ? clamp(prev.y + deltaY, -maxOffsetY, 0) : 0,
+        };
+      });
+    }, []);
+
+    useEffect(() => {
+      if (!file) return;
+
+      const containerElement = document.querySelector(
+        ".pdf-container"
+      ) as HTMLElement;
+      if (!containerElement) return;
+
+      const handleWheel = (e: WheelEvent) => {
+        e.preventDefault();
+
+        const containerRect = containerElement.getBoundingClientRect();
+        const mousePercentX =
+          (e.clientX - containerRect.left) / containerRect.width;
+        const mousePercentY =
+          (e.clientY - containerRect.top) / containerRect.height;
+        const wheelZoomStep = 0.1;
+
+        setZoomScale((oldZoom) => {
+          const delta = e.deltaY > 0 ? -wheelZoomStep : wheelZoomStep;
+          const newZoom = clamp(oldZoom + delta, MIN_ZOOM, MAX_ZOOM);
+
+          const pdfElement = pdfRef.current?.querySelector(".react-pdf__Page");
+          const pdfWidth = pdfElement?.getBoundingClientRect().width || 0;
+          const pdfHeight = pdfElement?.getBoundingClientRect().height || 0;
+
+          const zoomDelta = newZoom - oldZoom;
+          const maxDeltaX = pdfWidth * zoomDelta;
+          const maxDeltaY = pdfHeight * zoomDelta;
+
+          const panX = maxDeltaX * mousePercentX;
+          const panY = maxDeltaY * mousePercentY;
+
+          setPendingPan({ x: -panX, y: -panY });
+
+          return newZoom;
+        });
+      };
+
+      containerElement.addEventListener("wheel", handleWheel, {
+        passive: false,
+      });
+
+      return () => {
+        containerElement.removeEventListener("wheel", handleWheel);
+      };
+    }, [file, zoomScale]);
+
+    useEffect(() => {
+      if (pendingPan) {
+        pan(pendingPan.x, pendingPan.y);
+        setPendingPan(null);
+      }
+    }, [zoomScale]);
 
     /**
      * Função para extrair o texto na área de seleção
@@ -129,78 +317,55 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
      * - Considera questões de escala e posição do pdf e área de seleção
      * - Objetos com número da página e string são organizados em uma array
      */
-    const extractText = async () => {
-      // Early return em caso de dados ausentes
-      if (!documentRef.current || !selectionArea || !numPages) return;
+    // const extractText = async () => {
+    //   // Early return em caso de dados ausentes
+    //   if (!documentRef.current || !numPages) return;
 
-      const allStrings: ExtractedText[] = [];
+    //   const allStrings: ExtractedText[] = [];
 
-      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        const page = await documentRef.current.getPage(pageNum);
+    //   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+    //     const page = await documentRef.current.getPage(pageNum);
 
-        // Encontrando a escala em que o pdf foi renderizado
-        const originalViewport = page.getViewport({ scale: 1 });
-        const renderedWidth =
-          pdfRef.current
-            ?.querySelector(".react-pdf__Page")
-            ?.getBoundingClientRect().width || 600;
-        const renderedScale = renderedWidth / originalViewport.width;
+    //     // Encontrando a escala em que o pdf foi renderizado
+    //     const originalViewport = page.getViewport({ scale: 1 });
+    //     const renderedWidth =
+    //       pdfRef.current
+    //         ?.querySelector(".react-pdf__Page")
+    //         ?.getBoundingClientRect().width || 600;
+    //     const renderedScale = renderedWidth / originalViewport.width;
 
-        //Convertendo coordenadas da seleção para coordenadas do pdf original, considerando escala
-        const pdfCoords = {
-          x: selectionArea.x / renderedScale,
-          width: selectionArea.width / renderedScale,
-          //Y invertido: página = origem no topo, PDF = origem na base
-          y:
-            originalViewport.height -
-            selectionArea.y / renderedScale -
-            selectionArea.height / renderedScale,
-          height: selectionArea.height / renderedScale,
-        };
+    //     const pdfCoords = convertCoordinates(
+    //       selectionArea,
+    //       renderedScale,
+    //       zoomScale,
+    //       originalViewport
+    //     );
 
-        // Extrair textos da página e filtrar pela áre selecionada
-        const textContent = await page.getTextContent();
-        const filteredTextContent = textContent.items.filter(
-          (item: {
-            str: string;
-            height: number;
-            width: number;
-            transform: any[];
-          }) => {
-            const textMinX = item.transform[4];
-            const textMinY = item.transform[5];
-            const textMaxX = item.transform[4] + item.width;
-            const textMaxY = item.transform[5] + item.height;
-            return (
-              textMinX >= pdfCoords.x &&
-              textMaxX <= pdfCoords.x + pdfCoords.width &&
-              textMinY >= pdfCoords.y &&
-              textMaxY <= pdfCoords.y + pdfCoords.height
-            );
-          }
-        );
+    //     // Extrair textos da página e filtrar pela áre selecionada
+    //     const textContent = await page.getTextContent();
 
-        // Combinação do texto em string única por página
-        const pageText = filteredTextContent
-          .map((item: { str: any }) => item.str)
-          .join(" ");
-        allStrings.push({ pageNumber: pageNum, text: pageText });
-      }
+    //     const filteredTextContent = filterTextContent(textContent, pdfCoords);
 
-      onTextsExtracted(allStrings);
-    };
+    //     // Combinação do texto em string única por página
+    //     const pageText = filteredTextContent
+    //       .map((item: { str: any }) => item.str)
+    //       .join(" ");
+    //     allStrings.push({ pageNumber: pageNum, text: pageText });
+    //   }
 
-    const clearSelection = () => {
-      setSelectionArea(null);
-      setCurrentSelection(null);
-      setIsSelecting(false);
-      setStartPoint(null);
-    };
+    //   onTextsExtracted(allStrings);
+    // };
 
-    useImperativeHandle(ref, () => ({
-      extractTexts: extractText,
-      clearSelection: clearSelection,
-    }));
+    // const clearSelection = () => {
+    //   setCurrentSelection(null);
+    //   setStartedSelection(false);
+    //   setSelectionStartPoint(null);
+    // };
+
+    // useImperativeHandle(ref, () => ({
+    //   extractTexts: extractText,
+    //   clearSelection: clearSelection,
+    // }));
 
     return !file ? (
       // Mensagem antes de carregar algum pdf
@@ -217,81 +382,120 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     ) : (
       // Exibindo o pdf
       <>
-        {/* Menu de virar as páginas */}
-        <div className="row justify-content-center align-items-center mx-3 mt-2">
-          <button
-            className="col btn btn-secondary m-1"
-            type="button"
-            disabled={pageNumber <= 1}
-            onClick={previousPage}
-          >
-            Anterior
-          </button>
-          <p className="col align-self-bottom mt-2">
-            Página {pageNumber || (numPages ? 1 : "--")} de {numPages || "--"}
-          </p>
-          <button
-            className="col btn btn-secondary m-1"
-            type="button"
-            disabled={pageNumber >= (numPages ?? 0)}
-            onClick={nextPage}
-          >
-            Próxima
-          </button>
-        </div>
         <div
-          ref={pdfRef}
-          className="position-relative d-inline-block"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
+          className="pdf-container"
           style={{
-            cursor: "crosshair", // ← Sempre crosshair, removendo a condição
-            userSelect: "none",
+            minWidth: "600px",
+            height: "min(800px, 90vh)",
+            overflow: "hidden",
+            position: "relative",
+            border: "2px solid black",
+            marginTop: "30px",
+            marginBottom: "15px",
           }}
         >
-          {/* Documento */}
-          <Document
-            file={file}
-            onLoadSuccess={(pdfDoc) => {
-              setNumPages(pdfDoc.numPages);
-              setPageNumber(1);
-              documentRef.current = pdfDoc;
+          <div
+            ref={pdfRef}
+            className={`position-relative d-inline-block ${
+              isSelectingActive
+                ? "pdf-cursor-crosshair"
+                : isPanning
+                ? "pdf-cursor-grabbing"
+                : "pdf-cursor-grab"
+            }`}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            style={{
+              userSelect: "none",
+              transform: `translate(${pdfOffset.x}px, ${pdfOffset.y}px)`,
             }}
           >
-            <Page
-              pageNumber={pageNumber}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
+            {/* Documento */}
+            <Document
+              file={file}
+              onLoadSuccess={(pdfDoc) => {
+                setNumPages(pdfDoc.numPages);
+                setPageNumber(1);
+                setZoomScale(1);
+                documentRef.current = pdfDoc;
+              }}
+            >
+              <Page
+                pageNumber={pageNumber}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                scale={zoomScale}
+              />
+            </Document>
+            {/* Div para exibir área de seleção concluída */}
+            <SelectedAreas
+              areas={areas}
+              zoomScale={zoomScale}
+              activeAreaId={activeAreaId}
             />
-          </Document>
-          {/* Div para exibir área de seleção concluída */}
-          {selectionArea && (
-            <div
-              className="position-absolute border border-success"
-              style={{
-                left: selectionArea.x,
-                top: selectionArea.y,
-                width: selectionArea.width,
-                height: selectionArea.height,
-                backgroundColor: "rgba(40, 210, 60, 0.20)",
-                zIndex: 10,
-              }}
-            ></div>
-          )}
-          {/* Div para exibir área sendo selecionada */}
-          {currentSelection && (
-            <div
-              className="position-absolute border border-secondary"
-              style={{
-                left: currentSelection.x,
-                top: currentSelection.y,
-                width: currentSelection.width,
-                height: currentSelection.height,
-                backgroundColor: "rgba(134, 142, 135, 0.2)",
-                zIndex: 10,
-              }}
-            ></div>
-          )}
+            {/* Div para exibir área sendo selecionada */}
+            {currentSelection && (
+              <div
+                className="position-absolute border border-secondary"
+                style={{
+                  left: currentSelection.x * zoomScale,
+                  top: currentSelection.y * zoomScale,
+                  width: currentSelection.width * zoomScale,
+                  height: currentSelection.height * zoomScale,
+                  backgroundColor: "rgba(134, 142, 135, 0.2)",
+                  zIndex: 10,
+                }}
+              ></div>
+            )}
+          </div>
+          {/** Menu de navegação do pdf */}
+          <div
+            className="pdf-nav position-absolute bottom-0 start-0 end-0 d-flex align-items-center"
+            style={{
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              backdropFilter: "blur(4px)",
+              padding: "4px 12px",
+            }}
+          >
+            <div className="flex-grow-1 d-flex justify-content-center">
+              <span className="text-white small">
+                Página {pageNumber || 1} {numPages && `de ${numPages}`}
+              </span>
+            </div>
+            <div className="d-flex gap-1">
+              <button
+                className="pdf-nav-button"
+                title="Página anterior"
+                onClick={previousPage}
+                disabled={pageNumber <= 1}
+              >
+                <ChevronLeft size={24} color="#d0d0d0" />
+              </button>
+              <button
+                className="pdf-nav-button"
+                title="Próxima página"
+                onClick={nextPage}
+                disabled={pageNumber >= (numPages ?? 0)}
+              >
+                <ChevronRight size={24} color="#d0d0d0" />
+              </button>
+              <button
+                className="pdf-nav-button"
+                onClick={zoomOut}
+                disabled={zoomScale <= MIN_ZOOM}
+              >
+                <ZoomOut size={24} color="#d0d0d0" />
+              </button>
+              <button
+                className="pdf-nav-button"
+                onClick={zoomIn}
+                disabled={zoomScale >= MAX_ZOOM}
+              >
+                <ZoomIn size={24} color="#d0d0d0" />
+              </button>
+            </div>
+          </div>
         </div>
       </>
     );

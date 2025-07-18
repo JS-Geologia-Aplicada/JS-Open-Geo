@@ -1,0 +1,64 @@
+import type { Area, SelectionArea } from "../types";
+
+export const addNewArea = (areas: Area[]): Area[] => {
+  const newId = `area-${Date.now()}`;
+  const newArea: Area = {
+    id: newId,
+    name: `Área ${areas.length + 1}`,
+    order: areas.length + 1,
+    color: getUnusedDefaultColor(areas),
+    coordinates: null,
+  };
+  return [...areas, newArea];
+};
+
+export const deleteArea = (areas: Area[], areaId: string): Area[] => {
+  return areas.filter((area) => area.id !== areaId);
+};
+
+export const renameArea = (
+  areas: Area[],
+  areaId: string,
+  newName: string
+): Area[] => {
+  return areas.map((area) =>
+    area.id === areaId ? { ...area, name: newName } : area
+  );
+};
+
+export const clearArea = (areas: Area[], areaId: string): Area[] => {
+  return areas.map((area) =>
+    area.id === areaId ? { ...area, coordinates: null } : area
+  );
+};
+
+export const updateAreaCoordinates = (
+  areas: Area[],
+  areaId: string,
+  newCoords: SelectionArea
+): Area[] => {
+  return areas.map((area) =>
+    area.id === areaId ? { ...area, coordinates: newCoords } : area
+  );
+};
+
+export const DEFAULT_COLORS = [
+  "#3B82F6", // azul
+  "#EF4444", // vermelho
+  "#10B981", // verde
+  "#F59E0B", // amarelo
+  "#8B5CF6", // roxo
+  "#EC4899", // rosa
+  "#06B6D4", // ciano
+  "#F97316", // laranja
+  "#84CC16", // lima
+  "#6B7280", // cinza
+];
+
+const getUnusedDefaultColor = (areas: Area[]): string => {
+  const usedColors = areas.map((area) => area.color);
+
+  return (
+    DEFAULT_COLORS.find((color) => !usedColors.includes(color)) ?? "#000000"
+  );
+};
