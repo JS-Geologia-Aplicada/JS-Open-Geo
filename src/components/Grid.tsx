@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
-import PdfViewer, { type ExtractedText, type PdfViewerRef } from "./PdfViewer";
+import PdfViewer, { type PdfViewerRef } from "./PdfViewer";
 import Menu from "./Menu";
-import type { Area, SelectionArea } from "../types";
+import type { Area, PageTextData, SelectionArea } from "../types";
 import {
   addNewArea,
   clearArea,
@@ -11,6 +11,7 @@ import {
   updateAreaCoordinates,
 } from "../utils/areaUtils";
 import MenuCard from "./MenuCard";
+import { extractText } from "../utils/textExtractor";
 
 function Grid() {
   // ref do pdfviewer para poder chamar função
@@ -18,7 +19,8 @@ function Grid() {
 
   // state da extração de texto
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [extractedTexts, setExtractedTexts] = useState<ExtractedText[]>([]);
+
+  const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
 
   // state para áreas selecionadas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -58,12 +60,20 @@ function Grid() {
     setActiveAreaId(null);
   };
 
-  // funções de extrair texto e limpar seleção
-  const handleTextsExtracted = (texts: ExtractedText[]) => {
-    setExtractedTexts(texts);
-  };
-  const handleExtractRequest = () => {
-    pdfViewerRef.current?.extractTexts();
+  // funções de extrair texto
+  const handleExtraxtTexts = async () => {
+    const pdfDocument = pdfViewerRef.current?.getDocument();
+    if (!pdfDocument) return;
+
+    const renderedWidth =
+      document.querySelector(".react-pdf__Page")?.getBoundingClientRect()
+        .width || 600;
+    const page = await pdfDocument.getPage(1);
+    const originalViewport = page.getViewport({ scale: 1 });
+    const renderedScale = renderedWidth / originalViewport.width;
+    const extracted = await extractText(areas, pdfDocument, renderedScale);
+
+    setExtractedTexts(extracted);
   };
 
   // função carregar presets
@@ -132,8 +142,7 @@ function Grid() {
             <MenuCard>
               <Menu
                 onFileSelect={setSelectedFile}
-                extractedTexts={extractedTexts}
-                onExtractTexts={handleExtractRequest}
+                onExtractTexts={handleExtraxtTexts}
                 onStartAreaSelection={startAreaSelection}
                 onClearArea={onClearArea}
                 onDeleteArea={onDeleteArea}
@@ -141,6 +150,7 @@ function Grid() {
                 onAddNewArea={onAddNewArea}
                 onLoadPreset={onLoadPreset}
                 onDragEnd={handleDragEnd}
+                extractedTexts={extractedTexts}
                 areas={areas}
                 hasFile={!!selectedFile}
               />
@@ -150,7 +160,6 @@ function Grid() {
             <PdfViewer
               ref={pdfViewerRef}
               file={selectedFile}
-              onTextsExtracted={handleTextsExtracted}
               isSelectingActive={isSelectionActive}
               activeAreaId={activeAreaId}
               onFinishSelection={finishAreaSelection}

@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
-import type { Area } from "../types";
+import type { Area, PageTextData } from "../types";
 import AreaItem from "./AreaItem";
-import ExtractedTextsBox from "./ExtractedTextsBox";
-import type { ExtractedText } from "./PdfViewer";
 import UploadFile from "./UploadFile";
-import PresetManager from "./PresetManger";
+import PresetManager from "./PresetManager";
 import { Download, Folder, HelpCircle, Plus } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import HelpModal from "./HelpModal";
 import { Modal } from "bootstrap";
+import ExtractedTextsModal from "./ExtractedTextsModal";
 
 interface MenuProps {
   onFileSelect: (file: File) => void;
   onExtractTexts: () => void;
-  extractedTexts: ExtractedText[];
   onStartAreaSelection: (areaID: string) => void;
   onDeleteArea: (areaId: string) => void;
   onRenameArea: (areaId: string, newName: string) => void;
@@ -21,14 +19,14 @@ interface MenuProps {
   onAddNewArea: () => void;
   onLoadPreset: (areas: Area[]) => void;
   onDragEnd: (result: any) => void;
+  extractedTexts: PageTextData[];
   areas: Area[];
   hasFile: boolean;
 }
 
 function Menu({
   onFileSelect,
-  // onExtractTexts,
-  extractedTexts,
+  onExtractTexts,
   onStartAreaSelection,
   onDeleteArea,
   onRenameArea,
@@ -36,6 +34,7 @@ function Menu({
   onAddNewArea,
   onLoadPreset,
   onDragEnd,
+  extractedTexts,
   areas,
   hasFile,
 }: MenuProps) {
@@ -44,6 +43,8 @@ function Menu({
   const openPresetManager = () => {
     setIsPresetManagerOpen(true);
   };
+
+  const [isTextsModalOpen, setIsTextsModalOpen] = useState<boolean>(false);
 
   const [openHelpOnLoad, setOpenHelpOnLoad] = useState(() => {
     const saved = localStorage.getItem("showHelpOnLoad");
@@ -77,6 +78,9 @@ function Menu({
           onToggleShowOnLoad={toggleShowHelpOnLoad}
         />
       </div>
+      <div className="modal modal-xl fade" id="textsModal" tabIndex={-1}>
+        <ExtractedTextsModal extractedTexts={extractedTexts} areas={areas} />
+      </div>
       <div className="d-flex justify-content-end gap-2 my-3">
         <button
           title="Ajuda"
@@ -103,7 +107,10 @@ function Menu({
         <button
           title="Extrair texto"
           className="menu-btn menu-btn-cta"
-          disabled={true}
+          disabled={!(areas.length > 0 && hasFile)}
+          data-bs-toggle="modal"
+          data-bs-target="#textsModal"
+          onClick={onExtractTexts}
         >
           <Download size={24} />
         </button>
@@ -151,9 +158,6 @@ function Menu({
         </Droppable>
       </DragDropContext>
 
-      {extractedTexts.length > 0 && (
-        <ExtractedTextsBox extractedTexts={extractedTexts} />
-      )}
       <PresetManager
         isOpen={isPresetManagerOpen}
         onClose={() => setIsPresetManagerOpen(false)}

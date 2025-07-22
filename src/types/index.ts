@@ -19,3 +19,8 @@ export interface AreaPreset {
   name: string;
   areas: Area[];
 }
+
+export interface PageTextData {
+  page: number;
+  [areaName: string]: string[] | number;
+}
