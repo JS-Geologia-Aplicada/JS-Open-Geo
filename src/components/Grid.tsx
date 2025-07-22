@@ -65,13 +65,13 @@ function Grid() {
     const pdfDocument = pdfViewerRef.current?.getDocument();
     if (!pdfDocument) return;
 
-    const renderedWidth =
-      document.querySelector(".react-pdf__Page")?.getBoundingClientRect()
-        .width || 600;
-    const page = await pdfDocument.getPage(1);
-    const originalViewport = page.getViewport({ scale: 1 });
-    const renderedScale = renderedWidth / originalViewport.width;
-    const extracted = await extractText(areas, pdfDocument, renderedScale);
+    // const renderedWidth =
+    //   document.querySelector(".react-pdf__Page")?.getBoundingClientRect()
+    //     .width || 600;
+    // const page = await pdfDocument.getPage(1);
+    // const originalViewport = page.getViewport({ scale: 1 });
+    // const renderedScale = renderedWidth / originalViewport.width;
+    const extracted = await extractText(areas, pdfDocument);
 
     setExtractedTexts(extracted);
   };

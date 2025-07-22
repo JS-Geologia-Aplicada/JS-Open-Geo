@@ -44,8 +44,6 @@ function Menu({
     setIsPresetManagerOpen(true);
   };
 
-  const [isTextsModalOpen, setIsTextsModalOpen] = useState<boolean>(false);
-
   const [openHelpOnLoad, setOpenHelpOnLoad] = useState(() => {
     const saved = localStorage.getItem("showHelpOnLoad");
     return saved !== "false";

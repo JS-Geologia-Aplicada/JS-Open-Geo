@@ -7,8 +7,7 @@ import {
 
 export const extractText = async (
   areas: Area[],
-  pdfDocument: any,
-  renderedScale: number
+  pdfDocument: any
 ): Promise<PageTextData[]> => {
   const extractedTexts: PageTextData[] = [];
   const numPages = pdfDocument.numPages;

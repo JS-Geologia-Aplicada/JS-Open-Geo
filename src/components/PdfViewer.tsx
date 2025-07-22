@@ -66,7 +66,6 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       useState<SelectionArea | null>(null);
 
     const pdfRef = useRef<HTMLDivElement>(null);
-    const [loadedScale, setLoadedScale] = useState(1);
 
     // Lidando com Zoom
     const [zoomScale, setZoomScale] = useState<number>(1);
@@ -299,59 +298,6 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
         setPendingPan(null);
       }
     }, [zoomScale]);
-
-    /**
-     * Função para extrair o texto na área de seleção
-     * - Loop que repete em cada página
-     * - Considera questões de escala e posição do pdf e área de seleção
-     * - Objetos com número da página e string são organizados em uma array
-     */
-    // const extractText = async () => {
-    //   // Early return em caso de dados ausentes
-    //   if (!documentRef.current || !numPages) return;
-
-    //   const allStrings: ExtractedText[] = [];
-
-    //   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    //     const page = await documentRef.current.getPage(pageNum);
-
-    //     // Encontrando a escala em que o pdf foi renderizado
-    //     const originalViewport = page.getViewport({ scale: 1 });
-    //     const renderedWidth =
-    //       pdfRef.current
-    //         ?.querySelector(".react-pdf__Page")
-    //         ?.getBoundingClientRect().width || 600;
-    //     const renderedScale = renderedWidth / originalViewport.width;
-
-    //     const pdfCoords = convertCoordinates(
-    //       selectionArea,
-    //       renderedScale,
-    //       zoomScale,
-    //       originalViewport
-    //     );
-
-    //     // Extrair textos da página e filtrar pela áre selecionada
-    //     const textContent = await page.getTextContent();
-
-    //     const filteredTextContent = filterTextContent(textContent, pdfCoords);
-
-    //     // Combinação do texto em string única por página
-    //     const pageText = filteredTextContent
-    //       .map((item: { str: any }) => item.str)
-    //       .join(" ");
-    //     allStrings.push({ pageNumber: pageNum, text: pageText });
-    //   }
-
-    //   onTextsExtracted(allStrings);
-    // };
-
-    // const clearSelection = () => {
-    //   setCurrentSelection(null);
-    //   setStartedSelection(false);
-    //   setSelectionStartPoint(null);
-    // };
-
-    // pegar o zoom em que a página foi carregada
 
     useImperativeHandle(ref, () => ({
       getDocument: () => documentRef.current,
