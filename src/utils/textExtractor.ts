@@ -34,6 +34,5 @@ export const extractText = async (
       }
     });
   }
-  console.log(extractedTexts);
   return extractedTexts;
 };

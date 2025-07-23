@@ -31,18 +31,31 @@ const ExtractedTextsModal = ({
               <thead>
                 <tr>
                   <th scope="col">#</th>
-                  {areaNames.map((item) => {
-                    return <th scope="col">{item.toString()}</th>;
+                  {areaNames.map((item, index) => {
+                    return (
+                      <th scope="col" key={`coluna${index}`}>
+                        {item.toString()}
+                      </th>
+                    );
                   })}
                 </tr>
               </thead>
               <tbody>
-                {extractedTexts.map((item) => {
+                {extractedTexts.map((item, index) => {
                   return (
-                    <tr>
+                    <tr key={`coluna-pag-${index}`}>
                       <th scope="row">{item.page}</th>
-                      {areas.map((area) => {
-                        return <td>{item[area.name].toString()}</td>;
+                      {areas.map((area, index) => {
+                        const areaData = item[area.name];
+                        return (
+                          <td key={`area-${index}`}>
+                            {areaData && Array.isArray(areaData)
+                              ? (areaData as string[]).join(", ")
+                              : areaData
+                              ? areaData.toString()
+                              : "-"}
+                          </td>
+                        );
                       })}
                     </tr>
                   );

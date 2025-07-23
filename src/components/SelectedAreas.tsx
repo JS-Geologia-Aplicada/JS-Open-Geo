@@ -19,6 +19,7 @@ const SelectedAreas: React.FC<SelectedAreasProps> = ({
         return (
           <div
             className="position-absolute border"
+            key={`selected-${area.id}`}
             style={{
               left: area.coordinates.x * zoomScale,
               top: area.coordinates.y * zoomScale,

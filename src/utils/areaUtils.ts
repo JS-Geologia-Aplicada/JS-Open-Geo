@@ -21,8 +21,9 @@ export const renameArea = (
   areaId: string,
   newName: string
 ): Area[] => {
+  const newUniqueName = getUniqueName(newName, areas);
   return areas.map((area) =>
-    area.id === areaId ? { ...area, name: newName } : area
+    area.id === areaId ? { ...area, name: newUniqueName } : area
   );
 };
 
@@ -40,6 +41,18 @@ export const updateAreaCoordinates = (
   return areas.map((area) =>
     area.id === areaId ? { ...area, coordinates: newCoords } : area
   );
+};
+
+export const getUniqueName = (baseName: string, areas: Area[]) => {
+  let counter = 2;
+  let testName = baseName;
+
+  while (areas.some((area) => area.name === testName)) {
+    testName = `${baseName} (${counter})`;
+    counter++;
+  }
+
+  return testName;
 };
 
 export const DEFAULT_COLORS = [
