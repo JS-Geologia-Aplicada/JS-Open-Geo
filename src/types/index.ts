@@ -24,3 +24,9 @@ export interface PageTextData {
   page: number;
   [areaName: string]: string[] | number;
 }
+
+export interface HorizontalLine {
+  x1: number;
+  x2: number;
+  y: number;
+}
