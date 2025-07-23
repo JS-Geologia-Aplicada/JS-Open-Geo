@@ -143,7 +143,7 @@ const ExtractedTextsModal = ({
             <button className="btn btn-outline-success" onClick={exportCSV}>
               Exportar CSV
             </button>
-            <button className="btn btn-primary" onClick={exportExcel}>
+            <button className="btn btn-outline-secondary" onClick={exportExcel}>
               Exportar Excel
             </button>
           </div>
