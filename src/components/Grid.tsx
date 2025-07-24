@@ -124,6 +124,14 @@ function Grid() {
     setAreas(updatedAreas);
   };
 
+  const handleToggleMandatory = (areaId: string, mandatory: boolean) => {
+    setAreas(
+      areas.map((area) =>
+        area.id === areaId ? { ...area, isMandatory: mandatory } : area
+      )
+    );
+  };
+
   return (
     <>
       {isSelectionActive && <div className="selection-mode-overlay" />}
@@ -144,6 +152,7 @@ function Grid() {
                 onAddNewArea={onAddNewArea}
                 onLoadPreset={onLoadPreset}
                 onDragEnd={handleDragEnd}
+                onToggleMandatory={handleToggleMandatory}
                 extractedTexts={extractedTexts}
                 areas={areas}
                 hasFile={!!selectedFile}

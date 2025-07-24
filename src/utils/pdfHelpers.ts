@@ -70,6 +70,8 @@ export const textItemToString = (
         const joinedTexts = incompleteTexts.join(" ");
         textArr.push(joinedTexts);
         incompleteTexts.length = 0;
+      } else {
+        textArr.push(item.str.trim());
       }
     } else {
       incompleteTexts.push(item.str.trim());

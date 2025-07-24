@@ -13,6 +13,7 @@ export interface Area {
   color: string;
   coordinates: SelectionArea | null;
   isSelected?: boolean;
+  isMandatory: boolean;
 }
 
 export interface AreaPreset {

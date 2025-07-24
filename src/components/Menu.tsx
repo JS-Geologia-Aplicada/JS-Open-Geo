@@ -19,6 +19,7 @@ interface MenuProps {
   onAddNewArea: () => void;
   onLoadPreset: (areas: Area[]) => void;
   onDragEnd: (result: any) => void;
+  onToggleMandatory: (areaId: string, mandatory: boolean) => void;
   extractedTexts: PageTextData[];
   areas: Area[];
   hasFile: boolean;
@@ -34,6 +35,7 @@ function Menu({
   onAddNewArea,
   onLoadPreset,
   onDragEnd,
+  onToggleMandatory,
   extractedTexts,
   areas,
   hasFile,
@@ -141,10 +143,12 @@ function Menu({
                         color={area.color}
                         coordinates={area.coordinates}
                         hasFile={hasFile}
+                        isMandatory={area.isMandatory}
                         onStartSelection={onStartAreaSelection}
                         onClearArea={onClearArea}
                         onDeleteArea={onDeleteArea}
                         onRenameArea={onRenameArea}
+                        onToggleMandatory={onToggleMandatory}
                       />
                     </div>
                   )}

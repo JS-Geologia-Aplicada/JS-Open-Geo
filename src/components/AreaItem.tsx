@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Check, Eraser, TextSelect, Trash, X } from "lucide-react";
+import { Check, Eraser, Star, TextSelect, Trash, X } from "lucide-react";
 import type { SelectionArea } from "../types";
 
 interface AreaItemProps {
@@ -9,10 +9,12 @@ interface AreaItemProps {
   color: string;
   coordinates: SelectionArea | null;
   hasFile: boolean;
+  isMandatory: boolean;
   onStartSelection: (areaId: string) => void;
   onClearArea: (areaId: string) => void;
   onDeleteArea: (areaId: string) => void;
   onRenameArea: (areaId: string, newName: string) => void;
+  onToggleMandatory: (areaId: string, mandatory: boolean) => void;
 }
 
 const AreaItem: React.FC<AreaItemProps> = ({
@@ -22,10 +24,12 @@ const AreaItem: React.FC<AreaItemProps> = ({
   coordinates,
   color,
   hasFile,
+  isMandatory,
   onStartSelection,
   onClearArea,
   onDeleteArea,
   onRenameArea,
+  onToggleMandatory,
 }) => {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [editName, setEditName] = useState(name);
@@ -37,6 +41,10 @@ const AreaItem: React.FC<AreaItemProps> = ({
       inputRef.current.select();
     }
   }, [isEditingName]);
+
+  const handleToggleMandatory = () => {
+    onToggleMandatory(id, !isMandatory);
+  };
 
   const handleStartSelection = () => {
     onStartSelection(id);
@@ -139,6 +147,13 @@ const AreaItem: React.FC<AreaItemProps> = ({
             title="Excluir área"
           >
             <Trash size={14} />
+          </button>
+          <button
+            className="menu-btn menu-btn-secondary area-delete"
+            onClick={handleToggleMandatory}
+            title="Excluir área"
+          >
+            <Star size={14} />
           </button>
         </>
       )}

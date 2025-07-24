@@ -8,6 +8,7 @@ export const addNewArea = (areas: Area[]): Area[] => {
     order: areas.length + 1,
     color: getUnusedDefaultColor(areas),
     coordinates: null,
+    isMandatory: false,
   };
   return [...areas, newArea];
 };
