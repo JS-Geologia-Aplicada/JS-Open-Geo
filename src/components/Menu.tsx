@@ -107,7 +107,13 @@ function Menu({
         <button
           title="Extrair texto"
           className="menu-btn menu-btn-cta"
-          disabled={!(areas.length > 0 && hasFile)}
+          disabled={
+            !(
+              areas.length > 0 &&
+              hasFile &&
+              areas.some((area) => area.coordinates)
+            )
+          }
           data-bs-toggle="modal"
           data-bs-target="#textsModal"
           onClick={onExtractTexts}

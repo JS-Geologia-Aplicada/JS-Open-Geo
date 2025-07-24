@@ -13,14 +13,17 @@ export const extractText = async (
   const numPages = pdfDocument.numPages;
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    extractedTexts.push({ page: pageNum });
     const page = await pdfDocument.getPage(pageNum);
     const operatorList = await page.getOperatorList();
     const pageTexts = await page.getTextContent();
     const originalViewport = page.getViewport({ scale: 1 });
     const pageHorizontalLines = findHorizontalLines(operatorList);
+    let skipPage = false;
+
+    const pageData: PageTextData = { page: pageNum };
 
     areas.forEach((area) => {
+      if (skipPage) return;
       if (area.coordinates) {
         const pageCoordinates = convertCoordinates(
           area.coordinates,
@@ -28,15 +31,26 @@ export const extractText = async (
           1,
           originalViewport
         );
+
         const textArr = textItemToString(
           filterTextContent(pageTexts, pageCoordinates),
           pageHorizontalLines
         );
-        extractedTexts[pageNum - 1][area.name] = textArr;
+        pageData[area.name] = textArr;
       } else {
-        extractedTexts[pageNum - 1][area.name] = [];
+        pageData[area.name] = [];
       }
     });
+
+    const shouldSkipPage = areas.some((area) => {
+      if (!area.isMandatory) return false;
+      const areaData = pageData[area.name] as string[];
+      return !areaData || areaData.length === 0;
+    });
+
+    if (!shouldSkipPage) {
+      extractedTexts.push(pageData);
+    }
   }
   return extractedTexts;
 };

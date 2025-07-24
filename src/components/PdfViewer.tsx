@@ -54,9 +54,10 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     // constantes para virar páginas
     const [numPages, setNumPages] = useState<number>();
     const [pageNumber, setPageNumber] = useState<number>(1);
+    const [isEditingPage, setIsEditingPage] = useState(false);
+    const [editPageNumber, setEditPageNumber] = useState(pageNumber);
 
     // Constantes para seleção de área
-
     const [startedSelection, setStartedSelection] = useState<boolean>(false);
     const [selectionStartPoint, setSelectionStartPoint] = useState<{
       x: number;
@@ -64,6 +65,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     } | null>(null);
     const [currentSelection, setCurrentSelection] =
       useState<SelectionArea | null>(null);
+    const pageInputRef = useRef<HTMLInputElement>(null);
 
     const pdfRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +105,39 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     function nextPage() {
       changePage(1);
     }
+
+    const handlePageClick = () => {
+      setEditPageNumber(pageNumber);
+      setIsEditingPage(true);
+    };
+
+    const handleConfirmPage = () => {
+      if (editPageNumber >= 1 && editPageNumber <= (numPages || 1)) {
+        setPageNumber(editPageNumber);
+      }
+      setIsEditingPage(false);
+    };
+
+    const handleCancelPage = () => {
+      setEditPageNumber(pageNumber);
+      setIsEditingPage(false);
+    };
+
+    const handlePageKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleConfirmPage();
+      }
+      if (e.key === "Escape") {
+        handleCancelPage();
+      }
+    };
+
+    useEffect(() => {
+      if (isEditingPage && pageInputRef.current) {
+        pageInputRef.current.focus();
+        pageInputRef.current.select(); // seleciona todo o texto
+      }
+    }, [isEditingPage]);
 
     /**
      * Funções para seleção de área
@@ -395,9 +430,42 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             }}
           >
             <div className="flex-grow-1 d-flex justify-content-center">
-              <span className="text-white small">
-                Página {pageNumber || 1} {numPages && `de ${numPages}`}
-              </span>
+              {isEditingPage ? (
+                <div className="d-flex align-items-center gap-1">
+                  <input
+                    ref={pageInputRef}
+                    type="number"
+                    className="form-control form-control-sm text-center"
+                    style={{
+                      width: "40px",
+                      fontSize: "12px",
+                      backgroundColor: "rgba(108, 108, 108, 0.8)",
+                      border: "1px solid rgba(255, 255, 255, 0.3)",
+                      borderRadius: "2px",
+                      color: "white",
+                    }}
+                    value={editPageNumber}
+                    min={1}
+                    max={numPages || 1}
+                    onChange={(e) =>
+                      setEditPageNumber(parseInt(e.target.value) || 1)
+                    }
+                    onKeyDown={handlePageKeyDown}
+                    onBlur={handleCancelPage}
+                    autoFocus
+                  />
+                  <span className="text-white small">de {numPages || 1}</span>
+                </div>
+              ) : (
+                <span
+                  onClick={handlePageClick}
+                  className="text-white small"
+                  title="Selecionar página"
+                  style={{ cursor: "pointer" }}
+                >
+                  Página {pageNumber || 1} {numPages && `de ${numPages}`}
+                </span>
+              )}
             </div>
             <div className="d-flex gap-1">
               <button

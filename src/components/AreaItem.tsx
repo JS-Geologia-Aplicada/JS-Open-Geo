@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Check, Eraser, Star, TextSelect, Trash, X } from "lucide-react";
+import { BadgeAlert, Check, Eraser, TextSelect, Trash, X } from "lucide-react";
 import type { SelectionArea } from "../types";
 
 interface AreaItemProps {
@@ -84,24 +84,45 @@ const AreaItem: React.FC<AreaItemProps> = ({
   };
 
   return (
-    <div className="d-flex align-items-center gap-2 p-2 border rounded mb-1">
+    <div className="d-flex align-items-center gap-1 p-2 border rounded mb-1">
       <div className="drag-handle" style={{ cursor: "grab" }}>
         ⋮⋮
       </div>
-      <span
-        className="badge me-2"
-        style={{ backgroundColor: color, color: "white" }}
+      <div
+        className="d-flex align-items-center"
+        title={isMandatory ? "Campo obrigatório" : "Campo opcional"}
       >
-        #{order}
-      </span>
+        <BadgeAlert
+          onClick={handleToggleMandatory}
+          size={24}
+          strokeWidth={isMandatory ? 2.5 : 1.5}
+          style={{
+            borderRadius: 20,
+            cursor: "pointer",
+            opacity: isMandatory ? 1 : 0.3,
+            color: isMandatory ? "#dc3545" : "#6c757d",
+            backgroundColor: isMandatory ? "#dc354520" : "transparent",
+          }}
+        />
+      </div>
+      <div className="d-flex align-items-center">
+        <span
+          className="badge me-2"
+          style={{ backgroundColor: color, color: "white" }}
+        >
+          #{order}
+        </span>
+      </div>
       {isEditingName ? (
         <div className="d-flex align-items-center flex-grow-1">
           <input
+            ref={inputRef}
             type="text"
             className="form-control form-control-sm me-2"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             onKeyDown={handleRenameKey}
+            onBlur={handleCancelRename}
           />
           <div className="d-flex gap-2">
             <button
@@ -147,13 +168,6 @@ const AreaItem: React.FC<AreaItemProps> = ({
             title="Excluir área"
           >
             <Trash size={14} />
-          </button>
-          <button
-            className="menu-btn menu-btn-secondary area-delete"
-            onClick={handleToggleMandatory}
-            title="Excluir área"
-          >
-            <Star size={14} />
           </button>
         </>
       )}

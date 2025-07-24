@@ -4,7 +4,7 @@ export const addNewArea = (areas: Area[]): Area[] => {
   const newId = `area-${Date.now()}`;
   const newArea: Area = {
     id: newId,
-    name: `Área ${areas.length + 1}`,
+    name: getUniqueName("Nova Área", areas),
     order: areas.length + 1,
     color: getUnusedDefaultColor(areas),
     coordinates: null,

@@ -3,6 +3,7 @@ import type { HorizontalLine, SelectionArea } from "../types";
 
 const SELECTION_THRESHOLD = 5;
 
+// Converte as coordenadas na página para o pdf
 export const convertCoordinates = (
   selectionArea: SelectionArea,
   renderedScale: number,
@@ -20,6 +21,7 @@ export const convertCoordinates = (
   };
 };
 
+// Filtra os objetos de texto, retornando apenas aqueles em uma área dada
 export const filterTextContent = (
   textContent: any,
   pdfCoords: SelectionArea
@@ -38,18 +40,32 @@ export const filterTextContent = (
   });
 };
 
+// Função que recebe uma array de TextItem e retorna como array de textos, considerando particularidades como textos multilinha e a formatação de NSPT
 export const textItemToString = (
   items: TextItem[],
   horizontalLines: HorizontalLine[]
 ) => {
   const incompleteTexts = Array<string>();
   const textArr = Array<string>();
+  let startedNspt = false;
 
+  // Loop para organizar os textos na array
   items.forEach((item, index) => {
     if (item.str.trim() == "") return;
 
     const lineThreshold = item.height * 1.5;
+
+    if (startedNspt) {
+      incompleteTexts.push(item.str.trim());
+      const joinedTexts = incompleteTexts.join("/");
+      textArr.push(joinedTexts);
+      incompleteTexts.length = 0;
+      startedNspt = false;
+      return;
+    }
+    // Série de verificações realizadas apenas para itens que não sejam o último da área selecionada
     if (index < items.length - 1) {
+      // Cria um retângulo imaginário entre o texto atul e o próximo, ocupando os 60% centrais da linha para não colidir com elementos na beirada
       const areaToNextItem: SelectionArea = {
         x: item.transform[4] + item.width / 5,
         y: item.transform[5] - item.height / 2,
@@ -59,13 +75,34 @@ export const textItemToString = (
           item.height / 2
         ),
       };
+      // Cria um retângulo imaginário abaixo do texto, de altura limitada, ocupando os 60% centrais de sua largura
+
+      const areaBelowItem: SelectionArea = {
+        x: item.transform[4] + item.width / 5, // 20% margem esquerda
+        width: item.width * (3 / 5), // 60% largura central
+        y: item.transform[5] - item.height, // começa no meio do texto
+        height: item.height * 2, // metade da altura do texto
+      };
+
+      // Se a próxima linha está a uma distância menor que o limite de 1,5 * altura da linha e não há uma linha horizontal antes da próxima linha, o texto atual será adicionado a uma array de textos imcompletos
+
       if (
         Math.abs(item.transform[5] - items[index + 1].transform[5]) <=
           lineThreshold &&
         !areaHasHorizontalLines(areaToNextItem, horizontalLines)
       ) {
         incompleteTexts.push(item.str.trim());
+      } else if (
+        // Verificando caso específico de NSPT
+        areaHasHorizontalLines(areaBelowItem, horizontalLines, true) &&
+        isNumber(item.str.trim()) &&
+        isNextValidStringNumber(items, index) &&
+        incompleteTexts.length < 1
+      ) {
+        incompleteTexts.push(item.str.trim());
+        startedNspt = true;
       } else if (incompleteTexts.length > 0) {
+        // Se ou a próxima linha está distante ou existe uma linha horizontal, verifica se existem textos incompletos, e, se existirem, agrupa com o atual e junta na array de textos
         incompleteTexts.push(item.str.trim());
         const joinedTexts = incompleteTexts.join(" ");
         textArr.push(joinedTexts);
@@ -74,25 +111,30 @@ export const textItemToString = (
         textArr.push(item.str.trim());
       }
     } else {
+      // Caso seja o último item, junta na array de textos incompletos e junta tudo na array de textos
       incompleteTexts.push(item.str.trim());
       const joinedTexts = incompleteTexts.join(" ");
       textArr.push(joinedTexts);
       incompleteTexts.length = 0;
     }
   });
+  // se o loop terminar e tiverem itens na array de textos incompletos, eles são adicionados à array de textos
   if (incompleteTexts.length > 0) {
     textArr.push(incompleteTexts.join(" "));
   }
   return textArr;
 };
 
+// Combinação das funções Math.max e Math.min
 export const clamp = (value: number, min: number, max: number) => {
   return Math.max(Math.min(value, max), min);
 };
 
+// Verifica a existência de linhas horizontais em uma área
 export const areaHasHorizontalLines = (
   area: SelectionArea,
-  horizontalLines: HorizontalLine[]
+  horizontalLines: HorizontalLine[],
+  onlyShortLine: boolean = false
 ) => {
   const areaXMin = area.x;
   const areaXMax = area.x + area.width;
@@ -104,6 +146,31 @@ export const areaHasHorizontalLines = (
       line.x1 <= areaXMax &&
       line.x2 >= areaXMin &&
       line.y >= areaYMin &&
-      line.y <= areaYMax
+      line.y <= areaYMax &&
+      (Math.abs(line.x2 - line.x1) <= 15 || !onlyShortLine)
   );
+};
+
+// Verifica se uma string representa um número
+const isNumber = (str: string): boolean => {
+  return /^\d+(\.\d+)?$/.test(str.trim());
+};
+
+// Checando se o próximo texto não vazio é número
+const isNextValidStringNumber = (
+  items: TextItem[],
+  currentIndex: number
+): boolean => {
+  for (let i = currentIndex + 1; i < items.length; i++) {
+    const text = items[i].str.trim();
+
+    if (!text.trim()) {
+      continue; // pula strings vazias
+    }
+
+    // Primeira string não-vazia encontrada
+    return isNumber(text);
+  }
+
+  return false; // não achou nenhuma string não-vazia
 };
