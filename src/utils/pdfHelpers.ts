@@ -81,11 +81,10 @@ export const textItemToString = (
         x: item.transform[4] + item.width / 5, // 20% margem esquerda
         width: item.width * (3 / 5), // 60% largura central
         y: item.transform[5] - item.height, // começa no meio do texto
-        height: item.height * 2, // metade da altura do texto
+        height: item.height, // metade da altura do texto
       };
 
       // Se a próxima linha está a uma distância menor que o limite de 1,5 * altura da linha e não há uma linha horizontal antes da próxima linha, o texto atual será adicionado a uma array de textos imcompletos
-
       if (
         Math.abs(item.transform[5] - items[index + 1].transform[5]) <=
           lineThreshold &&
@@ -97,12 +96,14 @@ export const textItemToString = (
         areaHasHorizontalLines(areaBelowItem, horizontalLines, true) &&
         isNumber(item.str.trim()) &&
         isNextValidStringNumber(items, index) &&
+        Math.abs(item.transform[5] - items[index + 1].transform[5]) <=
+          lineThreshold &&
         incompleteTexts.length < 1
       ) {
         incompleteTexts.push(item.str.trim());
         startedNspt = true;
       } else if (incompleteTexts.length > 0) {
-        // Se ou a próxima linha está distante ou existe uma linha horizontal, verifica se existem textos incompletos, e, se existirem, agrupa com o atual e junta na array de textos
+        // Se a próxima linha está distante ou existe uma linha horizontal, verifica se existem textos incompletos, e, se existirem, agrupa com o atual e junta na array de textos
         incompleteTexts.push(item.str.trim());
         const joinedTexts = incompleteTexts.join(" ");
         textArr.push(joinedTexts);
