@@ -9,6 +9,7 @@ export const addNewArea = (areas: Area[]): Area[] => {
     color: getUnusedDefaultColor(areas),
     coordinates: null,
     isMandatory: false,
+    type: undefined,
   };
   return [...areas, newArea];
 };
@@ -22,6 +23,10 @@ export const renameArea = (
   areaId: string,
   newName: string
 ): Area[] => {
+  if (newName.trim().toLowerCase() === "pagenumber") {
+    alert('Nome "pageNumber" é reservado. Use outro nome.');
+    return areas;
+  }
   const newUniqueName = getUniqueName(newName, areas);
   return areas.map((area) =>
     area.id === areaId ? { ...area, name: newUniqueName } : area

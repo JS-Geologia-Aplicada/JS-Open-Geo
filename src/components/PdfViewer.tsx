@@ -356,7 +356,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
         <div
           className="pdf-container"
           style={{
-            minWidth: "600px",
+            // minWidth: "600px",
             height: "min(800px, 90vh)",
             overflow: "hidden",
             position: "relative",

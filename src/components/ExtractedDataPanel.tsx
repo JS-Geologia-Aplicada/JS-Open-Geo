@@ -1,17 +1,17 @@
-import type { Area, PageTextData } from "../types";
+import { Download } from "lucide-react";
+import type { PageTextData } from "../types";
 
 import * as XLSX from "xlsx";
 
-interface ExtractedTextsModalProps {
+interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];
-  areas: Area[];
 }
 
-const ExtractedTextsModal = ({
-  extractedTexts,
-  areas,
-}: ExtractedTextsModalProps) => {
-  const areaNames = areas.map((item) => item.name);
+const ExtractedDataPanel = ({ extractedTexts }: ExtractedDataPanelProps) => {
+  const areaNames =
+    extractedTexts.length > 0
+      ? Object.keys(extractedTexts[0]).filter((key) => key !== "pageNumber")
+      : [];
 
   const exportJSON = () => {
     const dataStr = JSON.stringify(extractedTexts, null, 2);
@@ -27,12 +27,12 @@ const ExtractedTextsModal = ({
   };
 
   const exportCSV = () => {
-    const headers = ["Página", ...areas.map((area) => area.name)];
+    const headers = ["Página", ...areaNames];
 
     const rows = extractedTexts.map((pageData) => {
       const row: (string | number)[] = [pageData.pageNumber];
-      areas.forEach((area) => {
-        const areaData = pageData[area.name];
+      areaNames.forEach((name) => {
+        const areaData = pageData[name];
         if (Array.isArray(areaData)) {
           row.push(areaData.join("; "));
         } else {
@@ -62,14 +62,14 @@ const ExtractedTextsModal = ({
 
   const exportExcel = () => {
     const xlsData = extractedTexts.map((pageData) => {
-      const row: any = { Página: pageData.pageNumber }; // renomeia 'page' pra 'Página'
+      const row: any = { Página: pageData.pageNumber }; // renomeia 'pageNumber' pra 'Página'
 
-      areas.forEach((area) => {
-        const areaData = pageData[area.name] as string[];
+      areaNames.forEach((name) => {
+        const areaData = pageData[name] as string[];
         if (Array.isArray(areaData)) {
-          row[area.name] = areaData.join("; "); // junta array com ;
+          row[name] = areaData.join("; ");
         } else {
-          row[area.name] = areaData || "";
+          row[name] = areaData || "";
         }
       });
 
@@ -82,31 +82,31 @@ const ExtractedTextsModal = ({
   };
 
   return (
-    <>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title flex-grow-1 text-center">
-              Texto extraído
-            </h5>
-            <button
-              type="button"
-              className="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
+    <div className="data-panel mt-5">
+      {!extractedTexts || extractedTexts.length <= 0 ? (
+        <div>
+          <p className="text-muted">Os dados extraídos serão exibidos aqui</p>
+        </div>
+      ) : (
+        <>
+          <h5 className="mb-3 pb-2 border-bottom">Dados Extraídos</h5>
           <div
-            className="modal-body"
-            style={{ maxHeight: "60vh", overflowY: "auto" }}
+            className="data-table mb-3"
+            style={{ maxHeight: "65vh", overflowY: "auto" }}
           >
             <table className="table table-hover">
               <thead>
                 <tr>
-                  <th scope="col">#</th>
+                  <th scope="col" style={{ minWidth: "100px" }}>
+                    #
+                  </th>
                   {areaNames.map((item, index) => {
                     return (
-                      <th scope="col" key={`coluna${index}`}>
+                      <th
+                        scope="col"
+                        key={`coluna${index}`}
+                        style={{ minWidth: "100px" }}
+                      >
                         {item.toString()}
                       </th>
                     );
@@ -118,8 +118,8 @@ const ExtractedTextsModal = ({
                   return (
                     <tr key={`coluna-pag-${index}`}>
                       <th scope="row">{item.pageNumber}</th>
-                      {areas.map((area, index) => {
-                        const areaData = item[area.name];
+                      {areaNames.map((area, index) => {
+                        const areaData = item[area];
                         return (
                           <td key={`area-${index}`}>
                             {areaData && Array.isArray(areaData)
@@ -136,21 +136,35 @@ const ExtractedTextsModal = ({
               </tbody>
             </table>
           </div>
-          <div className="modal-footer">
-            <button className="btn btn-outline-primary" onClick={exportJSON}>
-              Exportar JSON
+          <hr className="mt-3" />
+          <h6 className="mb-3 text-start ms-3">Exportar</h6>
+          <div className="d-flex justify-content-start">
+            <button
+              className="menu-btn menu-btn-export ms-2"
+              onClick={exportJSON}
+            >
+              <Download className="me-1" size={16} />
+              JSON
             </button>
-            <button className="btn btn-outline-success" onClick={exportCSV}>
-              Exportar CSV
+            <button
+              className="menu-btn menu-btn-export ms-2"
+              onClick={exportCSV}
+            >
+              <Download className="me-1" size={16} />
+              CSV
             </button>
-            <button className="btn btn-outline-secondary" onClick={exportExcel}>
-              Exportar Excel
+            <button
+              className="menu-btn menu-btn-export ms-2"
+              onClick={exportExcel}
+            >
+              <Download className="me-1" size={16} />
+              Excel
             </button>
           </div>
-        </div>
-      </div>
-    </>
+        </>
+      )}
+    </div>
   );
 };
 
-export default ExtractedTextsModal;
+export default ExtractedDataPanel;

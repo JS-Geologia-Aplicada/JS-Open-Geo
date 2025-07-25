@@ -14,6 +14,7 @@ export interface Area {
   coordinates: SelectionArea | null;
   isSelected?: boolean;
   isMandatory: boolean;
+  type?: string;
 }
 
 export interface AreaPreset {
@@ -22,7 +23,7 @@ export interface AreaPreset {
 }
 
 export interface PageTextData {
-  page: number;
+  pageNumber: number;
   [areaName: string]: string[] | number;
 }
 

@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import type { Area, PageTextData } from "../types";
+import type { Area } from "../types";
 import AreaItem from "./AreaItem";
 import UploadFile from "./UploadFile";
 import PresetManager from "./PresetManager";
-import { Download, Folder, HelpCircle, Plus } from "lucide-react";
+import { Download, Folder, HelpCircle, Plus, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import HelpModal from "./HelpModal";
 import { Modal } from "bootstrap";
-import ExtractedTextsModal from "./ExtractedTextsModal";
 
 interface MenuProps {
   onFileSelect: (file: File) => void;
@@ -20,7 +19,7 @@ interface MenuProps {
   onLoadPreset: (areas: Area[]) => void;
   onDragEnd: (result: any) => void;
   onToggleMandatory: (areaId: string, mandatory: boolean) => void;
-  extractedTexts: PageTextData[];
+  onChangeAreaType: (areaId: string, newType: string | undefined) => void;
   areas: Area[];
   hasFile: boolean;
 }
@@ -36,7 +35,7 @@ function Menu({
   onLoadPreset,
   onDragEnd,
   onToggleMandatory,
-  extractedTexts,
+  onChangeAreaType,
   areas,
   hasFile,
 }: MenuProps) {
@@ -69,6 +68,14 @@ function Menu({
     localStorage.setItem("showHelpOnLoad", show.toString());
   };
 
+  const clearAllAreas = () => {
+    if (confirm("Deseja remover todas as áreas?")) {
+      areas.forEach((area) => {
+        onDeleteArea(area.id);
+      });
+    }
+  };
+
   return (
     <>
       <UploadFile onFileSelect={onFileSelect} />
@@ -78,10 +85,16 @@ function Menu({
           onToggleShowOnLoad={toggleShowHelpOnLoad}
         />
       </div>
-      <div className="modal modal-xl fade" id="textsModal" tabIndex={-1}>
-        <ExtractedTextsModal extractedTexts={extractedTexts} areas={areas} />
-      </div>
       <div className="d-flex justify-content-end gap-2 my-3">
+        {areas.length > 0 && (
+          <button
+            title="Ajuda"
+            className="menu-btn menu-btn-warning"
+            onClick={clearAllAreas}
+          >
+            <X size={24} />
+          </button>
+        )}
         <button
           title="Ajuda"
           className="menu-btn"
@@ -114,15 +127,13 @@ function Menu({
               areas.some((area) => area.coordinates)
             )
           }
-          data-bs-toggle="modal"
-          data-bs-target="#textsModal"
           onClick={onExtractTexts}
         >
           <Download size={24} />
         </button>
       </div>
       {areas.length === 0 && (
-        <p className="text-muted">Clique em "Adicionar Área" para começar!</p>
+        <p className="text-muted">Adicione uma área para começar!</p>
       )}
 
       <DragDropContext onDragEnd={onDragEnd}>
@@ -143,18 +154,14 @@ function Menu({
                     >
                       <AreaItem
                         key={area.id}
-                        id={area.id}
-                        name={area.name}
-                        order={area.order}
-                        color={area.color}
-                        coordinates={area.coordinates}
+                        area={area}
                         hasFile={hasFile}
-                        isMandatory={area.isMandatory}
                         onStartSelection={onStartAreaSelection}
                         onClearArea={onClearArea}
                         onDeleteArea={onDeleteArea}
                         onRenameArea={onRenameArea}
                         onToggleMandatory={onToggleMandatory}
+                        onChangeAreaType={onChangeAreaType}
                       />
                     </div>
                   )}

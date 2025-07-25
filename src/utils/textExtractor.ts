@@ -1,7 +1,9 @@
+import type { TextItem } from "react-pdf";
 import type { Area, HorizontalLine, PageTextData } from "../types";
 import {
   convertCoordinates,
   filterTextContent,
+  nsptToString,
   textItemToString,
 } from "./pdfHelpers";
 
@@ -20,7 +22,7 @@ export const extractText = async (
     const pageHorizontalLines = findHorizontalLines(operatorList);
     let skipPage = false;
 
-    const pageData: PageTextData = { page: pageNum };
+    const pageData: PageTextData = { pageNumber: pageNum };
 
     areas.forEach((area) => {
       if (skipPage) return;
@@ -31,11 +33,16 @@ export const extractText = async (
           1,
           originalViewport
         );
-
-        const textArr = textItemToString(
-          filterTextContent(pageTexts, pageCoordinates),
-          pageHorizontalLines
+        const filteredTexts = filterTextContent(pageTexts, pageCoordinates);
+        filteredTexts.sort(
+          (a: TextItem, b: TextItem) => b.transform[5] - a.transform[5]
         );
+        console.log("filteredTexts:", filteredTexts);
+
+        const textArr =
+          area.type === "nspt"
+            ? nsptToString(filteredTexts)
+            : textItemToString(filteredTexts, pageHorizontalLines);
         pageData[area.name] = textArr;
       } else {
         pageData[area.name] = [];

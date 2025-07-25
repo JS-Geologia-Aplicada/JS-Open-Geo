@@ -40,6 +40,78 @@ export const filterTextContent = (
   });
 };
 
+// Função para tratar especificamente NSPT
+export const nsptToString = (items: TextItem[]) => {
+  console.log("items: ", items);
+  const validNspts = items.filter((item) => {
+    const trimmed = item.str.trim();
+    return isNumber(trimmed) || trimmed === "-";
+  });
+
+  if (validNspts.length === 0) {
+    return [];
+  }
+
+  const numberItems = validNspts.filter((item) => isNumber(item.str.trim()));
+
+  // Se tem poucos números pra calcular threshold, retorna tudo simples
+  if (numberItems.length < 2) {
+    return validNspts.map((item) => item.str.trim());
+  }
+
+  const distances = [];
+  for (let i = 0; i + 1 < numberItems.length; i++) {
+    distances.push(
+      Math.abs(numberItems[i].transform[5] - numberItems[i + 1].transform[5])
+    );
+  }
+  distances.sort((a, b) => a - b);
+  console.log(distances);
+  const nsptThreshold =
+    numberItems.length < 4
+      ? numberItems[0].height * 1.2 // Usa altura da linha quando são 2 ou 3 itens
+      : distances[distances.length - 1] - distances[0] <= distances[0] * 1.2
+      ? 0
+      : distances[0] * 1.1; // Usa menor distância quando há pelo menos 4 itens
+
+  const nsptArr: string[] = [];
+  const incompleteNspt: string[] = [];
+
+  validNspts.forEach((item, index) => {
+    // se tiver iniciado uma fração, completar e retornar
+    if (incompleteNspt.length > 0) {
+      incompleteNspt.push(item.str.trim());
+      nsptArr.push(incompleteNspt.join("/"));
+      incompleteNspt.length = 0;
+      return;
+    }
+
+    // se for hífen, só adicionar
+    if (item.str.trim() === "-") {
+      nsptArr.push(item.str.trim());
+      return;
+    }
+
+    // se não for o último item da lista e a distância para o próximo for curta, adicionar aos incompletos e retornar
+    if (
+      index + 1 < validNspts.length &&
+      Math.abs(item.transform[5] - validNspts[index + 1].transform[5]) <=
+        nsptThreshold
+    ) {
+      incompleteNspt.push(item.str.trim());
+      return;
+    }
+    nsptArr.push(item.str.trim());
+  });
+
+  // Processar qualquer NSPT incompleto restante
+  if (incompleteNspt.length > 0) {
+    nsptArr.push(incompleteNspt.join("/"));
+  }
+
+  return nsptArr;
+};
+
 // Função que recebe uma array de TextItem e retorna como array de textos, considerando particularidades como textos multilinha e a formatação de NSPT
 export const textItemToString = (
   items: TextItem[],

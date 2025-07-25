@@ -12,6 +12,7 @@ import {
 } from "../utils/areaUtils";
 import MenuCard from "./MenuCard";
 import { extractText } from "../utils/textExtractor";
+import ExtractedDataPanel from "./ExtractedDataPanel";
 
 function Grid() {
   // ref do pdfviewer para poder chamar função
@@ -132,13 +133,24 @@ function Grid() {
     );
   };
 
+  const handleChangeAreaType = (
+    areaId: string,
+    newType: string | undefined
+  ) => {
+    setAreas(
+      areas.map((area) =>
+        area.id === areaId ? { ...area, type: newType } : area
+      )
+    );
+  };
+
   return (
     <>
       {isSelectionActive && <div className="selection-mode-overlay" />}
-      <div className="container text-center">
+      <div className="container-fluid text-center px-xl-5">
         <div className="row justify-content-center">
           <div
-            className="col-12 col-lg-4 col-xl-5 col-xxl-auto"
+            className="col-12 col-lg-6 col-xxl-3 col-xxxl-4"
             style={{ maxWidth: "450px", minWidth: "300px" }}
           >
             <MenuCard>
@@ -153,13 +165,13 @@ function Grid() {
                 onLoadPreset={onLoadPreset}
                 onDragEnd={handleDragEnd}
                 onToggleMandatory={handleToggleMandatory}
-                extractedTexts={extractedTexts}
+                onChangeAreaType={handleChangeAreaType}
                 areas={areas}
                 hasFile={!!selectedFile}
               />
             </MenuCard>
           </div>
-          <div className="col-12 col-lg-8 col-xl-7 col-xxl">
+          <div className="col-12 col-lg-6 col-xxl-5 col-xxxl-4">
             <PdfViewer
               ref={pdfViewerRef}
               file={selectedFile}
@@ -168,6 +180,9 @@ function Grid() {
               onFinishSelection={finishAreaSelection}
               areas={areas}
             />
+          </div>
+          <div className="col-12 col-lg-6 col-xxl-4 col-xxxl-4">
+            <ExtractedDataPanel extractedTexts={extractedTexts} />
           </div>
         </div>
       </div>

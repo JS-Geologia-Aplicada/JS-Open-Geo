@@ -77,6 +77,18 @@
   color: white;
 }
 
+.menu-btn.menu-btn-export {
+  background: transparent;
+  border-color: #00912e;
+  color: #00912e;
+}
+
+.menu-btn.menu-btn-export:hover {
+  background: #00912e10;
+  border-color: #00912e;
+  color: #00912e;
+}
+
 .menu-btn.menu-btn-cta:disabled {
   background: #6c757d;
   border-color: #6c757d;
