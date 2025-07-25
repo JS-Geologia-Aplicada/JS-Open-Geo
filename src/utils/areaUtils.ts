@@ -15,7 +15,12 @@ export const addNewArea = (areas: Area[]): Area[] => {
 };
 
 export const deleteArea = (areas: Area[], areaId: string): Area[] => {
-  return areas.filter((area) => area.id !== areaId);
+  return areas
+    .filter((area) => area.id !== areaId)
+    .map((area, index) => ({
+      ...area,
+      order: index + 1,
+    }));
 };
 
 export const renameArea = (
