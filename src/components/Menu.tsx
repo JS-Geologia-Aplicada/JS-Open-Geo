@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import type { Area } from "../types";
+import type { Area, DataType } from "../types";
 import AreaItem from "./AreaItem";
 import UploadFile from "./UploadFile";
 import PresetManager from "./PresetManager";
 import { Download, Folder, HelpCircle, Plus, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import HelpModal from "./HelpModal";
-import { Modal } from "bootstrap";
+import { Modal, Tooltip } from "bootstrap";
 
 interface MenuProps {
   onFileSelect: (file: File) => void;
@@ -19,7 +19,8 @@ interface MenuProps {
   onLoadPreset: (areas: Area[]) => void;
   onDragEnd: (result: any) => void;
   onToggleMandatory: (areaId: string, mandatory: boolean) => void;
-  onChangeAreaType: (areaId: string, newType: string | undefined) => void;
+  onToggleRepeat: (areaId: string, repeat: boolean) => void;
+  onChangeAreaType: (areaId: string, newType: DataType) => void;
   areas: Area[];
   hasFile: boolean;
 }
@@ -35,10 +36,26 @@ function Menu({
   onLoadPreset,
   onDragEnd,
   onToggleMandatory,
+  onToggleRepeat,
   onChangeAreaType,
   areas,
   hasFile,
 }: MenuProps) {
+  // Inicializando os tooltips
+  useEffect(() => {
+    const tooltips = Array.from(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+    tooltips.forEach((el) => new Tooltip(el));
+
+    return () => {
+      tooltips.forEach((el) => {
+        const tooltip = Tooltip.getInstance(el);
+        if (tooltip) tooltip.dispose();
+      });
+    };
+  }, [areas.length]);
+
   const [isPresetManagerOpen, setIsPresetManagerOpen] =
     useState<boolean>(false);
   const openPresetManager = () => {
@@ -88,37 +105,51 @@ function Menu({
       <div className="d-flex justify-content-end gap-2 my-3">
         {areas.length > 0 && (
           <button
-            title="Ajuda"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title="Excluir todas as áreas"
             className="menu-btn menu-btn-warning"
             onClick={clearAllAreas}
           >
             <X size={24} />
           </button>
         )}
-        <button
-          title="Ajuda"
-          className="menu-btn"
-          data-bs-toggle="modal"
-          data-bs-target="#helpModal"
+        <span
+          data-bs-placement="top"
+          data-bs-toggle="tooltip"
+          data-bs-title="Ajuda"
         >
-          <HelpCircle size={24} />
-        </button>
+          <button
+            className="menu-btn"
+            data-bs-toggle="modal"
+            data-bs-target="#helpModal"
+          >
+            <HelpCircle size={24} />
+          </button>
+        </span>
         <button
-          title="Presets"
+          data-bs-title="Presets"
+          data-bs-toggle="tooltip"
+          data-bs-target="tooltip"
           className="menu-btn"
           onClick={openPresetManager}
         >
           <Folder size={24} />
         </button>
         <button
-          title="Adicionar área"
+          data-bs-toggle="tooltip"
+          data-bs-target="tooltip"
+          data-bs-trigger="hover"
+          data-bs-title="Adicionar área"
           className="menu-btn"
           onClick={onAddNewArea}
         >
           <Plus size={24} />
         </button>
         <button
-          title="Extrair texto"
+          data-bs-toggle="tooltip"
+          data-bs-target="tooltip"
+          data-bs-title="Extrair texto"
           className="menu-btn menu-btn-cta"
           disabled={
             !(
@@ -161,6 +192,7 @@ function Menu({
                         onDeleteArea={onDeleteArea}
                         onRenameArea={onRenameArea}
                         onToggleMandatory={onToggleMandatory}
+                        onToggleRepeat={onToggleRepeat}
                         onChangeAreaType={onChangeAreaType}
                       />
                     </div>

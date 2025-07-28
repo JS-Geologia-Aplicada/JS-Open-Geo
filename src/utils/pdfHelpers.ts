@@ -121,6 +121,7 @@ export const textItemToString = (
   const textArr = Array<string>();
   let startedNspt = false;
 
+  console.log(items);
   // Loop para organizar os textos na array
   items.forEach((item, index) => {
     if (item.str.trim() == "") return;

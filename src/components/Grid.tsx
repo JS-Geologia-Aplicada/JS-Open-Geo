@@ -2,12 +2,22 @@ import { useEffect, useRef, useState } from "react";
 
 import PdfViewer, { type PdfViewerRef } from "./PdfViewer";
 import Menu from "./Menu";
-import type { Area, PageTextData, SelectionArea } from "../types";
+import {
+  DATA_TYPE_LABELS,
+  MANDATORY_TYPES,
+  REPEATING_TYPES,
+  type Area,
+  type DataType,
+  type PageTextData,
+  type SelectionArea,
+} from "../types";
 import {
   addNewArea,
   clearArea,
   deleteArea,
+  getUniqueName,
   renameArea,
+  shouldRename,
   updateAreaCoordinates,
 } from "../utils/areaUtils";
 import MenuCard from "./MenuCard";
@@ -126,20 +136,41 @@ function Grid() {
   };
 
   const handleToggleMandatory = (areaId: string, mandatory: boolean) => {
-    setAreas(
-      areas.map((area) =>
+    setAreas((prev) =>
+      prev.map((area) =>
         area.id === areaId ? { ...area, isMandatory: mandatory } : area
       )
     );
   };
 
-  const handleChangeAreaType = (
-    areaId: string,
-    newType: string | undefined
-  ) => {
-    setAreas(
-      areas.map((area) =>
-        area.id === areaId ? { ...area, type: newType } : area
+  const handleToggleRepeat = (areaId: string, repeat: boolean) => {
+    setAreas((prev) =>
+      prev.map((area) =>
+        area.id === areaId ? { ...area, repeatInPages: repeat } : area
+      )
+    );
+  };
+
+  const handleChangeAreaType = (areaId: string, newType: DataType) => {
+    const repeat = REPEATING_TYPES.includes(newType);
+    const mandatory = MANDATORY_TYPES.includes(newType);
+
+    setAreas((prev) =>
+      prev.map((area) =>
+        area.id === areaId
+          ? {
+              ...area,
+              dataType: newType,
+              repeatInPages: repeat,
+              isMandatory: mandatory,
+              name:
+                shouldRename(area.name) && newType === "default"
+                  ? getUniqueName("Nova Área", prev)
+                  : shouldRename(area.name)
+                  ? getUniqueName(DATA_TYPE_LABELS[newType], prev)
+                  : area.name,
+            }
+          : area
       )
     );
   };
@@ -165,6 +196,7 @@ function Grid() {
                 onLoadPreset={onLoadPreset}
                 onDragEnd={handleDragEnd}
                 onToggleMandatory={handleToggleMandatory}
+                onToggleRepeat={handleToggleRepeat}
                 onChangeAreaType={handleChangeAreaType}
                 areas={areas}
                 hasFile={!!selectedFile}

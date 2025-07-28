@@ -1,15 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Check, Eraser, TextSelect, Trash, X } from "lucide-react";
 import {
-  BadgeAlert,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Eraser,
-  TextSelect,
-  Trash,
-  X,
-} from "lucide-react";
-import type { Area } from "../types";
+  DATA_TYPE_LABELS,
+  DATA_TYPES,
+  type Area,
+  type DataType,
+} from "../types";
+import { Tooltip } from "bootstrap";
 
 interface AreaItemProps {
   hasFile: boolean;
@@ -19,7 +16,8 @@ interface AreaItemProps {
   onDeleteArea: (areaId: string) => void;
   onRenameArea: (areaId: string, newName: string) => void;
   onToggleMandatory: (areaId: string, mandatory: boolean) => void;
-  onChangeAreaType: (areaId: string, newType: string | undefined) => void;
+  onToggleRepeat: (areaId: string, repeat: boolean) => void;
+  onChangeAreaType: (areaId: string, newType: DataType) => void;
 }
 
 const AreaItem: React.FC<AreaItemProps> = ({
@@ -30,11 +28,26 @@ const AreaItem: React.FC<AreaItemProps> = ({
   onDeleteArea,
   onRenameArea,
   onToggleMandatory,
+  onToggleRepeat,
   onChangeAreaType,
 }) => {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [editName, setEditName] = useState(area.name);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Inicializando os tooltips deste componente
+  useEffect(() => {
+    const tooltips = Array.from(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+    tooltips.forEach((el) => new Tooltip(el));
+    return () => {
+      tooltips.forEach((el) => {
+        const tooltip = Tooltip.getInstance(el);
+        if (tooltip) tooltip.dispose();
+      });
+    };
+  }, [area]);
 
   useEffect(() => {
     if (isEditingName && inputRef.current) {
@@ -42,12 +55,6 @@ const AreaItem: React.FC<AreaItemProps> = ({
       inputRef.current.select();
     }
   }, [isEditingName]);
-
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const handleToggleMandatory = () => {
-    onToggleMandatory(area.id, !area.isMandatory);
-  };
 
   const handleStartSelection = () => {
     onStartSelection(area.id);
@@ -89,7 +96,8 @@ const AreaItem: React.FC<AreaItemProps> = ({
   return (
     <>
       <div className="border rounded mb-1">
-        <div className="d-flex align-items-center gap-1 p-2">
+        {/* Linha 1 */}
+        <div className="d-flex align-items-center gap-1 pt-2 px-2 pb-1">
           <div className="drag-handle" style={{ cursor: "grab" }}>
             ⋮⋮
           </div>
@@ -160,7 +168,9 @@ const AreaItem: React.FC<AreaItemProps> = ({
                 <button
                   className="menu-btn menu-btn-alert"
                   onClick={handleClearArea}
-                  title="Limpar seleção"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  data-bs-title="Limpar seleção"
                 >
                   <Eraser size={16} />
                 </button>
@@ -168,79 +178,57 @@ const AreaItem: React.FC<AreaItemProps> = ({
               <button
                 className="menu-btn menu-btn-warning area-delete"
                 onClick={handleDeleteArea}
-                title="Excluir área"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                data-bs-title="Excluir área"
               >
                 <Trash size={14} />
               </button>
-              <div className="d-flex align-items-center m-1">
-                <span
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  title="Opções avançadas"
-                  style={{ cursor: "pointer" }}
-                >
-                  {showAdvanced ? (
-                    <ChevronUp size={20} />
-                  ) : (
-                    <ChevronDown size={20} />
-                  )}
-                </span>
-              </div>
             </>
           )}
         </div>
-        {showAdvanced && (
-          <div className="advanced-options mt-2 p-2 bg-light rounded">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <small className="text-muted">Opções avançadas</small>
-            </div>
 
-            <div className="d-flex align-items-start mb-1">
-              <div
-                className="d-flex align-items-center"
-                title={
-                  area.isMandatory ? "Campo obrigatório" : "Campo opcional"
-                }
-              >
-                <BadgeAlert
-                  onClick={handleToggleMandatory}
-                  size={24}
-                  strokeWidth={area.isMandatory ? 2.5 : 1.5}
-                  style={{
-                    borderRadius: 20,
-                    cursor: "pointer",
-                    opacity: area.isMandatory ? 1 : 0.3,
-                    color: area.isMandatory ? "#dc3545" : "#6c757d",
-                    backgroundColor: area.isMandatory
-                      ? "#dc354520"
-                      : "transparent",
-                  }}
-                />
-                <span className="ms-2">Campo obrigatório</span>
-              </div>
-            </div>
-
-            <div className="form-check form-switch d-flex align-items-start">
-              <input
-                className="form-check-input me-2"
-                type="checkbox"
-                id={`area-${area.order}-is-nspt`}
-                checked={area.type === "nspt"}
-                onChange={(e) =>
-                  onChangeAreaType(
-                    area.id,
-                    e.target.checked ? "nspt" : undefined
-                  )
-                }
-              />
-              <label
-                className="form-check-label"
-                htmlFor={`area-${area.order}-is-nspt`}
-              >
-                NSPT
-              </label>
-            </div>
+        {/* Linha 2 */}
+        <div className="d-flex align-items-center gap-2 px-2 pb-2 justify-content-between">
+          <div className="flex-grow-1 me-2">
+            <select
+              className="form-select form-select-sm w-100"
+              value={area.dataType || ""}
+              onChange={(e) =>
+                onChangeAreaType(area.id, e.target.value as DataType)
+              }
+            >
+              <option value="default">Tipo padrão</option>
+              {DATA_TYPES.filter((type) => type !== "default").map((type) => (
+                <option key={type} value={type}>
+                  {DATA_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
+
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id={`mandatory-${area.id}`}
+              checked={area.isMandatory}
+              onChange={(e) => onToggleMandatory(area.id, e.target.checked)}
+            />
+            <label className="form-check-label small">Obrigatório</label>
+          </div>
+
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id={`repeat-${area.id}`}
+              checked={area.repeatInPages}
+              onChange={(e) => onToggleRepeat(area.id, e.target.checked)}
+            />
+            <label className="form-check-label small">Único</label>
+          </div>
+        </div>
       </div>
     </>
   );

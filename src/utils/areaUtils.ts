@@ -1,4 +1,4 @@
-import type { Area, SelectionArea } from "../types";
+import { DATA_TYPE_LABELS, type Area, type SelectionArea } from "../types";
 
 export const addNewArea = (areas: Area[]): Area[] => {
   const newId = `area-${Date.now()}`;
@@ -9,7 +9,7 @@ export const addNewArea = (areas: Area[]): Area[] => {
     color: getUnusedDefaultColor(areas),
     coordinates: null,
     isMandatory: false,
-    type: undefined,
+    dataType: undefined,
   };
   return [...areas, newArea];
 };
@@ -41,6 +41,13 @@ export const renameArea = (
 export const clearArea = (areas: Area[], areaId: string): Area[] => {
   return areas.map((area) =>
     area.id === areaId ? { ...area, coordinates: null } : area
+  );
+};
+
+export const shouldRename = (name: string) => {
+  return (
+    Object.values(DATA_TYPE_LABELS).includes(name) ||
+    /^Nova Área( \(\d+\))?$/.test(name)
   );
 };
 

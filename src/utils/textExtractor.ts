@@ -13,52 +13,143 @@ export const extractText = async (
 ): Promise<PageTextData[]> => {
   const extractedTexts: PageTextData[] = [];
   const numPages = pdfDocument.numPages;
+  const holeIdArea = areas.find((area) => area.dataType === "hole_id");
+  const nonRepeatDataAreas = areas.filter(
+    (area) => !area.repeatInPages && area.dataType !== "hole_id"
+  );
 
-  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    const page = await pdfDocument.getPage(pageNum);
-    const operatorList = await page.getOperatorList();
-    const pageTexts = await page.getTextContent();
-    const originalViewport = page.getViewport({ scale: 1 });
-    const pageHorizontalLines = findHorizontalLines(operatorList);
-    let skipPage = false;
+  // Extração específica para quando há hole_id
+  if (holeIdArea && holeIdArea.coordinates) {
+    const holeIdName = holeIdArea.name;
+    const holeIdsPerPage: { page: number; holeId: string }[] = [];
+    const pagesWithoutId: number[] = [];
+    const uniqueHoleIds: string[] = [];
 
-    const pageData: PageTextData = { pageNumber: pageNum };
+    // Extraindo os hole_id e identificando as páginas nos quais se repetem
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      const page = await pdfDocument.getPage(pageNum);
+      const pageTexts = await page.getTextContent();
+      const originalViewport = page.getViewport({ scale: 1 });
 
-    areas.forEach((area) => {
-      if (skipPage) return;
-      if (area.coordinates) {
-        const pageCoordinates = convertCoordinates(
-          area.coordinates,
-          1,
-          1,
-          originalViewport
+      const pageCoordinates = convertCoordinates(
+        holeIdArea.coordinates,
+        1,
+        1,
+        originalViewport
+      );
+      const filteredItems = filterTextContent(pageTexts, pageCoordinates);
+      filteredItems.sort(
+        (a: { transform: number[] }, b: { transform: number[] }) =>
+          b.transform[5] - a.transform[5]
+      );
+      const holeIdText = textItemToString(filteredItems, []).join(" ").trim();
+      holeIdsPerPage.push({ page: pageNum, holeId: holeIdText });
+
+      if (holeIdText) {
+        const existingEntry = extractedTexts.find(
+          (textItem) =>
+            textItem[holeIdName] &&
+            Array.isArray(textItem[holeIdName]) &&
+            textItem[holeIdName][0] === holeIdText
         );
-        const filteredTexts = filterTextContent(pageTexts, pageCoordinates);
-        filteredTexts.sort(
-          (a: TextItem, b: TextItem) => b.transform[5] - a.transform[5]
-        );
-        console.log("filteredTexts:", filteredTexts);
 
-        const textArr =
-          area.type === "nspt"
-            ? nsptToString(filteredTexts)
-            : textItemToString(filteredTexts, pageHorizontalLines);
-        pageData[area.name] = textArr;
+        if (existingEntry) {
+          existingEntry.pageNumber.push(pageNum);
+        } else {
+          uniqueHoleIds.push(holeIdText);
+          extractedTexts.push({
+            pageNumber: [pageNum],
+            [holeIdName]: [holeIdText],
+          });
+        }
       } else {
-        pageData[area.name] = [];
+        pagesWithoutId.push(pageNum);
       }
-    });
+    }
 
-    const shouldSkipPage = areas.some((area) => {
-      if (!area.isMandatory) return false;
-      const areaData = pageData[area.name] as string[];
-      return !areaData || areaData.length === 0;
-    });
+    const repeatDataAreas = areas.filter((area) => area.repeatInPages);
 
-    if (!shouldSkipPage) {
-      extractedTexts.push(pageData);
+    // Adicionando textos que repetem entre páginas
+    if (repeatDataAreas.length > 0) {
+      // Loop para localizar textos em cada primeira página de sondagem
+      for (const entry of extractedTexts) {
+        const firstPage = entry.pageNumber[0];
+        const page = await pdfDocument.getPage(firstPage);
+        const operatorList = await page.getOperatorList();
+        const pageTexts = await page.getTextContent();
+        const originalViewport = page.getViewport({ scale: 1 });
+        const pageHorizontalLines = findHorizontalLines(operatorList);
+
+        repeatDataAreas.forEach((area) => {
+          if (area.coordinates) {
+            const pageCoordinates = convertCoordinates(
+              area.coordinates,
+              1,
+              1,
+              originalViewport
+            );
+            const filteredTexts = filterTextContent(pageTexts, pageCoordinates);
+            filteredTexts.sort(
+              (a: TextItem, b: TextItem) => b.transform[5] - a.transform[5]
+            );
+
+            const textArr =
+              area.dataType === "nspt"
+                ? nsptToString(filteredTexts)
+                : textItemToString(filteredTexts, pageHorizontalLines);
+            entry[area.name] = textArr;
+          }
+        });
+      }
+    }
+  } else {
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      extractedTexts.push({
+        pageNumber: [pageNum],
+      });
     }
   }
+
+  // Processando dados que não repetem em páginas diferentes da mesma sondagem
+  // A mesma lógica é aplicada para quando não há hole_id
+  if (nonRepeatDataAreas.length > 0) {
+    for (const textEntry of extractedTexts) {
+      for (const entryPage of textEntry.pageNumber) {
+        const page = await pdfDocument.getPage(entryPage);
+        const operatorList = await page.getOperatorList();
+        const pageTexts = await page.getTextContent();
+        const originalViewport = page.getViewport({ scale: 1 });
+        const pageHorizontalLines = findHorizontalLines(operatorList);
+
+        nonRepeatDataAreas.forEach((area) => {
+          if (area.coordinates) {
+            const pageCoordinates = convertCoordinates(
+              area.coordinates,
+              1,
+              1,
+              originalViewport
+            );
+            const filteredTexts = filterTextContent(pageTexts, pageCoordinates);
+            filteredTexts.sort(
+              (a: TextItem, b: TextItem) => b.transform[5] - a.transform[5]
+            );
+
+            const textArr =
+              area.dataType === "nspt"
+                ? nsptToString(filteredTexts)
+                : textItemToString(filteredTexts, pageHorizontalLines);
+
+            if (!textEntry[area.name]) {
+              textEntry[area.name] = [];
+            }
+            (textEntry[area.name] as string[]).push(...textArr);
+          }
+        });
+      }
+    }
+  }
+
+  console.log(extractedTexts);
   return extractedTexts;
 };
 
