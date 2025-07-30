@@ -16,6 +16,7 @@
     "@hello-pangea/dnd": "^18.0.1",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.7",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.525.0",
     "prop-types": "^15.8.1",
     "react": "^19.1.0",

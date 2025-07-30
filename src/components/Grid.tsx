@@ -214,7 +214,7 @@ function Grid() {
             />
           </div>
           <div className="col-12 col-lg-6 col-xxl-4 col-xxxl-4">
-            <ExtractedDataPanel extractedTexts={extractedTexts} />
+            <ExtractedDataPanel extractedTexts={extractedTexts} areas={areas} />
           </div>
         </div>
       </div>

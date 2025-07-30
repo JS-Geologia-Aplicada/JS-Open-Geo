@@ -5,7 +5,7 @@ import {
   filterTextContent,
   nsptToString,
   textItemToString,
-} from "./pdfHelpers";
+} from "./helpers";
 
 export const extractText = async (
   areas: Area[],
@@ -149,7 +149,6 @@ export const extractText = async (
     }
   }
 
-  console.log(extractedTexts);
   return extractedTexts;
 };
 

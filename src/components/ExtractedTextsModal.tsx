@@ -30,7 +30,7 @@ const ExtractedTextsModal = ({
     const headers = ["Página", ...areas.map((area) => area.name)];
 
     const rows = extractedTexts.map((pageData) => {
-      const row: (string | number)[] = [pageData.pageNumber];
+      const row: (string | number)[] = [pageData.pageNumber.join(", ")];
       areas.forEach((area) => {
         const areaData = pageData[area.name];
         if (Array.isArray(areaData)) {
@@ -124,8 +124,6 @@ const ExtractedTextsModal = ({
                           <td key={`area-${index}`}>
                             {areaData && Array.isArray(areaData)
                               ? (areaData as string[]).join(", ")
-                              : areaData
-                              ? areaData.toString()
                               : "-"}
                           </td>
                         );

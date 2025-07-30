@@ -1,5 +1,10 @@
 import type { TextItem } from "react-pdf";
-import type { HorizontalLine, SelectionArea } from "../types";
+import type {
+  Area,
+  HorizontalLine,
+  PageTextData,
+  SelectionArea,
+} from "../types";
 
 const SELECTION_THRESHOLD = 5;
 
@@ -42,7 +47,6 @@ export const filterTextContent = (
 
 // Função para tratar especificamente NSPT
 export const nsptToString = (items: TextItem[]) => {
-  console.log("items: ", items);
   const validNspts = items.filter((item) => {
     const trimmed = item.str.trim();
     return isNumber(trimmed) || trimmed === "-";
@@ -66,7 +70,6 @@ export const nsptToString = (items: TextItem[]) => {
     );
   }
   distances.sort((a, b) => a - b);
-  console.log(distances);
   const nsptThreshold =
     numberItems.length < 4
       ? numberItems[0].height * 1.2 // Usa altura da linha quando são 2 ou 3 itens
@@ -121,7 +124,6 @@ export const textItemToString = (
   const textArr = Array<string>();
   let startedNspt = false;
 
-  console.log(items);
   // Loop para organizar os textos na array
   items.forEach((item, index) => {
     if (item.str.trim() == "") return;
@@ -247,4 +249,60 @@ const isNextValidStringNumber = (
   }
 
   return false; // não achou nenhuma string não-vazia
+};
+
+export const parseNumber = (str: string, fallback: number = 0): number => {
+  if (!str) return 0;
+  const cleanStr = str.trim().replaceAll(".", "").replace(",", ".");
+  return parseFloat(cleanStr) || fallback;
+};
+
+export const createTypeToAreaNameMap = (areas: Area[]): Map<string, string> => {
+  const typeToAreaName = new Map<string, string>();
+  areas.forEach((area) => {
+    if (area.dataType) {
+      typeToAreaName.set(area.dataType, area.name);
+    }
+  });
+  return typeToAreaName;
+};
+
+export const getSingleValueFromEntry = (
+  entry: PageTextData,
+  typeToAreaName: Map<string, string>,
+  dataType: string
+): string => {
+  const areaName = typeToAreaName.get(dataType);
+  if (!areaName || !entry[areaName]) return dataType === "z" ? "0" : "";
+  return entry[areaName][0] as string;
+};
+
+export const getMultipleValuesFromEntry = (
+  entry: PageTextData,
+  typeToAreaName: Map<string, string>,
+  dataType: string
+): string[] => {
+  const areaName = typeToAreaName.get(dataType);
+  if (!areaName || !entry[areaName]) return [];
+  return entry[areaName] as string[];
+};
+
+export const getMaxDepth = (
+  entry: PageTextData,
+  typeToAreaName: Map<string, string>
+): number => {
+  // Tentar pegar depth específico primeiro
+  const depthAreaName = typeToAreaName.get("depth");
+  if (depthAreaName && entry[depthAreaName]) {
+    return parseNumber(entry[depthAreaName][0] as string);
+  }
+
+  // Fallback: calcular do depth_from_to
+  const depthFromToAreaName = typeToAreaName.get("depth_from_to");
+  if (depthFromToAreaName && entry[depthFromToAreaName]) {
+    const depths = entry[depthFromToAreaName] as string[];
+    return Math.max(...depths.map((d) => parseNumber(d)));
+  }
+
+  return 0;
 };

@@ -17,7 +17,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 import { Document, Page } from "react-pdf";
 
 import type { Area, SelectionArea } from "../types";
-import { clamp } from "../utils/pdfHelpers";
+import { clamp } from "../utils/helpers";
 import SelectedAreas from "./SelectedAreas";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 

@@ -25,7 +25,7 @@ export interface AreaPreset {
 
 export interface PageTextData {
   pageNumber: number[];
-  [areaName: string]: string[] | number | number[];
+  [areaName: string]: string[] | number[];
 }
 
 export interface HorizontalLine {
@@ -46,6 +46,7 @@ export const DATA_TYPES = [
   "water_level",
   "geology",
   "nspt",
+  "campaign",
   "generic_info",
 ] as const;
 
@@ -63,6 +64,7 @@ export const DATA_TYPE_LABELS: Record<DataType, string> = {
   water_level: "Nível d'Água",
   geology: "Descrição Geológica",
   nspt: "NSPT",
+  campaign: "Campanha",
   generic_info: "Outras Informações",
 };
 
@@ -74,5 +76,37 @@ export const REPEATING_TYPES: DataType[] = [
   "depth",
   "date",
   "water_level",
+  "campaign",
 ];
-export const MANDATORY_TYPES: DataType[] = ["hole_id", "depth_from_to"];
+export const MANDATORY_TYPES: DataType[] = ["hole_id"];
+
+export interface CollarData {
+  "HOLE ID": string;
+  X: number;
+  Y: number;
+  Z: number;
+  DEPTH: number;
+  DATA?: string;
+  CAMPANHA?: string;
+}
+
+export interface NSPTData {
+  "HOLE ID": string;
+  from: number;
+  to: number;
+  NSPT: string;
+}
+
+export interface NAData {
+  "HOLE ID": string;
+  from: number;
+  to: number;
+  cond: "SECO" | "ÁGUA";
+}
+
+export interface GeologyData {
+  "HOLE ID": string;
+  from: number;
+  to: number;
+  [description: string]: string | number;
+}

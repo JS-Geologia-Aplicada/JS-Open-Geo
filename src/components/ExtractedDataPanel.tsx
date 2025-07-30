@@ -1,13 +1,18 @@
 import { Download } from "lucide-react";
-import type { PageTextData } from "../types";
-
+import type { Area, PageTextData } from "../types";
 import * as XLSX from "xlsx";
+import { generateCSVString, getLeapfrogData } from "../utils/leapfrogExport";
+import JSZip from "jszip";
 
 interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];
+  areas: Area[];
 }
 
-const ExtractedDataPanel = ({ extractedTexts }: ExtractedDataPanelProps) => {
+const ExtractedDataPanel = ({
+  extractedTexts,
+  areas,
+}: ExtractedDataPanelProps) => {
   const areaNames =
     extractedTexts.length > 0
       ? Object.keys(extractedTexts[0]).filter((key) => key !== "pageNumber")
@@ -30,7 +35,7 @@ const ExtractedDataPanel = ({ extractedTexts }: ExtractedDataPanelProps) => {
     const headers = ["Página", ...areaNames];
 
     const rows = extractedTexts.map((pageData) => {
-      const row: (string | number)[] = [pageData.pageNumber];
+      const row: (string | number)[] = [pageData.pageNumber.join(", ")];
       areaNames.forEach((name) => {
         const areaData = pageData[name];
         if (Array.isArray(areaData)) {
@@ -81,6 +86,60 @@ const ExtractedDataPanel = ({ extractedTexts }: ExtractedDataPanelProps) => {
     XLSX.writeFile(wb, "dados-pdf.xlsx");
   };
 
+  const downloadSingleCSV = (type: string) => {
+    const { data, headers, filename } = getLeapfrogData(
+      extractedTexts,
+      areas,
+      type
+    );
+    const BOM = "\uFEFF";
+    const csvString = BOM + generateCSVString(data, headers);
+
+    // Download
+    const blob = new Blob([csvString], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadZip = async () => {
+    const zip = new JSZip();
+    const BOM = "\uFEFF";
+
+    const collarData = getLeapfrogData(extractedTexts, areas, "collar");
+    const nsptData = getLeapfrogData(extractedTexts, areas, "nspt");
+    const naData = getLeapfrogData(extractedTexts, areas, "na");
+    // adicionar novos tipos aqui
+
+    if (collarData) {
+      const collarCSV =
+        BOM + generateCSVString(collarData.data, collarData.headers);
+      zip.file(collarData.filename, collarCSV);
+    }
+
+    if (nsptData) {
+      const nsptCSV = BOM + generateCSVString(nsptData.data, nsptData.headers);
+      zip.file(nsptData.filename, nsptCSV);
+    }
+
+    if (naData) {
+      const naCSV = BOM + generateCSVString(naData.data, naData.headers);
+      zip.file(naData.filename, naCSV);
+    }
+
+    // Gerar ZIP e baixar
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(zipBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "leapfrog-data.zip";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="data-panel mt-5">
       {!extractedTexts || extractedTexts.length <= 0 ? (
@@ -122,10 +181,8 @@ const ExtractedDataPanel = ({ extractedTexts }: ExtractedDataPanelProps) => {
                         const areaData = item[area];
                         return (
                           <td key={`area-${index}`}>
-                            {areaData && Array.isArray(areaData)
-                              ? (areaData as string[]).join(", ")
-                              : areaData
-                              ? areaData.toString()
+                            {Array.isArray(areaData)
+                              ? areaData.join(", ")
                               : "-"}
                           </td>
                         );
@@ -160,6 +217,63 @@ const ExtractedDataPanel = ({ extractedTexts }: ExtractedDataPanelProps) => {
               <Download className="me-1" size={16} />
               Excel
             </button>
+            {/* Dropdown para baixar no formato leapfrog */}
+            <div className="btn-group dropup">
+              <button
+                className="btn btn-secondary btn-lg"
+                type="button"
+                onClick={downloadZip}
+              >
+                Formato Leapfrog
+              </button>
+              <button
+                type="button"
+                className="btn btn-lg btn-secondary dropdown-toggle dropdown-toggle-split"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <span className="sr-only"></span>
+              </button>
+              <ul className="dropdown-menu">
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="#"
+                    onClick={() => downloadSingleCSV("collar")}
+                  >
+                    Collar
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="#"
+                    onClick={() => downloadSingleCSV("nspt")}
+                  >
+                    NSPT
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="#"
+                    onClick={() => downloadSingleCSV("na")}
+                  >
+                    NA
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="#"
+                    onClick={() => downloadSingleCSV("geology")}
+                  >
+                    Geologia
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </>
       )}
