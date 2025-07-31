@@ -47,6 +47,7 @@ export const DATA_TYPES = [
   "geology",
   "nspt",
   "campaign",
+  "interp",
   "generic_info",
 ] as const;
 
@@ -65,6 +66,7 @@ export const DATA_TYPE_LABELS: Record<DataType, string> = {
   geology: "Descrição Geológica",
   nspt: "NSPT",
   campaign: "Campanha",
+  interp: "Interpretação Geológica",
   generic_info: "Outras Informações",
 };
 
@@ -80,8 +82,27 @@ export const REPEATING_TYPES: DataType[] = [
 ];
 export const MANDATORY_TYPES: DataType[] = ["hole_id"];
 
-export interface CollarData {
+export const UNIQUE_TYPES: DataType[] = ["hole_id", "x", "y", "z", "depth"];
+
+export const EASY_ADD_TYPES: DataType[] = [
+  "hole_id",
+  "x",
+  "y",
+  "z",
+  "depth",
+  "depth_from_to",
+  "nspt",
+  "water_level",
+  "interp",
+];
+
+// Interface base para todos os dados do Leapfrog
+export interface BaseLeapfrogData {
   "HOLE ID": string;
+  [key: string]: string | number | undefined;
+}
+
+export interface CollarData extends BaseLeapfrogData {
   X: number;
   Y: number;
   Z: number;
@@ -90,23 +111,51 @@ export interface CollarData {
   CAMPANHA?: string;
 }
 
-export interface NSPTData {
-  "HOLE ID": string;
+// Interfaces para dados com intervalos (from/to)
+export interface IntervalLeapfrogData extends BaseLeapfrogData {
   from: number;
   to: number;
+}
+
+export interface NSPTData extends IntervalLeapfrogData {
   NSPT: string;
 }
 
-export interface NAData {
-  "HOLE ID": string;
-  from: number;
-  to: number;
+export interface NAData extends IntervalLeapfrogData {
   cond: "SECO" | "ÁGUA";
 }
 
-export interface GeologyData {
-  "HOLE ID": string;
-  from: number;
-  to: number;
+export interface GeologyData extends IntervalLeapfrogData {
   [description: string]: string | number;
 }
+
+export interface InterpData extends IntervalLeapfrogData {
+  "interp. geol": string;
+}
+
+export type LeapfrogDataTypes =
+  | CollarData
+  | NSPTData
+  | NAData
+  | GeologyData
+  | InterpData;
+
+export interface LeapfrogExportData {
+  data: LeapfrogDataTypes[];
+  headers: string[];
+  filename: string;
+}
+
+export interface ExportValidation {
+  isValid: boolean;
+  missingFields: string[];
+  errorMessage?: string;
+}
+
+export const EXPORT_REQUIREMENTS: Record<string, string[]> = {
+  collar: ["hole_id", "x", "y", "z"],
+  nspt: ["hole_id", "nspt"],
+  na: ["hole_id", "water_level"],
+  geology: ["hole_id", "geology", "depth_from_to"],
+  interp: ["hole_id", "interp", "depth_from_to"],
+};

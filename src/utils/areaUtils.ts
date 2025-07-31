@@ -1,15 +1,27 @@
-import { DATA_TYPE_LABELS, type Area, type SelectionArea } from "../types";
+import {
+  DATA_TYPE_LABELS,
+  MANDATORY_TYPES,
+  REPEATING_TYPES,
+  type Area,
+  type DataType,
+  type SelectionArea,
+} from "../types";
 
-export const addNewArea = (areas: Area[]): Area[] => {
-  const newId = `area-${Date.now()}`;
+export const addNewArea = (areas: Area[], type?: DataType): Area[] => {
+  const newId = `area-${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2, 9)}`;
   const newArea: Area = {
     id: newId,
-    name: getUniqueName("Nova Área", areas),
+    name: type
+      ? getUniqueName(DATA_TYPE_LABELS[type], areas)
+      : getUniqueName("Nova Área", areas),
     order: areas.length + 1,
     color: getUnusedDefaultColor(areas),
     coordinates: null,
-    isMandatory: false,
-    dataType: undefined,
+    isMandatory: type ? MANDATORY_TYPES.includes(type) : false,
+    repeatInPages: type ? REPEATING_TYPES.includes(type) : false,
+    dataType: type,
   };
   return [...areas, newArea];
 };
@@ -84,6 +96,11 @@ export const DEFAULT_COLORS = [
   "#F97316", // laranja
   "#84CC16", // lima
   "#6B7280", // cinza
+  "#DC2626", // vermelho escuro
+  "#059669", // verde escuro
+  "#7C3AED", // violeta
+  "#BE123C", // carmim
+  "#0369A1", // azul escuro
 ];
 
 const getUnusedDefaultColor = (areas: Area[]): string => {

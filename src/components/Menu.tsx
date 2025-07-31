@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import type { Area, DataType } from "../types";
+import {
+  DATA_TYPE_LABELS,
+  EASY_ADD_TYPES,
+  type Area,
+  type DataType,
+} from "../types";
 import AreaItem from "./AreaItem";
 import UploadFile from "./UploadFile";
 import PresetManager from "./PresetManager";
@@ -15,7 +20,7 @@ interface MenuProps {
   onDeleteArea: (areaId: string) => void;
   onRenameArea: (areaId: string, newName: string) => void;
   onClearArea: (areaId: string) => void;
-  onAddNewArea: () => void;
+  onAddNewArea: (type?: DataType) => void;
   onLoadPreset: (areas: Area[]) => void;
   onDragEnd: (result: any) => void;
   onToggleMandatory: (areaId: string, mandatory: boolean) => void;
@@ -93,6 +98,14 @@ function Menu({
     }
   };
 
+  const onAddAllAreas = () => {
+    EASY_ADD_TYPES.forEach((type) => {
+      if (!areas.find((area) => area.dataType === type)) {
+        onAddNewArea(type);
+      }
+    });
+  };
+
   return (
     <>
       <UploadFile onFileSelect={onFileSelect} />
@@ -136,16 +149,52 @@ function Menu({
         >
           <Folder size={24} />
         </button>
-        <button
-          data-bs-toggle="tooltip"
-          data-bs-target="tooltip"
-          data-bs-trigger="hover"
-          data-bs-title="Adicionar área"
-          className="menu-btn"
-          onClick={onAddNewArea}
-        >
-          <Plus size={24} />
-        </button>
+        <div className="btn-group">
+          <button
+            data-bs-toggle="tooltip"
+            data-bs-target="tooltip"
+            data-bs-trigger="hover"
+            data-bs-title="Adicionar área"
+            className="menu-btn"
+            onClick={() => onAddNewArea()}
+          >
+            <Plus size={24} />
+          </button>
+          <button
+            className="menu-btn dropdown-toggle dropdown-toggle-split"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            disabled={EASY_ADD_TYPES.some((type) =>
+              areas.find((area) => area.dataType === type)
+            )}
+          >
+            <span className="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul className="dropdown-menu" style={{ zIndex: 1001 }}>
+            {EASY_ADD_TYPES.filter(
+              (type) => !areas.find((area) => area.dataType === type)
+            ).map((type) => {
+              return (
+                <li>
+                  <a
+                    className="dropdown-item"
+                    href="#"
+                    onClick={() => onAddNewArea(type)}
+                  >
+                    {DATA_TYPE_LABELS[type]}
+                  </a>
+                </li>
+              );
+            })}
+            <div className="dropdown-divider"></div>
+            <li>
+              <a href="#" className="dropdown-item" onClick={onAddAllAreas}>
+                Criar todos ausentes
+              </a>
+            </li>
+          </ul>
+        </div>
         <button
           data-bs-toggle="tooltip"
           data-bs-target="tooltip"
@@ -186,6 +235,7 @@ function Menu({
                       <AreaItem
                         key={area.id}
                         area={area}
+                        areas={areas}
                         hasFile={hasFile}
                         onStartSelection={onStartAreaSelection}
                         onClearArea={onClearArea}

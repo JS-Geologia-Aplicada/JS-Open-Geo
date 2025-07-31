@@ -1,8 +1,13 @@
 import { Download } from "lucide-react";
 import type { Area, PageTextData } from "../types";
 import * as XLSX from "xlsx";
-import { generateCSVString, getLeapfrogData } from "../utils/leapfrogExport";
+import {
+  generateCSVString,
+  getLeapfrogData,
+  validateExportRequirements,
+} from "../utils/leapfrogExport";
 import JSZip from "jszip";
+import { useState } from "react";
 
 interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];
@@ -13,6 +18,7 @@ const ExtractedDataPanel = ({
   extractedTexts,
   areas,
 }: ExtractedDataPanelProps) => {
+  const [advancedDownload, setAdvancedDownload] = useState(false);
   const areaNames =
     extractedTexts.length > 0
       ? Object.keys(extractedTexts[0]).filter((key) => key !== "pageNumber")
@@ -87,20 +93,21 @@ const ExtractedDataPanel = ({
   };
 
   const downloadSingleCSV = (type: string) => {
-    const { data, headers, filename } = getLeapfrogData(
-      extractedTexts,
-      areas,
-      type
-    );
+    const leapfrogData = getLeapfrogData(extractedTexts, areas, type);
+    if (!leapfrogData) {
+      alert("Não existem todas as áreas necessárias para gerar esse arquivo");
+      return;
+    }
     const BOM = "\uFEFF";
-    const csvString = BOM + generateCSVString(data, headers);
+    const csvString =
+      BOM + generateCSVString(leapfrogData.data, leapfrogData.headers);
 
     // Download
     const blob = new Blob([csvString], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = filename;
+    link.download = leapfrogData.filename;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -109,26 +116,19 @@ const ExtractedDataPanel = ({
     const zip = new JSZip();
     const BOM = "\uFEFF";
 
-    const collarData = getLeapfrogData(extractedTexts, areas, "collar");
-    const nsptData = getLeapfrogData(extractedTexts, areas, "nspt");
-    const naData = getLeapfrogData(extractedTexts, areas, "na");
-    // adicionar novos tipos aqui
+    const leapfrogTypes = ["collar", "nspt", "na", "geology", "interp"];
 
-    if (collarData) {
-      const collarCSV =
-        BOM + generateCSVString(collarData.data, collarData.headers);
-      zip.file(collarData.filename, collarCSV);
-    }
+    // Loop através de todos os tipos
+    leapfrogTypes.forEach((type) => {
+      if (validateExportRequirements(areas, type).isValid || advancedDownload) {
+        const data = getLeapfrogData(extractedTexts, areas, type);
 
-    if (nsptData) {
-      const nsptCSV = BOM + generateCSVString(nsptData.data, nsptData.headers);
-      zip.file(nsptData.filename, nsptCSV);
-    }
-
-    if (naData) {
-      const naCSV = BOM + generateCSVString(naData.data, naData.headers);
-      zip.file(naData.filename, naCSV);
-    }
+        if (data) {
+          const csvString = BOM + generateCSVString(data.data, data.headers);
+          zip.file(data.filename, csvString);
+        }
+      }
+    });
 
     // Gerar ZIP e baixar
     const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -139,6 +139,13 @@ const ExtractedDataPanel = ({
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const getDropdownItemClass = (type: string) =>
+    `dropdown-item${
+      validateExportRequirements(areas, type).isValid || advancedDownload
+        ? ""
+        : " disabled"
+    }`;
 
   return (
     <div className="data-panel mt-5">
@@ -194,85 +201,120 @@ const ExtractedDataPanel = ({
             </table>
           </div>
           <hr className="mt-3" />
-          <h6 className="mb-3 text-start ms-3">Exportar</h6>
-          <div className="d-flex justify-content-start">
-            <button
-              className="menu-btn menu-btn-export ms-2"
-              onClick={exportJSON}
-            >
-              <Download className="me-1" size={16} />
-              JSON
-            </button>
-            <button
-              className="menu-btn menu-btn-export ms-2"
-              onClick={exportCSV}
-            >
-              <Download className="me-1" size={16} />
-              CSV
-            </button>
-            <button
-              className="menu-btn menu-btn-export ms-2"
-              onClick={exportExcel}
-            >
-              <Download className="me-1" size={16} />
-              Excel
-            </button>
-            {/* Dropdown para baixar no formato leapfrog */}
-            <div className="btn-group dropup">
-              <button
-                className="btn btn-secondary btn-lg"
-                type="button"
-                onClick={downloadZip}
-              >
-                Formato Leapfrog
-              </button>
-              <button
-                type="button"
-                className="btn btn-lg btn-secondary dropdown-toggle dropdown-toggle-split"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <span className="sr-only"></span>
-              </button>
-              <ul className="dropdown-menu">
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={() => downloadSingleCSV("collar")}
+          <div className="d-flex gap-3 mb-2">
+            <div className="border rounded p-3 flex-grow-1">
+              <h6>Exportar todos os dados</h6>
+              <div className="d-flex gap-1 mt-3">
+                <button
+                  className="menu-btn menu-btn-export ms-2"
+                  onClick={exportJSON}
+                >
+                  <Download className="me-1" size={16} />
+                  JSON
+                </button>
+                <button
+                  className="menu-btn menu-btn-export ms-2"
+                  onClick={exportCSV}
+                >
+                  <Download className="me-1" size={16} />
+                  CSV
+                </button>
+                <button
+                  className="menu-btn menu-btn-export ms-2"
+                  onClick={exportExcel}
+                >
+                  <Download className="me-1" size={16} />
+                  Excel
+                </button>
+              </div>
+              {/* Dropdown para baixar no formato leapfrog */}
+            </div>
+            <div className="border rounded p-3 flex-grow-1">
+              <h6>Exportar formato Leapfrog</h6>
+              <div>
+                <div className="btn-group dropup">
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={downloadZip}
                   >
-                    Collar
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={() => downloadSingleCSV("nspt")}
+                    Exportar todos
+                  </button>
+                  <button
+                    type="button"
+                    className="btn  btn-secondary dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
                   >
-                    NSPT
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={() => downloadSingleCSV("na")}
-                  >
-                    NA
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item"
-                    href="#"
-                    onClick={() => downloadSingleCSV("geology")}
-                  >
-                    Geologia
-                  </a>
-                </li>
-              </ul>
+                    <span className="sr-only"></span>
+                  </button>
+
+                  <ul className="dropdown-menu">
+                    <li>
+                      <a
+                        className={getDropdownItemClass("collar")}
+                        href="#"
+                        onClick={() => downloadSingleCSV("collar")}
+                      >
+                        Collar
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className={getDropdownItemClass("nspt")}
+                        href="#"
+                        onClick={() => downloadSingleCSV("nspt")}
+                      >
+                        NSPT
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className={getDropdownItemClass("na")}
+                        href="#"
+                        onClick={() => downloadSingleCSV("na")}
+                      >
+                        NA
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className={getDropdownItemClass("geology")}
+                        href="#"
+                        onClick={() => downloadSingleCSV("geology")}
+                      >
+                        Geologia
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className={getDropdownItemClass("interp")}
+                        href="#"
+                        onClick={() => downloadSingleCSV("interp")}
+                      >
+                        Interpretação
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div className="form-check form-switch mt-2">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="switchCheckDefault"
+                  checked={advancedDownload}
+                  onChange={(e) => setAdvancedDownload(e.target.checked)}
+                />
+                <label
+                  className="form-check-label small text-align-start"
+                  htmlFor="switchCheckDefault"
+                >
+                  Aceitar dados incompletos
+                </label>
+              </div>
             </div>
           </div>
         </>

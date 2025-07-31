@@ -39,12 +39,12 @@ function Grid() {
   const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
 
   // criar nova área
-  const onAddNewArea = () => {
-    if (areas.length >= 10) {
-      alert("Limite de 10 áreas atingido");
+  const onAddNewArea = (type?: DataType) => {
+    if (areas.length >= 15) {
+      alert("Limite de 15 áreas atingido");
       return;
     }
-    setAreas((prev) => addNewArea(prev));
+    setAreas((prev) => addNewArea(prev, type));
   };
 
   // funções de manipulação das áreas
@@ -74,6 +74,29 @@ function Grid() {
   // funções de extrair texto
   const handleExtraxtTexts = async () => {
     const pdfDocument = pdfViewerRef.current?.getDocument();
+    const hasRepeatAreas = areas.some((area) => area.repeatInPages);
+    const holeId = areas.find((area) => area.dataType === "hole_id");
+    const areasWithoutCoords = areas
+      .filter((area) => !area.coordinates)
+      .map((area) => area.name);
+
+    if (areasWithoutCoords.length > 0) {
+      const proceed = confirm(
+        "A(s) seguinte(s) área(s) não possue(m) coordenadas:\n" +
+          areasWithoutCoords.join(", ") +
+          "\n" +
+          "Deseja continuar mesmo assim?"
+      );
+      if (!proceed) return;
+    }
+    if (!holeId && hasRepeatAreas) {
+      const proceed = confirm(
+        "Algumas áreas estão configuradas como 'Único' mas não há uma área de ID da Sondagem. " +
+          "A função não vai funcionar corretamente. Deseja continuar mesmo assim?"
+      );
+      if (!proceed) return;
+    }
+
     if (!pdfDocument) return;
 
     const extracted = await extractText(areas, pdfDocument);

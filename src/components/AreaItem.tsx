@@ -3,6 +3,7 @@ import { Check, Eraser, TextSelect, Trash, X } from "lucide-react";
 import {
   DATA_TYPE_LABELS,
   DATA_TYPES,
+  UNIQUE_TYPES,
   type Area,
   type DataType,
 } from "../types";
@@ -11,6 +12,7 @@ import { Tooltip } from "bootstrap";
 interface AreaItemProps {
   hasFile: boolean;
   area: Area;
+  areas: Area[];
   onStartSelection: (areaId: string) => void;
   onClearArea: (areaId: string) => void;
   onDeleteArea: (areaId: string) => void;
@@ -23,6 +25,7 @@ interface AreaItemProps {
 const AreaItem: React.FC<AreaItemProps> = ({
   hasFile,
   area,
+  areas,
   onStartSelection,
   onClearArea,
   onDeleteArea,
@@ -160,6 +163,9 @@ const AreaItem: React.FC<AreaItemProps> = ({
               <button
                 className="menu-btn menu-btn-cta"
                 disabled={!hasFile}
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                data-bs-title="Selecionar área"
                 onClick={handleStartSelection}
               >
                 <TextSelect size={16} />
@@ -199,7 +205,12 @@ const AreaItem: React.FC<AreaItemProps> = ({
               }
             >
               <option value="default">Tipo padrão</option>
-              {DATA_TYPES.filter((type) => type !== "default").map((type) => (
+              {DATA_TYPES.filter(
+                (type) =>
+                  type !== "default" &&
+                  (!UNIQUE_TYPES.includes(type) ||
+                    !areas.find((a) => a.dataType === type && a.id !== area.id))
+              ).map((type) => (
                 <option key={type} value={type}>
                   {DATA_TYPE_LABELS[type]}
                 </option>
@@ -207,7 +218,12 @@ const AreaItem: React.FC<AreaItemProps> = ({
             </select>
           </div>
 
-          <div className="form-check form-switch">
+          <div
+            className="form-check form-switch"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title="Pular páginas sem texto nesta área"
+          >
             <input
               className="form-check-input"
               type="checkbox"
@@ -218,13 +234,23 @@ const AreaItem: React.FC<AreaItemProps> = ({
             <label className="form-check-label small">Obrigatório</label>
           </div>
 
-          <div className="form-check form-switch">
+          <div
+            className="form-check form-switch"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            data-bs-title={
+              areas.find((a) => a.dataType === "hole_id")
+                ? "Usar um único valor por sondagem"
+                : "Adicione uma área como ID da Sondagem para utilizar essa opção"
+            }
+          >
             <input
               className="form-check-input"
               type="checkbox"
               id={`repeat-${area.id}`}
               checked={area.repeatInPages}
               onChange={(e) => onToggleRepeat(area.id, e.target.checked)}
+              disabled={!areas.find((a) => a.dataType === "hole_id")}
             />
             <label className="form-check-label small">Único</label>
           </div>

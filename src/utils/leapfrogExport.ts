@@ -1,10 +1,15 @@
-import type {
-  Area,
-  CollarData,
-  GeologyData,
-  NAData,
-  NSPTData,
-  PageTextData,
+import {
+  EXPORT_REQUIREMENTS,
+  type Area,
+  type CollarData,
+  type DataType,
+  type ExportValidation,
+  type GeologyData,
+  type InterpData,
+  type LeapfrogExportData,
+  type NAData,
+  type NSPTData,
+  type PageTextData,
 } from "../types";
 import {
   createTypeToAreaNameMap,
@@ -151,6 +156,47 @@ export const generateGeologyData = (
   return geologyData;
 };
 
+export const generateInterpData = (
+  documentData: PageTextData[],
+  areas: Area[]
+) => {
+  const typeToAreaName = createTypeToAreaNameMap(areas);
+  const interpData: InterpData[] = [];
+
+  documentData.forEach((entry) => {
+    const holeId = getSingleValueFromEntry(entry, typeToAreaName, "hole_id");
+    const depths = getMultipleValuesFromEntry(
+      entry,
+      typeToAreaName,
+      "depth_from_to"
+    );
+    const depthNumbers = depths
+      .map((value) => parseNumber(value))
+      .sort((a, b) => a - b);
+    if (depthNumbers[0] !== 0) depthNumbers.unshift(0);
+    const entryInterp = getMultipleValuesFromEntry(
+      entry,
+      typeToAreaName,
+      "interp"
+    );
+    const entryInterpData: InterpData[] = [];
+    for (let i = depthNumbers.length - 2; i >= 0; i--) {
+      entryInterpData.push({
+        "HOLE ID": holeId,
+        from: depthNumbers[i],
+        to: depthNumbers[i + 1],
+        "interp. geol": entryInterp[i + i] || "",
+      });
+    }
+    entryInterpData.reverse();
+    interpData.push(...entryInterpData);
+  });
+
+  interpData.reverse();
+
+  return interpData;
+};
+
 // Função que converte dados pra CSV string
 export const generateCSVString = (data: any[], headers: string[]): string => {
   const csvRows = [
@@ -167,7 +213,7 @@ export const getLeapfrogData = (
   extractedTexts: PageTextData[],
   areas: Area[],
   type: string
-) => {
+): LeapfrogExportData | undefined => {
   switch (type) {
     case "collar":
       const collarHeaders = ["HOLE ID", "X", "Y", "Z", "DEPTH"];
@@ -198,11 +244,58 @@ export const getLeapfrogData = (
         headers: ["HOLE ID", "from", "to", "Descrição"],
         filename: "geology.csv",
       };
-    default:
+    case "interp":
       return {
-        data: [],
-        headers: [],
-        filename: "unknown.csv",
+        data: generateInterpData(extractedTexts, areas),
+        headers: ["HOLE ID", "from", "to", "interp. geol"],
+        filename: "interp.csv",
       };
+    default:
+      return undefined;
   }
+};
+
+export const validateExportRequirements = (
+  areas: Area[],
+  exportType: string
+): ExportValidation => {
+  const requirements = EXPORT_REQUIREMENTS[exportType];
+
+  if (!requirements) {
+    return {
+      isValid: false,
+      missingFields: [],
+      errorMessage: `Tipo de exportação '${exportType}' não reconhecido`,
+    };
+  }
+
+  const missingFields: string[] = [];
+  const availableTypes = areas
+    .filter((area) => area.dataType && area.coordinates) // só áreas configuradas e selecionadas
+    .map((area) => area.dataType!);
+
+  requirements.forEach((requiredType) => {
+    if (!availableTypes.includes(requiredType as DataType)) {
+      missingFields.push(requiredType);
+    }
+  });
+
+  // Validação para tipos que precisam de depth OU depth_from_to
+  if (exportType === "nspt" || exportType === "collar" || exportType === "na") {
+    const hasDepth = availableTypes.includes("depth");
+    const hasDepthFromTo = availableTypes.includes("depth_from_to");
+
+    if (!hasDepth && !hasDepthFromTo) {
+      missingFields.push("depth");
+    }
+  }
+
+  return {
+    isValid: missingFields.length === 0,
+    missingFields,
+    errorMessage:
+      missingFields.length > 0
+        ? `Campos obrigatórios ausentes: ${missingFields.join(", ")}`
+        : undefined,
+  };
 };
