@@ -151,6 +151,7 @@ function Menu({
         </button>
         <div className="btn-group">
           <button
+            type="button"
             data-bs-toggle="tooltip"
             data-bs-target="tooltip"
             data-bs-trigger="hover"
@@ -165,33 +166,42 @@ function Menu({
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
-            disabled={EASY_ADD_TYPES.some((type) =>
-              areas.find((area) => area.dataType === type)
-            )}
           >
             <span className="visually-hidden">Toggle Dropdown</span>
           </button>
-          <ul className="dropdown-menu" style={{ zIndex: 1001 }}>
+          <ul
+            className="dropdown-menu"
+            id="add-area-dropdown"
+            style={{ zIndex: 1001 }}
+          >
             {EASY_ADD_TYPES.filter(
               (type) => !areas.find((area) => area.dataType === type)
             ).map((type) => {
               return (
                 <li>
-                  <a
+                  <button
                     className="dropdown-item"
-                    href="#"
+                    type="button"
+                    data-bs-dismiss="dropdown"
                     onClick={() => onAddNewArea(type)}
                   >
                     {DATA_TYPE_LABELS[type]}
-                  </a>
+                  </button>
                 </li>
               );
             })}
             <div className="dropdown-divider"></div>
+
             <li>
-              <a href="#" className="dropdown-item" onClick={onAddAllAreas}>
+              <button
+                className="dropdown-item"
+                onClick={onAddAllAreas}
+                disabled={EASY_ADD_TYPES.some((type) =>
+                  areas.find((area) => area.dataType === type)
+                )}
+              >
                 Criar todos ausentes
-              </a>
+              </button>
             </li>
           </ul>
         </div>
