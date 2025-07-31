@@ -91,6 +91,7 @@ export const EASY_ADD_TYPES: DataType[] = [
   "z",
   "depth",
   "depth_from_to",
+  "geology",
   "nspt",
   "water_level",
   "interp",
