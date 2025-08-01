@@ -97,11 +97,6 @@ export const generateNAData = (documentData: PageTextData[], areas: Area[]) => {
     const hasWater = typeof naNumber === "number" && naNumber >= 0;
 
     if (!hasWater) {
-      console.log("Página: ", entry.pageNumber);
-      console.log("na: ", na);
-      console.log("naNumber: ", naNumber);
-      console.log("hasWater: ", hasWater);
-      console.log("---");
       naData.push({
         "HOLE ID": holeId,
         from: 0,
@@ -145,10 +140,6 @@ export const generateGeologyData = (
       "geology"
     );
     for (let i = 0; i < depthNumbers.length - 1; i++) {
-      console.log(
-        "NÚMERO DE DESCRIÇÕES CORRETO? ",
-        geologyData.length === depthNumbers.length
-      );
       geologyData.push({
         "HOLE ID": holeId,
         from: depthNumbers[i],
@@ -185,16 +176,17 @@ export const generateInterpData = (
       "interp"
     );
     const entryInterpData: InterpData[] = [];
-    for (let i = depthNumbers.length - 2; i >= 0; i--) {
+    for (let i = 0; i < depthNumbers.length - 1; i++) {
       entryInterpData.push({
         "HOLE ID": holeId,
         from: depthNumbers[i],
         to: depthNumbers[i + 1],
-        "interp. geol": entryInterp[i + i] || "",
+        "interp. geol": entryInterp[i] || "",
       });
     }
-    entryInterpData.reverse();
     interpData.push(...entryInterpData);
+    console.log("entry página: ", entry.pageNumber);
+    console.log("interpData: ", entryInterpData);
   });
 
   return interpData;
