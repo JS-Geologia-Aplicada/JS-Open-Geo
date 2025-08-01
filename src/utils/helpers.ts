@@ -6,7 +6,7 @@ import type {
   SelectionArea,
 } from "../types";
 
-const SELECTION_THRESHOLD = 5;
+const SELECTION_THRESHOLD = 3;
 
 // Converte as coordenadas na página para o pdf
 export const convertCoordinates = (

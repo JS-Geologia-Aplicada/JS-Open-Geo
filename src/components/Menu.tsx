@@ -176,9 +176,9 @@ function Menu({
           >
             {EASY_ADD_TYPES.filter(
               (type) => !areas.find((area) => area.dataType === type)
-            ).map((type) => {
+            ).map((type, index) => {
               return (
-                <li>
+                <li key={`list-item${index}`}>
                   <button
                     className="dropdown-item"
                     type="button"

@@ -1,5 +1,11 @@
 import { Download } from "lucide-react";
-import type { Area, PageTextData } from "../types";
+import {
+  DATA_TYPE_LABELS,
+  LEAPFROG_LABELS,
+  LEAPFROG_TYPES,
+  type Area,
+  type PageTextData,
+} from "../types";
 import * as XLSX from "xlsx";
 import {
   generateCSVString,
@@ -7,7 +13,8 @@ import {
   validateExportRequirements,
 } from "../utils/leapfrogExport";
 import JSZip from "jszip";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Tooltip } from "bootstrap";
 
 interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];
@@ -23,6 +30,21 @@ const ExtractedDataPanel = ({
     extractedTexts.length > 0
       ? Object.keys(extractedTexts[0]).filter((key) => key !== "pageNumber")
       : [];
+
+  useEffect(() => {
+    // Atualizar todos os tooltips quando advancedDownload ou areas mudarem
+    const tooltipElements = document.querySelectorAll(
+      '[data-bs-toggle="tooltip"]'
+    );
+
+    tooltipElements.forEach((element) => {
+      const existingTooltip = Tooltip.getInstance(element);
+      if (existingTooltip) {
+        existingTooltip.dispose();
+      }
+      new Tooltip(element);
+    });
+  }, [extractedTexts, advancedDownload]);
 
   const exportJSON = () => {
     const dataStr = JSON.stringify(extractedTexts, null, 2);
@@ -147,6 +169,22 @@ const ExtractedDataPanel = ({
         : " disabled"
     }`;
 
+  const downloadAllValidation = () => {
+    const validExports = LEAPFROG_TYPES.filter(
+      (type) => validateExportRequirements(areas, type).isValid
+    );
+    return {
+      validExports: validExports,
+      nonValidExports: LEAPFROG_TYPES.filter(
+        (type) => !validExports.includes(type)
+      ),
+      someValid: validExports.length > 0,
+      allValid: validExports.length === LEAPFROG_TYPES.length,
+    };
+  };
+
+  const validationData = downloadAllValidation();
+
   return (
     <div className="data-panel mt-5">
       {!extractedTexts || extractedTexts.length <= 0 ? (
@@ -237,6 +275,25 @@ const ExtractedDataPanel = ({
                     className="btn btn-secondary"
                     type="button"
                     onClick={downloadZip}
+                    disabled={!validationData.someValid}
+                    data-bs-toggle="tooltip"
+                    data-bs-target="tooltip"
+                    data-bs-placement="top"
+                    data-bs-title={
+                      validationData.allValid
+                        ? `Exportar todos os arquivos`
+                        : advancedDownload && validationData.someValid
+                        ? `Exportar ${validationData.validExports.join(
+                            ", "
+                          )} completo(s) e ${validationData.nonValidExports.join(
+                            ", "
+                          )} incompleto(s)`
+                        : advancedDownload
+                        ? "Exportar todos incompletos"
+                        : validationData.someValid
+                        ? `Exportar ${validationData.validExports.join(", ")}`
+                        : "Dados insuficientes para gerar arquivos"
+                    }
                   >
                     Exportar todos
                   </button>
@@ -251,51 +308,46 @@ const ExtractedDataPanel = ({
                   </button>
 
                   <ul className="dropdown-menu">
-                    <li>
-                      <a
-                        className={getDropdownItemClass("collar")}
-                        href="#"
-                        onClick={() => downloadSingleCSV("collar")}
-                      >
-                        Collar
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className={getDropdownItemClass("nspt")}
-                        href="#"
-                        onClick={() => downloadSingleCSV("nspt")}
-                      >
-                        NSPT
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className={getDropdownItemClass("na")}
-                        href="#"
-                        onClick={() => downloadSingleCSV("na")}
-                      >
-                        NA
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className={getDropdownItemClass("geology")}
-                        href="#"
-                        onClick={() => downloadSingleCSV("geology")}
-                      >
-                        Geologia
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className={getDropdownItemClass("interp")}
-                        href="#"
-                        onClick={() => downloadSingleCSV("interp")}
-                      >
-                        Interpretação
-                      </a>
-                    </li>
+                    {LEAPFROG_TYPES.map((type) => {
+                      const validation = validateExportRequirements(
+                        areas,
+                        type
+                      );
+                      return (
+                        <li
+                          key={`export-leapfrog-${type}`}
+                          data-bs-toggle="tooltip"
+                          data-bs-target="tooltip"
+                          data-bs-placement="left"
+                          data-bs-title={
+                            validation.isValid
+                              ? `Exportar ${type}.csv`
+                              : advancedDownload
+                              ? `Exportar ${type}.csv incompleto (dados ausentes: ${validation.missingFields
+                                  .map((t) => {
+                                    return t === "depth"
+                                      ? "Profundidades ou Profundidade Total"
+                                      : DATA_TYPE_LABELS[t];
+                                  })
+                                  .join(", ")})`
+                              : `Campos faltantes: ${validation.missingFields
+                                  .map((t) => {
+                                    return t === "depth"
+                                      ? "Profundidades ou Profundidade Total"
+                                      : DATA_TYPE_LABELS[t];
+                                  })
+                                  .join(", ")}`
+                          }
+                        >
+                          <button
+                            className={getDropdownItemClass(type)}
+                            onClick={() => downloadSingleCSV(type)}
+                          >
+                            {LEAPFROG_LABELS[type]}
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               </div>

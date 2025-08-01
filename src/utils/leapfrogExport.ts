@@ -269,14 +269,14 @@ export const validateExportRequirements = (
     };
   }
 
-  const missingFields: string[] = [];
+  const missingFields: DataType[] = [];
   const availableTypes = areas
     .filter((area) => area.dataType && area.coordinates) // só áreas configuradas e selecionadas
     .map((area) => area.dataType!);
 
   requirements.forEach((requiredType) => {
     if (!availableTypes.includes(requiredType as DataType)) {
-      missingFields.push(requiredType);
+      missingFields.push(requiredType as DataType);
     }
   });
 
@@ -286,7 +286,7 @@ export const validateExportRequirements = (
     const hasDepthFromTo = availableTypes.includes("depth_from_to");
 
     if (!hasDepth && !hasDepthFromTo) {
-      missingFields.push("depth");
+      missingFields.unshift("depth");
     }
   }
 

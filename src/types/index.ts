@@ -149,12 +149,24 @@ export interface LeapfrogExportData {
 
 export interface ExportValidation {
   isValid: boolean;
-  missingFields: string[];
+  missingFields: DataType[];
   errorMessage?: string;
 }
 
-export const EXPORT_REQUIREMENTS: Record<string, string[]> = {
-  collar: ["hole_id", "x", "y", "z"],
+export const LEAPFROG_TYPES = ["collar", "nspt", "na", "geology", "interp"];
+
+export type LeapfrogType = (typeof LEAPFROG_TYPES)[number];
+
+export const LEAPFROG_LABELS: Record<LeapfrogType, string> = {
+  collar: "Collar",
+  nspt: "NSPT",
+  na: "NA",
+  geology: "Geologia",
+  interp: "Interpretação",
+};
+
+export const EXPORT_REQUIREMENTS: Record<LeapfrogType, string[]> = {
+  collar: ["hole_id", "x", "y"],
   nspt: ["hole_id", "nspt"],
   na: ["hole_id", "water_level"],
   geology: ["hole_id", "geology", "depth_from_to"],
