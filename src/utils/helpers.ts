@@ -49,13 +49,6 @@ export const filterTextContent = (
 export const nsptToString = (items: TextItem[]) => {
   const validNspts = items.filter((item) => {
     const trimmed = item.str.trim();
-    if (trimmed === "1/15**") {
-      console.log("Teste para ", trimmed);
-      console.log(
-        "Regex funciona? ",
-        /^(P|\d+)(\/\d+)?(\*+)?$|^-$/.test(trimmed)
-      );
-    }
     return /^(P|\d+)(\/\d+)?(\*+)?$|^-$/.test(trimmed);
   });
 
@@ -130,6 +123,18 @@ export const textItemToString = (
   const incompleteTexts = Array<string>();
   const textArr = Array<string>();
   let startedNspt = false;
+
+  items.sort((a: TextItem, b: TextItem) => {
+    const yDiff = b.transform[5] - a.transform[5];
+    const avgHeight = (a.height + b.height) / 2;
+    const threshold = avgHeight * 0.5; // 50% da altura média
+
+    if (Math.abs(yDiff) <= threshold) {
+      return a.transform[4] - b.transform[4]; // ordenar por X se na mesma linha
+    }
+
+    return yDiff; // ordenar por Y se linhas diferentes
+  });
 
   // Loop para organizar os textos na array
   items.forEach((item, index) => {

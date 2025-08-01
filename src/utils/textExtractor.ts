@@ -12,11 +12,45 @@ export const extractText = async (
   pdfDocument: any
 ): Promise<PageTextData[]> => {
   const extractedTexts: PageTextData[] = [];
+  const mandatoryAreas = areas.filter(
+    (area) => area.isMandatory && area.coordinates
+  );
   const numPages = pdfDocument.numPages;
   const holeIdArea = areas.find((area) => area.dataType === "hole_id");
   const nonRepeatDataAreas = areas.filter(
     (area) => !area.repeatInPages && area.dataType !== "hole_id"
   );
+
+  const hasRequiredData = async (pageNum: number) => {
+    if (mandatoryAreas.length === 0) return true; // Se não tem obrigatórios, todas as páginas servem
+
+    const page = await pdfDocument.getPage(pageNum);
+    const pageTexts = await page.getTextContent();
+    const originalViewport = page.getViewport({ scale: 1 });
+
+    for (const area of mandatoryAreas) {
+      const pageCoordinates = convertCoordinates(
+        area.coordinates!,
+        1,
+        1,
+        originalViewport
+      );
+      const filteredItems = filterTextContent(pageTexts, pageCoordinates);
+      const textContent = textItemToString(filteredItems, []).join(" ").trim();
+
+      if (!textContent) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const validPages: number[] = [];
+  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+    if (await hasRequiredData(pageNum)) {
+      validPages.push(pageNum);
+    }
+  }
 
   // Extração específica para quando há hole_id
   if (holeIdArea && holeIdArea.coordinates) {
@@ -26,7 +60,7 @@ export const extractText = async (
     const uniqueHoleIds: string[] = [];
 
     // Extraindo os hole_id e identificando as páginas nos quais se repetem
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+    for (const pageNum of validPages) {
       const page = await pdfDocument.getPage(pageNum);
       const pageTexts = await page.getTextContent();
       const originalViewport = page.getViewport({ scale: 1 });
@@ -103,7 +137,7 @@ export const extractText = async (
       }
     }
   } else {
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+    for (const pageNum of validPages) {
       extractedTexts.push({
         pageNumber: [pageNum],
       });
@@ -142,7 +176,25 @@ export const extractText = async (
             if (!textEntry[area.name]) {
               textEntry[area.name] = [];
             }
-            (textEntry[area.name] as string[]).push(...textArr);
+            const currentTexts = textEntry[area.name] as string[];
+            const newTexts = [...textArr];
+
+            if (currentTexts.length > 0 && newTexts.length > 0) {
+              const lastExisting = currentTexts[currentTexts.length - 1]
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, " ");
+              const firstNew = newTexts[0]
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, " ");
+
+              if (lastExisting === firstNew) {
+                newTexts.shift();
+              }
+            }
+
+            currentTexts.push(...newTexts);
           }
         });
       }

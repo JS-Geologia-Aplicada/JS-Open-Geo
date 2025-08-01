@@ -133,18 +133,37 @@ export const generateGeologyData = (
     const depthNumbers = depths
       .map((value) => parseNumber(value))
       .sort((a, b) => a - b);
-    if (depthNumbers[0] !== 0) depthNumbers.unshift(0);
+    if (!depthNumbers.includes(0)) depthNumbers.unshift(0);
     const entryGeology = getMultipleValuesFromEntry(
       entry,
       typeToAreaName,
       "geology"
     );
+    const cleanedGeology = entryGeology.filter(
+      (description) =>
+        !description.toUpperCase().startsWith("LIMITE DE SONDAGEM")
+    );
+
+    if (cleanedGeology.length > 0) {
+      const lastIndex = cleanedGeology.length - 1;
+      const lastDescription = cleanedGeology[lastIndex];
+      const limiteIndex = lastDescription
+        .toUpperCase()
+        .indexOf("LIMITE DE SONDAGEM");
+
+      if (limiteIndex !== -1) {
+        cleanedGeology[lastIndex] = lastDescription
+          .substring(0, limiteIndex)
+          .trim();
+      }
+    }
+
     for (let i = 0; i < depthNumbers.length - 1; i++) {
       geologyData.push({
         "HOLE ID": holeId,
         from: depthNumbers[i],
         to: depthNumbers[i + 1],
-        Descrição: entryGeology[i] || "",
+        Descrição: cleanedGeology[i] || "",
       });
     }
   });
@@ -169,7 +188,7 @@ export const generateInterpData = (
     const depthNumbers = depths
       .map((value) => parseNumber(value))
       .sort((a, b) => a - b);
-    if (depthNumbers[0] !== 0) depthNumbers.unshift(0);
+    if (!depthNumbers.includes(0)) depthNumbers.unshift(0);
     const entryInterp = getMultipleValuesFromEntry(
       entry,
       typeToAreaName,
@@ -185,8 +204,6 @@ export const generateInterpData = (
       });
     }
     interpData.push(...entryInterpData);
-    console.log("entry página: ", entry.pageNumber);
-    console.log("interpData: ", entryInterpData);
   });
 
   return interpData;
