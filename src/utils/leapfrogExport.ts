@@ -192,8 +192,6 @@ export const generateInterpData = (
     interpData.push(...entryInterpData);
   });
 
-  interpData.reverse();
-
   return interpData;
 };
 
