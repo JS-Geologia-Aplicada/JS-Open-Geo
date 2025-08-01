@@ -252,9 +252,10 @@ const isNextValidStringNumber = (
 };
 
 export const parseNumber = (str: string, fallback: number = 0): number => {
-  if (!str) return 0;
+  if (!str) return fallback;
   const cleanStr = str.trim().replaceAll(".", "").replace(",", ".");
-  return parseFloat(cleanStr) || fallback;
+  const result = parseFloat(cleanStr);
+  return isNaN(result) ? fallback : result;
 };
 
 export const createTypeToAreaNameMap = (areas: Area[]): Map<string, string> => {

@@ -6,6 +6,7 @@ import {
   nsptToString,
   textItemToString,
 } from "./helpers";
+import { generateNAData } from "./leapfrogExport";
 
 export const extractText = async (
   areas: Area[],
@@ -148,6 +149,8 @@ export const extractText = async (
       }
     }
   }
+
+  console.log(generateNAData(extractedTexts, areas));
 
   return extractedTexts;
 };

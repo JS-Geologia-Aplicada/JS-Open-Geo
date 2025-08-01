@@ -94,9 +94,14 @@ export const generateNAData = (documentData: PageTextData[], areas: Area[]) => {
     const na = getSingleValueFromEntry(entry, typeToAreaName, "water_level");
     const naNumber = parseNumber(na, -1);
 
-    const hasWater = naNumber && naNumber >= 0;
+    const hasWater = typeof naNumber === "number" && naNumber >= 0;
 
     if (!hasWater) {
+      console.log("Página: ", entry.pageNumber);
+      console.log("na: ", na);
+      console.log("naNumber: ", naNumber);
+      console.log("hasWater: ", hasWater);
+      console.log("---");
       naData.push({
         "HOLE ID": holeId,
         from: 0,
