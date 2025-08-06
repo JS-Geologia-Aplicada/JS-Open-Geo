@@ -5,6 +5,7 @@ import {
   LEAPFROG_TYPES,
   type Area,
   type PageTextData,
+  type PalitoData,
 } from "../types";
 import * as XLSX from "xlsx";
 import {
@@ -15,6 +16,13 @@ import {
 import JSZip from "jszip";
 import { useEffect, useState } from "react";
 import { Tooltip } from "bootstrap";
+import {
+  createTypeToAreaNameMap,
+  getMaxDepth,
+  getMultipleValuesFromEntry,
+  getSingleValueFromEntry,
+  parseNumber,
+} from "../utils/helpers";
 
 interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];
@@ -46,14 +54,124 @@ const ExtractedDataPanel = ({
     });
   }, [extractedTexts, advancedDownload]);
 
+  // const exportJSON = () => {
+  //   const dataStr = JSON.stringify(extractedTexts, null, 2);
+  //   const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+  //   const url = URL.createObjectURL(dataBlob);
+  //   const link = document.createElement("a");
+  //   link.href = url;
+  //   link.download = "dados-extraidos.json";
+  //   link.click();
+
+  //   URL.revokeObjectURL(url);
+  // };
+
   const exportJSON = () => {
-    const dataStr = JSON.stringify(extractedTexts, null, 2);
+    const typeToAreaName = createTypeToAreaNameMap(areas);
+    const structuredData: PalitoData[] = [];
+
+    extractedTexts.forEach((entry) => {
+      const palitoEntry: PalitoData = {
+        hole_id: getSingleValueFromEntry(entry, typeToAreaName, "hole_id"),
+        nspt: {
+          start_depth: 1,
+          interval: 1,
+          values: [],
+        },
+        depths: [],
+        geology: [],
+      };
+
+      // Max depth (opcional)
+      const maxDepth = getMaxDepth(entry, typeToAreaName);
+      if (maxDepth > 0) {
+        palitoEntry.max_depth = maxDepth;
+      }
+
+      // Z (cota)
+      const z = parseNumber(
+        getSingleValueFromEntry(entry, typeToAreaName, "z")
+      );
+      if (z !== -1) {
+        palitoEntry.z = z;
+      }
+
+      // Water level (opcional)
+      const waterLevel = getSingleValueFromEntry(
+        entry,
+        typeToAreaName,
+        "water_level"
+      );
+      if (waterLevel) {
+        const naNumber = parseNumber(waterLevel, -1);
+        if (naNumber >= 0) {
+          palitoEntry.water_level = naNumber;
+        }
+      }
+
+      // Depths (profundidades from/to)
+      const depths = getMultipleValuesFromEntry(
+        entry,
+        typeToAreaName,
+        "depth_from_to"
+      )
+        .map((d) => parseNumber(d))
+        .filter((d) => d !== -1)
+        .sort((a, b) => a - b);
+      if (depths.length > 0 && !depths.includes(0)) {
+        depths.unshift(0);
+      }
+      if (depths.length > 0) {
+        palitoEntry.depths = depths;
+      }
+
+      // Geology (descrições)
+      const geology = getMultipleValuesFromEntry(
+        entry,
+        typeToAreaName,
+        "geology"
+      );
+      if (geology.length > 0) {
+        palitoEntry.geology = geology;
+      }
+
+      // Interpretação (opcional)
+      const interp = getMultipleValuesFromEntry(
+        entry,
+        typeToAreaName,
+        "interp"
+      );
+      if (interp.length > 0) {
+        palitoEntry.interp = interp;
+      }
+
+      // NSPT
+      const nsptValues = getMultipleValuesFromEntry(
+        entry,
+        typeToAreaName,
+        "nspt"
+      );
+      if (nsptValues.length > 0) {
+        palitoEntry.nspt = {
+          start_depth: 1,
+          interval: 1,
+          values: nsptValues,
+        };
+      }
+
+      // Outros tipos de dados não mapeados
+      structuredData.push(palitoEntry);
+    });
+
+    // Download
+    const dataStr = JSON.stringify(structuredData, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
 
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "dados-extraidos.json";
+    link.download = "dados-estruturados.json";
     link.click();
 
     URL.revokeObjectURL(url);

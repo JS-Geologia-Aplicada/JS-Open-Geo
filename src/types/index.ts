@@ -172,3 +172,18 @@ export const EXPORT_REQUIREMENTS: Record<LeapfrogType, string[]> = {
   geology: ["hole_id", "geology", "depth_from_to"],
   interp: ["hole_id", "interp", "depth_from_to"],
 };
+
+export interface PalitoData {
+  hole_id: string;
+  max_depth?: number;
+  z?: number;
+  water_level?: number;
+  depths: number[];
+  geology: string[];
+  interp?: string[];
+  nspt: {
+    start_depth: number;
+    interval: number;
+    values: string[];
+  };
+}
