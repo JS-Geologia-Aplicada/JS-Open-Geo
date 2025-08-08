@@ -49,6 +49,7 @@ npm run dev
 - **SheetJS** - Exportação Excel
 - **@hello-pangea/dnd** - Drag and drop das áreas
 - **Lucide React** - Ícones
+- **React-dropzone** - Drag and drop de arquivos para upload
 
 ## Desenvolvimento
 
