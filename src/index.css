@@ -121,7 +121,7 @@
 }
 
 .areas-container {
-  max-height: 50vh;
+  max-height: 45vh;
   overflow-y: auto;
   padding-right: 4px;
 }

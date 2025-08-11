@@ -354,14 +354,13 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       // Exibindo o pdf
       <>
         <div
-          className="pdf-container"
+          className="pdf-container mt-2"
           style={{
             // minWidth: "600px",
-            height: "min(800px, 90vh)",
+            height: "min(800px, 80vh)",
             overflow: "hidden",
             position: "relative",
             border: "2px solid black",
-            marginTop: "30px",
             marginBottom: "15px",
           }}
         >

@@ -265,7 +265,15 @@ const isNextValidStringNumber = (
 
 export const parseNumber = (str: string, fallback: number = 0): number => {
   if (!str) return fallback;
-  const cleanStr = str.trim().replaceAll(".", "").replace(",", ".");
+
+  if (/^\d+\.\d+$/.test(str.trim())) {
+    return parseFloat(str.trim());
+  }
+
+  const numberMatch = str.match(/\d+(?:[.,]\d+)*/);
+  if (!numberMatch) return fallback;
+
+  const cleanStr = numberMatch[0].trim().replaceAll(".", "").replace(",", ".");
   const result = parseFloat(cleanStr);
   return isNaN(result) ? fallback : result;
 };
@@ -318,4 +326,37 @@ export const getMaxDepth = (
   }
 
   return 0;
+};
+
+/**
+ * Formata a exibição de números de página
+ * @param pageNumbers Array com os números de páginas
+ * @returns Une páginas sequenciais com hífen, e separa não sequenciais com vírgula
+ */
+export const formatPageNumbers = (pageNumbers: number[]) => {
+  if (!pageNumbers || pageNumbers.length === 0) return "-";
+
+  if (pageNumbers.length === 1) {
+    return `${pageNumbers[0]}`;
+  }
+
+  // Para múltiplas páginas, mostrar intervalos quando possível
+  const sorted = [...pageNumbers].sort((a, b) => a - b);
+
+  // Se são consecutivas, mostrar como intervalo
+  if (areConsecutive(sorted)) {
+    return `${sorted[0]}-${sorted[sorted.length - 1]}`;
+  }
+
+  // Senão, mostrar separadas
+  return `${sorted.join(", ")}`;
+};
+
+const areConsecutive = (numbers: number[]): boolean => {
+  for (let i = 1; i < numbers.length; i++) {
+    if (numbers[i] !== numbers[i - 1] + 1) {
+      return false;
+    }
+  }
+  return true;
 };

@@ -8,14 +8,13 @@ import {
 import AreaItem from "./AreaItem";
 import UploadFile from "./UploadFile";
 import PresetManager from "./PresetManager";
-import { Download, Folder, HelpCircle, Plus, X } from "lucide-react";
+import { Folder, HelpCircle, Plus, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import HelpModal from "./HelpModal";
 import { Modal, Tooltip } from "bootstrap";
 
 interface MenuProps {
   onFileSelect: (file: File) => void;
-  onExtractTexts: () => void;
   onStartAreaSelection: (areaID: string) => void;
   onDeleteArea: (areaId: string) => void;
   onRenameArea: (areaId: string, newName: string) => void;
@@ -32,7 +31,6 @@ interface MenuProps {
 
 function Menu({
   onFileSelect,
-  onExtractTexts,
   onStartAreaSelection,
   onDeleteArea,
   onRenameArea,
@@ -205,22 +203,6 @@ function Menu({
             </li>
           </ul>
         </div>
-        <button
-          data-bs-toggle="tooltip"
-          data-bs-target="tooltip"
-          data-bs-title="Extrair texto"
-          className="menu-btn menu-btn-cta"
-          disabled={
-            !(
-              areas.length > 0 &&
-              hasFile &&
-              areas.some((area) => area.coordinates)
-            )
-          }
-          onClick={onExtractTexts}
-        >
-          <Download size={24} />
-        </button>
       </div>
       {areas.length === 0 && (
         <p className="text-muted">Adicione uma área para começar!</p>

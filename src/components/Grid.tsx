@@ -23,6 +23,8 @@ import {
 import MenuCard from "./MenuCard";
 import { extractText } from "../utils/textExtractor";
 import ExtractedDataPanel from "./ExtractedDataPanel";
+import PageHeader from "./PageHeader";
+import ExtractButtons from "./ExtractButtons";
 
 function Grid() {
   // ref do pdfviewer para poder chamar função
@@ -30,7 +32,7 @@ function Grid() {
 
   // state da extração de texto
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
+  const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
 
   // state para áreas selecionadas
@@ -72,7 +74,7 @@ function Grid() {
   };
 
   // funções de extrair texto
-  const handleExtraxtTexts = async () => {
+  const handleExtraxtTexts = async (): Promise<PageTextData[]> => {
     const pdfDocument = pdfViewerRef.current?.getDocument();
     const hasRepeatAreas = areas.some((area) => area.repeatInPages);
     const holeId = areas.find((area) => area.dataType === "hole_id");
@@ -87,21 +89,40 @@ function Grid() {
           "\n" +
           "Deseja continuar mesmo assim?"
       );
-      if (!proceed) return;
+      if (!proceed) {
+        throw new Error("Extração cancelada pelo usuário");
+      }
     }
     if (!holeId && hasRepeatAreas) {
       const proceed = confirm(
         "Algumas áreas estão configuradas como 'Único' mas não há uma área de ID da Sondagem. " +
           "A função não vai funcionar corretamente. Deseja continuar mesmo assim?"
       );
-      if (!proceed) return;
+      if (!proceed) {
+        throw new Error("Extração cancelada pelo usuário");
+      }
     }
 
-    if (!pdfDocument) return;
+    if (!pdfDocument) {
+      throw new Error("PDF não carregado");
+    }
 
     const extracted = await extractText(areas, pdfDocument);
 
     setExtractedTexts(extracted);
+
+    return extracted;
+  };
+
+  const handlePreview = async () => {
+    try {
+      setIsExtracting(true);
+      await handleExtraxtTexts();
+    } catch (error) {
+      console.error("Erro na extração: ", error);
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   // função carregar presets
@@ -203,28 +224,42 @@ function Grid() {
       {isSelectionActive && <div className="selection-mode-overlay" />}
       <div className="container-fluid text-center px-xl-5">
         <div className="row justify-content-center">
+          <PageHeader />
+        </div>
+
+        <div className="row justify-content-center">
           <div
-            className="col-12 col-lg-6 col-xxl-3 col-xxxl-4"
+            className="col-12 col-lg-6 col-xxl-4 col-xxxl-4"
             style={{ maxWidth: "450px", minWidth: "300px" }}
           >
-            <MenuCard>
-              <Menu
-                onFileSelect={setSelectedFile}
-                onExtractTexts={handleExtraxtTexts}
-                onStartAreaSelection={startAreaSelection}
-                onClearArea={onClearArea}
-                onDeleteArea={onDeleteArea}
-                onRenameArea={onRenameArea}
-                onAddNewArea={onAddNewArea}
-                onLoadPreset={onLoadPreset}
-                onDragEnd={handleDragEnd}
-                onToggleMandatory={handleToggleMandatory}
-                onToggleRepeat={handleToggleRepeat}
-                onChangeAreaType={handleChangeAreaType}
-                areas={areas}
-                hasFile={!!selectedFile}
-              />
-            </MenuCard>
+            <MenuCard
+              areas={areas}
+              areasMenu={
+                <Menu
+                  onFileSelect={setSelectedFile}
+                  onStartAreaSelection={startAreaSelection}
+                  onClearArea={onClearArea}
+                  onDeleteArea={onDeleteArea}
+                  onRenameArea={onRenameArea}
+                  onAddNewArea={onAddNewArea}
+                  onLoadPreset={onLoadPreset}
+                  onDragEnd={handleDragEnd}
+                  onToggleMandatory={handleToggleMandatory}
+                  onToggleRepeat={handleToggleRepeat}
+                  onChangeAreaType={handleChangeAreaType}
+                  areas={areas}
+                  hasFile={!!selectedFile}
+                />
+              }
+              extractMenu={
+                <ExtractButtons
+                  onPreview={handlePreview}
+                  onExtractTexts={handleExtraxtTexts}
+                  areas={areas}
+                  hasFile={!!selectedFile}
+                />
+              }
+            ></MenuCard>
           </div>
           <div className="col-12 col-lg-6 col-xxl-5 col-xxxl-4">
             <PdfViewer
@@ -236,8 +271,12 @@ function Grid() {
               areas={areas}
             />
           </div>
-          <div className="col-12 col-lg-6 col-xxl-4 col-xxxl-4">
-            <ExtractedDataPanel extractedTexts={extractedTexts} areas={areas} />
+          <div className="col-12 col-lg-6 col-xxl-3 col-xxxl-4">
+            <ExtractedDataPanel
+              extractedTexts={extractedTexts}
+              areas={areas}
+              isExtracting={isExtracting}
+            />
           </div>
         </div>
       </div>

@@ -1,24 +1,24 @@
 import React from "react";
+import type { Area } from "../types";
 
 interface MenuCardProps {
-  children: React.ReactNode;
+  areas: Area[];
+  areasMenu: React.ReactNode;
+  extractMenu: React.ReactNode;
 }
 
-const MenuCard: React.FC<MenuCardProps> = ({ children }) => {
+const MenuCard: React.FC<MenuCardProps> = ({
+  areasMenu,
+  extractMenu,
+  areas,
+}) => {
   return (
-    <div className="card mt-5">
+    <div className="card mt-2">
       <div className="card-header">
-        <img
-          src="js_logo_horizontal.png"
-          alt="JS Geologia Aplicada"
-          style={{ maxWidth: "200px" }}
-        />
-      </div>
-      <div className="card-body">
         <h4 className="card-title">Extrator de dados de PDF</h4>
-        <p className="card-text">Selecione áreas, extraia dados</p>
-        {children}
       </div>
+      <div className="card-body">{areasMenu}</div>
+      {areas.length > 0 && <div className="card-footer">{extractMenu}</div>}
     </div>
   );
 };
