@@ -25,6 +25,7 @@ import { extractText } from "../utils/textExtractor";
 import ExtractedDataPanel from "./ExtractedDataPanel";
 import PageHeader from "./PageHeader";
 import ExtractButtons from "./ExtractButtons";
+import { extractTextOCR } from "../utils/ocrExtractor";
 
 function Grid() {
   // ref do pdfviewer para poder chamar função
@@ -34,6 +35,9 @@ function Grid() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
+
+  // modo da extração de texto
+  const [extractionMode, setExtractionMode] = useState<"text" | "ocr">("text");
 
   // state para áreas selecionadas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -107,7 +111,10 @@ function Grid() {
       throw new Error("PDF não carregado");
     }
 
-    const extracted = await extractText(areas, pdfDocument);
+    const extracted =
+      extractionMode === "text"
+        ? await extractText(areas, pdfDocument)
+        : await extractTextOCR(areas, pdfDocument);
 
     setExtractedTexts(extracted);
 
@@ -249,6 +256,8 @@ function Grid() {
                   onChangeAreaType={handleChangeAreaType}
                   areas={areas}
                   hasFile={!!selectedFile}
+                  extractionMode={extractionMode}
+                  setExtractionMode={setExtractionMode}
                 />
               }
               extractMenu={

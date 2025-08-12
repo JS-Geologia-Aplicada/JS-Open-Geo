@@ -1,10 +1,11 @@
 import type { TextItem } from "react-pdf";
-import type { Area, DataType, HorizontalLine, PageTextData } from "../types";
+import type { Area, HorizontalLine, PageTextData } from "../types";
 import {
   convertCoordinates,
   filterTextContent,
+  formatDataByType,
+  isUniqueValueType,
   nsptToString,
-  parseNumber,
   textItemToString,
 } from "./helpers";
 
@@ -242,61 +243,4 @@ const findHorizontalLines = (operatorList: any): HorizontalLine[] => {
   }
 
   return horizontalLines;
-};
-
-const formatDataByType = (texts: string[], dataType?: DataType): string[] => {
-  // Se não há textos, retorna array vazia
-  if (!texts || texts.length === 0) {
-    return [];
-  }
-
-  // Remove strings vazias
-  const cleanTexts = texts.filter((text) => text.trim() !== "");
-
-  if (cleanTexts.length === 0) {
-    return [];
-  }
-
-  // Tipos que devem retornar valor único (mas como array de 1 item)
-  if (isUniqueValueType(dataType)) {
-    const joinedText = cleanTexts.join(" ").trim();
-
-    // Tratamento especial para water_level
-    if (dataType === "water_level") {
-      const numericValue = parseNumber(joinedText, -1);
-      return [numericValue === -1 ? "Seco" : numericValue.toString()];
-    }
-
-    // Para outros tipos numéricos, aplica parseNumber e retorna como array de 1 item
-    if (isNumericType(dataType)) {
-      const numericValue = parseNumber(joinedText);
-      return [numericValue.toString()];
-    }
-
-    return [joinedText];
-  }
-
-  // Tipos que devem retornar array completa
-  return cleanTexts;
-};
-
-const isUniqueValueType = (dataType?: DataType): boolean => {
-  const uniqueValueTypes: DataType[] = [
-    "hole_id",
-    "x",
-    "y",
-    "z",
-    "depth",
-    "date",
-    "campaign",
-    "water_level",
-  ];
-
-  return dataType ? uniqueValueTypes.includes(dataType) : false;
-};
-
-const isNumericType = (dataType?: DataType): boolean => {
-  const numericTypes: DataType[] = ["x", "y", "z", "depth"];
-
-  return dataType ? numericTypes.includes(dataType) : false;
 };
