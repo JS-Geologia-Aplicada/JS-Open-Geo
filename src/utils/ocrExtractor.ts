@@ -1,4 +1,4 @@
-import Tesseract from "tesseract.js";
+import Tesseract, { createWorker } from "tesseract.js";
 import type { Area, PageTextData, SelectionArea } from "../types";
 import { convertCoordinates, formatDataByType } from "./helpers";
 
@@ -9,9 +9,10 @@ export const extractTextOCR = async (
   console.log("chamou a função de extrair OCR");
   const extractedTexts: PageTextData[] = [];
   const numPages = pdfDocument.numPages;
+  const worker = await createWorker("por");
+  const startTotalTime = performance.now();
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    console.log(`Processando página ${pageNum}/${numPages}...`);
     const startTime = performance.now();
     try {
       const page = await pdfDocument.getPage(pageNum);
@@ -45,27 +46,48 @@ export const extractTextOCR = async (
           height: imageCoords.height,
         });
 
+        // const rectangle = {
+        //   left: imageCoords.x,
+        //   top: viewport.height - imageCoords.y - imageCoords.height,
+        //   width: imageCoords.width,
+        //   height: imageCoords.height,
+        // };
+
         // Faz OCR da área recortada
-        const ocrResults = await ocrFromCanvas(croppedCanvas);
+        const ocrResults = await ocrFromCanvas(croppedCanvas, worker);
 
         // Aplica formatação por tipo (mesmo sistema atual)
-        pageData[area.name] = formatDataByType(ocrResults, area.dataType);
+
+        const textArr =
+          area.dataType === "geology"
+            ? joinMultilineTexts(ocrResults)
+            : ocrResults.map((result) => result.text.trim());
+
+        pageData[area.name] = formatDataByType(textArr, area.dataType);
       }
 
       extractedTexts.push(pageData);
 
       const endTime = performance.now();
       console.log(
-        `  ✅ Página ${pageNum} processada em ${(
+        `  Página ${pageNum} processada em ${(
           (endTime - startTime) /
           1000
         ).toFixed(1)}s`
       );
-      console.log("Dados da página: ", pageData);
     } catch (error) {
       console.error(`Erro ao processar página ${pageNum}:`, error);
     }
   }
+  await worker.terminate();
+  const endTotalTime = performance.now();
+  const totalTime = (endTotalTime - startTotalTime) / 1000;
+  console.log(
+    `  ${numPages} páginas processadas em ${totalTime.toFixed(
+      1
+    )}s, em uma média de ${(totalTime / numPages).toFixed(2)}s por página `
+  );
+  console.log(extractedTexts);
   return extractedTexts;
 };
 
@@ -100,9 +122,38 @@ const cropCanvas = (canvas: HTMLCanvasElement, area: SelectionArea) => {
   return croppedCanvas;
 };
 
-const ocrFromCanvas = async (canvas: HTMLCanvasElement): Promise<string[]> => {
-  const {
-    data: { text },
-  } = await Tesseract.recognize(canvas, "por");
-  return text.split("\n").filter((line) => line.trim() !== "");
+const ocrFromCanvas = async (
+  canvas: HTMLCanvasElement,
+  worker: Tesseract.Worker
+): Promise<Tesseract.Line[]> => {
+  const { data } = await worker.recognize(
+    canvas,
+    {},
+    {
+      blocks: true,
+      text: true,
+    }
+  );
+  const lines =
+    data.blocks?.flatMap((b) => b.paragraphs)?.flatMap((p) => p.lines) ?? [];
+
+  return lines;
+};
+
+const joinMultilineTexts = (lines: Tesseract.Line[]) => {
+  const textBlocks: string[] = [];
+  const currentBlock: string[] = [];
+  lines.forEach((line, index) => {
+    const currentRowHeight = (line.rowAttributes as any).rowHeight || 20;
+    currentBlock.push(line.text.trim());
+
+    if (
+      index === lines.length - 1 ||
+      line.baseline.y0 + currentRowHeight <= lines[index + 1].baseline.y0
+    ) {
+      textBlocks.push(currentBlock.join(" "));
+      currentBlock.length = 0;
+    }
+  });
+  return textBlocks;
 };

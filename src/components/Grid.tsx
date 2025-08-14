@@ -256,7 +256,6 @@ function Grid() {
                   onChangeAreaType={handleChangeAreaType}
                   areas={areas}
                   hasFile={!!selectedFile}
-                  extractionMode={extractionMode}
                   setExtractionMode={setExtractionMode}
                 />
               }

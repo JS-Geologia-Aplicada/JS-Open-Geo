@@ -27,7 +27,6 @@ interface MenuProps {
   onChangeAreaType: (areaId: string, newType: DataType) => void;
   areas: Area[];
   hasFile: boolean;
-  extractionMode: "text" | "ocr";
   setExtractionMode: (mode: "text" | "ocr") => void;
 }
 
@@ -45,7 +44,6 @@ function Menu({
   onChangeAreaType,
   areas,
   hasFile,
-  extractionMode,
   setExtractionMode,
 }: MenuProps) {
   // Inicializando os tooltips
@@ -111,20 +109,6 @@ function Menu({
   return (
     <>
       <UploadFile onFileSelect={onFileSelect} />
-      <div
-        className="form-check form-switch"
-        // data-bs-toggle="tooltip"
-        // data-bs-placement="top"
-        // data-bs-title="Pular páginas sem texto nesta área"
-      >
-        <input
-          className="form-check-input"
-          type="checkbox"
-          checked={extractionMode === "ocr"}
-          onChange={(e) => setExtractionMode(e.target.checked ? "ocr" : "text")}
-        />
-        <label className="form-check-label small">OCR</label>
-      </div>
 
       <div className="modal fade" id="helpModal" tabIndex={-1}>
         <HelpModal
@@ -133,6 +117,19 @@ function Menu({
         />
       </div>
       <div className="d-flex justify-content-end gap-2 my-3">
+        <select
+          className="form-select form-select-sm"
+          defaultValue={"text"}
+          onChange={(e) =>
+            setExtractionMode(e.target.value === "ocr" ? "ocr" : "text")
+          }
+        >
+          <option value="text">Extração de texto</option>
+          <option value="ocr">Extração OCR (em implementação)</option>
+          <option value="text-ocr" disabled>
+            Escolha por área
+          </option>
+        </select>
         {areas.length > 0 && (
           <button
             data-bs-toggle="tooltip"
