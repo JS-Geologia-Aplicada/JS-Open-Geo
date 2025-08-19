@@ -115,3 +115,29 @@ const getUnusedDefaultColor = (areas: Area[]): string => {
     DEFAULT_COLORS.find((color) => !usedColors.includes(color)) ?? "#000000"
   );
 };
+
+export const generateAreasFingerprint = (
+  areas: Area[],
+  file: File | null
+): string => {
+  const areasData = areas.map((area) => ({
+    id: area.id,
+    name: area.name,
+    dataType: area.dataType,
+    coordinates: area.coordinates,
+    isMandatory: area.isMandatory,
+    repeatInPages: area.repeatInPages,
+    ocr: area.ocr,
+  }));
+
+  const fileData = file
+    ? {
+        name: file.name,
+        size: file.size,
+        lastModified: file.lastModified,
+        type: file.type,
+      }
+    : null;
+
+  return JSON.stringify({ areas: areasData, file: fileData });
+};

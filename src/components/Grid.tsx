@@ -16,6 +16,7 @@ import {
   addNewArea,
   clearArea,
   deleteArea,
+  generateAreasFingerprint,
   getUniqueName,
   renameArea,
   shouldRename,
@@ -78,8 +79,29 @@ function Grid() {
     setActiveAreaId(null);
   };
 
+  const [lastExtractedFingerprint, setLastExtractedFingerprint] =
+    useState<string>("");
+  const [cachedExtractedTexts, setCachedExtractedTexts] = useState<
+    PageTextData[]
+  >([]);
+
+  // Função para verificar se precisa extrair novamente
+  const needsReExtraction = (): boolean => {
+    const currentFingerprint = generateAreasFingerprint(areas, selectedFile);
+    const needs =
+      currentFingerprint !== lastExtractedFingerprint ||
+      cachedExtractedTexts.length === 0;
+    return needs;
+  };
+
   // funções de extrair texto
   const handleExtraxtTexts = async (): Promise<PageTextData[]> => {
+    console.log(needsReExtraction());
+    if (!needsReExtraction()) {
+      console.log("returning cached");
+      return cachedExtractedTexts;
+    }
+
     const pdfDocument = pdfViewerRef.current?.getDocument();
     const hasRepeatAreas = areas.some((area) => area.repeatInPages);
     const holeId = areas.find((area) => area.dataType === "hole_id");
@@ -115,6 +137,8 @@ function Grid() {
     const extracted = await extractText(areas, pdfDocument);
 
     setExtractedTexts(extracted);
+    setCachedExtractedTexts(extracted);
+    setLastExtractedFingerprint(generateAreasFingerprint(areas, selectedFile));
 
     return extracted;
   };
