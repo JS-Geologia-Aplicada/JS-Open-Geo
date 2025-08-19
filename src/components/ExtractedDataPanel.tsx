@@ -5,11 +5,13 @@ interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];
   areas: Area[];
   isExtracting: boolean;
+  fileName: string | undefined;
 }
 
 const ExtractedDataPanel = ({
   extractedTexts,
   isExtracting,
+  fileName,
 }: ExtractedDataPanelProps) => {
   const areaNames =
     extractedTexts.length > 0
@@ -20,7 +22,7 @@ const ExtractedDataPanel = ({
       {isExtracting ? (
         <>
           <span className="spinner-border spinner-border-sm me-1" />
-          Extraindo...
+          {fileName ? `Extraindo dados do arquivo ${fileName}` : "Extraindo..."}
         </>
       ) : !extractedTexts || extractedTexts.length <= 0 ? (
         <div>

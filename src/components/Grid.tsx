@@ -8,6 +8,7 @@ import {
   REPEATING_TYPES,
   type Area,
   type DataType,
+  type ExtractionType,
   type PageTextData,
   type SelectionArea,
 } from "../types";
@@ -25,7 +26,6 @@ import { extractText } from "../utils/textExtractor";
 import ExtractedDataPanel from "./ExtractedDataPanel";
 import PageHeader from "./PageHeader";
 import ExtractButtons from "./ExtractButtons";
-import { extractTextOCR } from "../utils/ocrExtractor";
 
 function Grid() {
   // ref do pdfviewer para poder chamar função
@@ -37,7 +37,7 @@ function Grid() {
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
 
   // modo da extração de texto
-  const [extractionMode, setExtractionMode] = useState<"text" | "ocr">("text");
+  const [extractionMode, setExtractionMode] = useState<ExtractionType>("text");
 
   // state para áreas selecionadas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -50,7 +50,8 @@ function Grid() {
       alert("Limite de 15 áreas atingido");
       return;
     }
-    setAreas((prev) => addNewArea(prev, type));
+    const isOCR = extractionMode === "ocr";
+    setAreas((prev) => addNewArea(prev, isOCR, type));
   };
 
   // funções de manipulação das áreas
@@ -111,10 +112,7 @@ function Grid() {
       throw new Error("PDF não carregado");
     }
 
-    const extracted =
-      extractionMode === "text"
-        ? await extractText(areas, pdfDocument)
-        : await extractTextOCR(areas, pdfDocument);
+    const extracted = await extractText(areas, pdfDocument);
 
     setExtractedTexts(extracted);
 
@@ -202,6 +200,20 @@ function Grid() {
     );
   };
 
+  const handleToggleAreaOCR = (areaId: string, ocr: boolean) => {
+    setAreas((prev) =>
+      prev.map((area) => (area.id === areaId ? { ...area, ocr: ocr } : area))
+    );
+  };
+
+  const handleChangeExtractionMode = (mode: ExtractionType) => {
+    setExtractionMode(mode);
+    if (mode !== "both") {
+      const isOCR = mode === "ocr";
+      setAreas((prev) => prev.map((area) => ({ ...area, ocr: isOCR })));
+    }
+  };
+
   const handleChangeAreaType = (areaId: string, newType: DataType) => {
     const repeat = REPEATING_TYPES.includes(newType);
     const mandatory = MANDATORY_TYPES.includes(newType);
@@ -254,9 +266,11 @@ function Grid() {
                   onToggleMandatory={handleToggleMandatory}
                   onToggleRepeat={handleToggleRepeat}
                   onChangeAreaType={handleChangeAreaType}
+                  onToggleAreaOCR={handleToggleAreaOCR}
                   areas={areas}
                   hasFile={!!selectedFile}
-                  setExtractionMode={setExtractionMode}
+                  extractionMode={extractionMode}
+                  onChangeExtractionMode={handleChangeExtractionMode}
                 />
               }
               extractMenu={
@@ -284,6 +298,7 @@ function Grid() {
               extractedTexts={extractedTexts}
               areas={areas}
               isExtracting={isExtracting}
+              fileName={selectedFile?.name || undefined}
             />
           </div>
         </div>

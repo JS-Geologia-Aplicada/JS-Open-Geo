@@ -4,6 +4,7 @@ import {
   EASY_ADD_TYPES,
   type Area,
   type DataType,
+  type ExtractionType,
 } from "../types";
 import AreaItem from "./AreaItem";
 import UploadFile from "./UploadFile";
@@ -25,9 +26,11 @@ interface MenuProps {
   onToggleMandatory: (areaId: string, mandatory: boolean) => void;
   onToggleRepeat: (areaId: string, repeat: boolean) => void;
   onChangeAreaType: (areaId: string, newType: DataType) => void;
+  onToggleAreaOCR: (areaId: string, ocr: boolean) => void;
   areas: Area[];
   hasFile: boolean;
-  setExtractionMode: (mode: "text" | "ocr") => void;
+  extractionMode: ExtractionType;
+  onChangeExtractionMode: (mode: ExtractionType) => void;
 }
 
 function Menu({
@@ -42,9 +45,11 @@ function Menu({
   onToggleMandatory,
   onToggleRepeat,
   onChangeAreaType,
+  onToggleAreaOCR,
   areas,
   hasFile,
-  setExtractionMode,
+  extractionMode,
+  onChangeExtractionMode: setExtractionMode,
 }: MenuProps) {
   // Inicializando os tooltips
   useEffect(() => {
@@ -120,15 +125,11 @@ function Menu({
         <select
           className="form-select form-select-sm"
           defaultValue={"text"}
-          onChange={(e) =>
-            setExtractionMode(e.target.value === "ocr" ? "ocr" : "text")
-          }
+          onChange={(e) => setExtractionMode(e.target.value as ExtractionType)}
         >
           <option value="text">Extração de texto</option>
           <option value="ocr">Extração OCR (em implementação)</option>
-          <option value="text-ocr" disabled>
-            Escolha por área
-          </option>
+          <option value="both">Escolha por área</option>
         </select>
         {areas.length > 0 && (
           <button
@@ -245,6 +246,7 @@ function Menu({
                         area={area}
                         areas={areas}
                         hasFile={hasFile}
+                        extractionMode={extractionMode}
                         onStartSelection={onStartAreaSelection}
                         onClearArea={onClearArea}
                         onDeleteArea={onDeleteArea}
@@ -252,6 +254,7 @@ function Menu({
                         onToggleMandatory={onToggleMandatory}
                         onToggleRepeat={onToggleRepeat}
                         onChangeAreaType={onChangeAreaType}
+                        onToggleAreaOCR={onToggleAreaOCR}
                       />
                     </div>
                   )}

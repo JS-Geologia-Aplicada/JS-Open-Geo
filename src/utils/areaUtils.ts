@@ -7,7 +7,11 @@ import {
   type SelectionArea,
 } from "../types";
 
-export const addNewArea = (areas: Area[], type?: DataType): Area[] => {
+export const addNewArea = (
+  areas: Area[],
+  ocr: boolean,
+  type?: DataType
+): Area[] => {
   const newId = `area-${Date.now()}-${Math.random()
     .toString(36)
     .substring(2, 9)}`;
@@ -22,6 +26,7 @@ export const addNewArea = (areas: Area[], type?: DataType): Area[] => {
     isMandatory: type ? MANDATORY_TYPES.includes(type) : false,
     repeatInPages: type ? REPEATING_TYPES.includes(type) : false,
     dataType: type,
+    ocr: ocr,
   };
   return [...areas, newArea];
 };
