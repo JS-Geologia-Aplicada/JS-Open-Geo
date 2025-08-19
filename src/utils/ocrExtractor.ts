@@ -1,5 +1,5 @@
 import Tesseract, { createWorker } from "tesseract.js";
-import type { Area, PageTextData, SelectionArea } from "../types";
+import type { Area, DataType, PageTextData, SelectionArea } from "../types";
 import { convertCoordinates, formatDataByType } from "./helpers";
 
 //Função antiga para extrair só OCR, está sendo transferida para o textExtractor
@@ -142,29 +142,48 @@ export const ocrFromCanvas = async (
 };
 
 const joinMultilineTexts = (lines: Tesseract.Line[]) => {
+  const rowHeightMultiplier = 1.3;
   const textBlocks: string[] = [];
   const currentBlock: string[] = [];
   lines.forEach((line, index) => {
     const currentRowHeight = (line.rowAttributes as any).rowHeight || 20;
+    const nextLine = lines[index + 1];
     currentBlock.push(line.text.trim());
 
-    if (
+    const shouldBreak =
       index === lines.length - 1 ||
-      line.baseline.y0 + currentRowHeight <= lines[index + 1].baseline.y0
-    ) {
+      line.baseline.y0 + currentRowHeight * rowHeightMultiplier <=
+        nextLine?.baseline.y0;
+
+    console.log(
+      `Linha ${index}: "${line.text.trim()}" | y0: ${
+        line.baseline.y0
+      } | altura: ${currentRowHeight} | quebra: ${shouldBreak}`
+    );
+
+    if (shouldBreak) {
       textBlocks.push(currentBlock.join(" "));
+      console.log("📦 Bloco criado:", currentBlock.join(" "));
       currentBlock.length = 0;
     }
   });
+  console.log("📋 Resultado final:", textBlocks);
   return textBlocks;
 };
 
-export const processOCRLines = (lines: Tesseract.Line[], dataType?: string) => {
+export const processOCRLines = (
+  lines: Tesseract.Line[],
+  dataType?: DataType
+) => {
   // Usar o dataType para implementar processamentos de acordo com o tipo de dado
-  const texts: string[] = [];
-  lines.forEach((line) => {
-    texts.push(line.text.trim());
-  });
+  let texts: string[] = [];
+  if (dataType === "geology") {
+    texts = joinMultilineTexts(lines);
+  } else {
+    lines.forEach((line) => {
+      texts.push(line.text.trim());
+    });
+  }
   return texts;
 };
 

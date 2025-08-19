@@ -192,7 +192,7 @@ export const extractText = async (
                     worker,
                     pageCanvas
                   );
-                  textArr = processOCRLines(dataLines);
+                  textArr = processOCRLines(dataLines, area.dataType);
                 } else {
                   const pageCoordinates = convertCoordinates(
                     area.coordinates,
@@ -258,7 +258,7 @@ export const extractText = async (
                     worker,
                     pageCanvas
                   );
-                  textArr = processOCRLines(dataLines);
+                  textArr = processOCRLines(dataLines, area.dataType);
                 } else {
                   const pageCoordinates = convertCoordinates(
                     area.coordinates,
