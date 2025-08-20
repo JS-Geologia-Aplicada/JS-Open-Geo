@@ -190,3 +190,17 @@ export interface PalitoData {
     values: string[];
   };
 }
+
+export interface ExtractionProgress {
+  stage:
+    | "starting"
+    | "validating"
+    | "hole_ids"
+    | "repeat_areas"
+    | "non_repeat_areas"
+    | "complete";
+  currentArea?: string;
+  currentPage?: number;
+  totalPages?: number;
+  message: string;
+}

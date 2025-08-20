@@ -4,6 +4,7 @@ import {
   LEAPFROG_LABELS,
   LEAPFROG_TYPES,
   type Area,
+  type ExtractionProgress,
   type PageTextData,
 } from "../types";
 import {
@@ -18,24 +19,36 @@ import {
 import { validateExportRequirements } from "../utils/leapfrogExport";
 import { Tooltip } from "bootstrap";
 import { Download, Eye } from "lucide-react";
+import { millisecondsToTimerFormat } from "../utils/helpers";
 
 interface ExtractButtonProps {
   areas: Area[];
   hasFile: boolean;
+  isExtracting: boolean;
+  extractionProgress: ExtractionProgress | null;
+  extractionStartTime: number;
+  fileName: string | undefined;
   onPreview: () => void;
   onExtractTexts: () => Promise<PageTextData[]>;
+  onCancelExtraction: () => void;
 }
 
 const ExtractButtons: React.FC<ExtractButtonProps> = ({
-  onPreview,
   areas,
   hasFile,
+  isExtracting,
+  extractionProgress,
+  extractionStartTime,
+  fileName,
+  onPreview,
   onExtractTexts,
+  onCancelExtraction,
 }) => {
   const [validationData, setValidationData] = useState<any>(
     downloadAllValidation(areas)
   );
   const [advancedDownload, setAdvancedDownload] = useState<boolean>(false);
+  const [elapsedTimeString, setElapsedTimeString] = useState<string>("");
   useEffect(() => {
     setValidationData(downloadAllValidation(areas));
     const tooltipElements = document.querySelectorAll(
@@ -93,7 +106,45 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
     }
   };
 
-  return (
+  // Timer para atualizar tempo a cada 100ms
+  useEffect(() => {
+    if (!isExtracting) {
+      setElapsedTimeString("");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - extractionStartTime;
+      setElapsedTimeString(millisecondsToTimerFormat(elapsed, 10));
+    }, 100); // Atualiza a cada 100ms
+
+    return () => clearInterval(interval);
+  }, [isExtracting, extractionStartTime]);
+
+  return isExtracting ? (
+    <div className="d-flex align-items-center justify-content-between p-1">
+      <div className="d-flex flex-column text-start">
+        {fileName && (
+          <small className="text-muted">
+            Extraindo dados do arquivo <strong>{fileName}</strong>
+          </small>
+        )}
+        <small className="text-muted">
+          {extractionProgress && extractionProgress.message}
+        </small>
+        <small className="text-secondary">
+          Tempo decorrido: <strong>{elapsedTimeString}</strong>
+        </small>
+      </div>
+
+      <button
+        className="btn btn-outline-danger btn-sm ms-3"
+        onClick={onCancelExtraction}
+      >
+        Cancelar
+      </button>
+    </div>
+  ) : (
     <div className="d-flex align-items-start gap-3">
       {/* Botão de pré-visualizar */}
       <div>

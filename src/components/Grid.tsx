@@ -8,6 +8,7 @@ import {
   REPEATING_TYPES,
   type Area,
   type DataType,
+  type ExtractionProgress,
   type ExtractionType,
   type PageTextData,
   type SelectionArea,
@@ -35,6 +36,11 @@ function Grid() {
   // state da extração de texto
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
+  const [extractionProgress, setExtractionProgress] =
+    useState<ExtractionProgress | null>(null);
+  const [extractionStartTime, setExtractionStartTime] = useState<number>(0);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
 
   // modo da extração de texto
@@ -98,9 +104,13 @@ function Grid() {
   const handleExtraxtTexts = async (): Promise<PageTextData[]> => {
     console.log(needsReExtraction());
     if (!needsReExtraction()) {
-      console.log("returning cached");
       return cachedExtractedTexts;
     }
+
+    const controller = new AbortController();
+    setAbortController(controller);
+    setIsExtracting(true);
+    setExtractionStartTime(Date.now());
 
     const pdfDocument = pdfViewerRef.current?.getDocument();
     const hasRepeatAreas = areas.some((area) => area.repeatInPages);
@@ -134,7 +144,12 @@ function Grid() {
       throw new Error("PDF não carregado");
     }
 
-    const extracted = await extractText(areas, pdfDocument);
+    const extracted = await extractText(
+      areas,
+      pdfDocument,
+      controller.signal,
+      setExtractionProgress
+    );
 
     setExtractedTexts(extracted);
     setCachedExtractedTexts(extracted);
@@ -262,6 +277,12 @@ function Grid() {
     );
   };
 
+  const handleCancelExtraction = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+  };
+
   return (
     <>
       {isSelectionActive && <div className="selection-mode-overlay" />}
@@ -301,8 +322,13 @@ function Grid() {
                 <ExtractButtons
                   onPreview={handlePreview}
                   onExtractTexts={handleExtraxtTexts}
+                  onCancelExtraction={handleCancelExtraction}
                   areas={areas}
                   hasFile={!!selectedFile}
+                  isExtracting={isExtracting}
+                  extractionProgress={extractionProgress}
+                  extractionStartTime={extractionStartTime}
+                  fileName={selectedFile?.name}
                 />
               }
             ></MenuCard>

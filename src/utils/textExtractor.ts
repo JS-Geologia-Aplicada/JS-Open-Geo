@@ -1,6 +1,11 @@
 import { createWorker } from "tesseract.js";
 import type { TextItem } from "react-pdf";
-import type { Area, HorizontalLine, PageTextData } from "../types";
+import type {
+  Area,
+  ExtractionProgress,
+  HorizontalLine,
+  PageTextData,
+} from "../types";
 import {
   convertCoordinates,
   filterTextContent,
@@ -17,8 +22,20 @@ import {
 
 export const extractText = async (
   areas: Area[],
-  pdfDocument: any
+  pdfDocument: any,
+  abortSignal?: AbortSignal,
+  onProgress?: (progress: ExtractionProgress) => void
 ): Promise<PageTextData[]> => {
+  const checkAborted = () => {
+    if (abortSignal?.aborted) {
+      throw new Error("Extração cancelada pelo usuário");
+    }
+  };
+  onProgress?.({
+    stage: "starting",
+    message: "Iniciando extração...",
+  });
+
   const extractedTexts: PageTextData[] = [];
   const mandatoryAreas = areas.filter(
     (area) => area.isMandatory && area.coordinates
@@ -32,12 +49,15 @@ export const extractText = async (
   const needsOCR = areas.some((area) => area.ocr);
   const worker = needsOCR ? await createWorker("por") : null;
 
+  checkAborted();
+
   try {
     // Cache de canvas por página (apenas se precisar de OCR)
     let pageCanvasCache: Map<number, HTMLCanvasElement> | null = null;
     let getPageCanvas:
       | ((page: any, pageNum: number) => Promise<HTMLCanvasElement>)
       | null = null;
+
     if (needsOCR) {
       pageCanvasCache = new Map<number, HTMLCanvasElement>();
 
@@ -55,6 +75,8 @@ export const extractText = async (
         return canvas;
       };
     }
+
+    checkAborted();
 
     const hasRequiredData = async (pageNum: number) => {
       if (mandatoryAreas.length === 0) return true; // Se não tem obrigatórios, todas as páginas servem
@@ -93,6 +115,11 @@ export const extractText = async (
 
     const validPages: number[] = [];
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      checkAborted();
+      onProgress?.({
+        stage: "validating",
+        message: `Verificando páginas obrigatórias ${pageNum}/${numPages}`,
+      });
       if (await hasRequiredData(pageNum)) {
         validPages.push(pageNum);
       }
@@ -106,7 +133,14 @@ export const extractText = async (
       const uniqueHoleIds: string[] = [];
 
       // Extraindo os hole_id e identificando as páginas nos quais se repetem
+      let holePageIndex = 0;
       for (const pageNum of validPages) {
+        checkAborted();
+        holePageIndex++;
+        onProgress?.({
+          stage: "hole_ids",
+          message: `Extraindo IDs de sondagem da página ${holePageIndex}/${validPages.length}`,
+        });
         const page = await pdfDocument.getPage(pageNum);
         let holeIdText = "";
 
@@ -168,7 +202,14 @@ export const extractText = async (
       // Adicionando textos que repetem entre páginas
       if (repeatDataAreas.length > 0) {
         // Loop para localizar textos em cada primeira página de sondagem
+        let repeatEntryIndex = 0;
         for (const entry of extractedTexts) {
+          checkAborted();
+          repeatEntryIndex++;
+          onProgress?.({
+            stage: "repeat_areas",
+            message: `Processando áreas únicas da sondagem ${repeatEntryIndex}/${extractedTexts.length}`,
+          });
           const firstPage = entry.pageNumber[0];
           const page = await pdfDocument.getPage(firstPage);
           const operatorList = await page.getOperatorList();
@@ -234,8 +275,17 @@ export const extractText = async (
     // Processando dados que não repetem em páginas diferentes da mesma sondagem
     // A mesma lógica é aplicada para quando não há hole_id
     if (nonRepeatDataAreas.length > 0) {
+      let nonRepeatEntryIndex = 0;
       for (const textEntry of extractedTexts) {
+        nonRepeatEntryIndex++;
+        let entryPageIndex = 0;
         for (const entryPage of textEntry.pageNumber) {
+          checkAborted();
+          entryPageIndex++;
+          onProgress?.({
+            stage: "non_repeat_areas",
+            message: `Processando áreas não únicas da sondagem ${nonRepeatEntryIndex}/${extractedTexts.length}, página ${entryPageIndex}/${textEntry.pageNumber.length} ...`,
+          });
           const page = await pdfDocument.getPage(entryPage);
           const operatorList = await page.getOperatorList();
           const pageTexts = await page.getTextContent();
@@ -319,6 +369,10 @@ export const extractText = async (
         }
       }
     }
+    onProgress?.({
+      stage: "complete",
+      message: "Finalizando extração...",
+    });
     return extractedTexts;
   } finally {
     if (worker) await worker.terminate();
