@@ -1,4 +1,4 @@
-# Extrator de Dados de PDF
+# JS Open Geo
 
 Uma aplicação web para extrair texto de áreas específicas em documentos PDF, permitindo selecionar uma região em qualquer página e aplicar a mesma área em todas as páginas do documento.
 
