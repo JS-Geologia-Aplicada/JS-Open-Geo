@@ -218,6 +218,7 @@ function UploadFile({ onFileSelect }: UploadFileProps) {
                   wordWrap: "break-word",
                   overflowWrap: "break-word",
                   maxWidth: "100%",
+                  fontSize: 14,
                 }}
               >
                 <strong>{uploadedFile.name}</strong>

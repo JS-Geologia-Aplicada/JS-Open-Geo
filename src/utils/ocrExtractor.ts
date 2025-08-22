@@ -1,7 +1,8 @@
 import Tesseract, { createWorker } from "tesseract.js";
-import type { Area, PageTextData, SelectionArea } from "../types";
+import type { Area, DataType, PageTextData, SelectionArea } from "../types";
 import { convertCoordinates, formatDataByType } from "./helpers";
 
+//Função antiga para extrair só OCR, está sendo transferida para o textExtractor
 export const extractTextOCR = async (
   areas: Area[],
   pdfDocument: any
@@ -91,7 +92,7 @@ export const extractTextOCR = async (
   return extractedTexts;
 };
 
-const pdfPageToCanvas = async (page: any, viewport: any) => {
+export const pdfPageToCanvas = async (page: any, viewport: any) => {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d")!;
   canvas.width = viewport.width;
@@ -101,7 +102,7 @@ const pdfPageToCanvas = async (page: any, viewport: any) => {
   return canvas;
 };
 
-const cropCanvas = (canvas: HTMLCanvasElement, area: SelectionArea) => {
+export const cropCanvas = (canvas: HTMLCanvasElement, area: SelectionArea) => {
   const croppedCanvas = document.createElement("canvas");
   const ctx = croppedCanvas.getContext("2d")!;
 
@@ -122,7 +123,7 @@ const cropCanvas = (canvas: HTMLCanvasElement, area: SelectionArea) => {
   return croppedCanvas;
 };
 
-const ocrFromCanvas = async (
+export const ocrFromCanvas = async (
   canvas: HTMLCanvasElement,
   worker: Tesseract.Worker
 ): Promise<Tesseract.Line[]> => {
@@ -141,19 +142,72 @@ const ocrFromCanvas = async (
 };
 
 const joinMultilineTexts = (lines: Tesseract.Line[]) => {
+  const rowHeightMultiplier = 1.3;
   const textBlocks: string[] = [];
   const currentBlock: string[] = [];
   lines.forEach((line, index) => {
     const currentRowHeight = (line.rowAttributes as any).rowHeight || 20;
+    const nextLine = lines[index + 1];
     currentBlock.push(line.text.trim());
 
-    if (
+    const shouldBreak =
       index === lines.length - 1 ||
-      line.baseline.y0 + currentRowHeight <= lines[index + 1].baseline.y0
-    ) {
+      line.baseline.y0 + currentRowHeight * rowHeightMultiplier <=
+        nextLine?.baseline.y0;
+
+    console.log(
+      `Linha ${index}: "${line.text.trim()}" | y0: ${
+        line.baseline.y0
+      } | altura: ${currentRowHeight} | quebra: ${shouldBreak}`
+    );
+
+    if (shouldBreak) {
       textBlocks.push(currentBlock.join(" "));
+      console.log("📦 Bloco criado:", currentBlock.join(" "));
       currentBlock.length = 0;
     }
   });
+  console.log("📋 Resultado final:", textBlocks);
   return textBlocks;
+};
+
+export const processOCRLines = (
+  lines: Tesseract.Line[],
+  dataType?: DataType
+) => {
+  // Usar o dataType para implementar processamentos de acordo com o tipo de dado
+  let texts: string[] = [];
+  if (dataType === "geology") {
+    texts = joinMultilineTexts(lines);
+  } else {
+    lines.forEach((line) => {
+      texts.push(line.text.trim());
+    });
+  }
+  return texts;
+};
+
+export const ocrExtractLines = async (
+  areaCoordinates: SelectionArea,
+  page: any,
+  worker: Tesseract.Worker,
+  pageCanvas?: HTMLCanvasElement
+): Promise<Tesseract.Line[]> => {
+  const viewport = page.getViewport({ scale: 2 });
+  const canvas = pageCanvas || (await pdfPageToCanvas(page, viewport));
+  const imageCoords = convertCoordinates(
+    areaCoordinates,
+    1, // renderedScale
+    2, // zoomScale (mesmo do viewport)
+    viewport
+  );
+  const croppedCanvas = cropCanvas(canvas, {
+    x: imageCoords.x,
+    y: viewport.height - imageCoords.y - imageCoords.height, // Inverte Y para canvas
+    width: imageCoords.width,
+    height: imageCoords.height,
+  });
+
+  const dataLines = await ocrFromCanvas(croppedCanvas, worker);
+  return dataLines;
 };

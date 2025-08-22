@@ -421,3 +421,24 @@ export const formatDataByType = (
   // Tipos que devem retornar array completa
   return cleanTexts;
 };
+
+export const millisecondsToTimerFormat = (
+  totalMS: number,
+  precision: number
+): string => {
+  const totalSeconds = totalMS / 1000;
+  const totalSecondsFloor = Math.floor(totalMS / 1000);
+  const milliseconds = Math.floor(
+    (totalSeconds - totalSecondsFloor) * precision
+  );
+  const seconds = totalSecondsFloor % 60;
+  const minutes = Math.floor(totalSecondsFloor / 60);
+
+  const mm = minutes.toString();
+  const ss = seconds.toString().padStart(2, "0");
+  const ms = milliseconds
+    .toString()
+    .padStart(precision.toString().length - 1, "0");
+
+  return `${mm}:${ss},${ms}`;
+};

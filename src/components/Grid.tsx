@@ -8,6 +8,8 @@ import {
   REPEATING_TYPES,
   type Area,
   type DataType,
+  type ExtractionProgress,
+  type ExtractionType,
   type PageTextData,
   type SelectionArea,
 } from "../types";
@@ -15,6 +17,7 @@ import {
   addNewArea,
   clearArea,
   deleteArea,
+  generateAreasFingerprint,
   getUniqueName,
   renameArea,
   shouldRename,
@@ -25,7 +28,6 @@ import { extractText } from "../utils/textExtractor";
 import ExtractedDataPanel from "./ExtractedDataPanel";
 import PageHeader from "./PageHeader";
 import ExtractButtons from "./ExtractButtons";
-import { extractTextOCR } from "../utils/ocrExtractor";
 
 function Grid() {
   // ref do pdfviewer para poder chamar função
@@ -34,10 +36,15 @@ function Grid() {
   // state da extração de texto
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
+  const [extractionProgress, setExtractionProgress] =
+    useState<ExtractionProgress | null>(null);
+  const [extractionStartTime, setExtractionStartTime] = useState<number>(0);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
 
   // modo da extração de texto
-  const [extractionMode, setExtractionMode] = useState<"text" | "ocr">("text");
+  const [extractionMode, setExtractionMode] = useState<ExtractionType>("text");
 
   // state para áreas selecionadas
   const [areas, setAreas] = useState<Area[]>([]);
@@ -50,7 +57,8 @@ function Grid() {
       alert("Limite de 15 áreas atingido");
       return;
     }
-    setAreas((prev) => addNewArea(prev, type));
+    const isOCR = extractionMode === "ocr";
+    setAreas((prev) => addNewArea(prev, isOCR, type));
   };
 
   // funções de manipulação das áreas
@@ -77,8 +85,33 @@ function Grid() {
     setActiveAreaId(null);
   };
 
+  const [lastExtractedFingerprint, setLastExtractedFingerprint] =
+    useState<string>("");
+  const [cachedExtractedTexts, setCachedExtractedTexts] = useState<
+    PageTextData[]
+  >([]);
+
+  // Função para verificar se precisa extrair novamente
+  const needsReExtraction = (): boolean => {
+    const currentFingerprint = generateAreasFingerprint(areas, selectedFile);
+    const needs =
+      currentFingerprint !== lastExtractedFingerprint ||
+      cachedExtractedTexts.length === 0;
+    return needs;
+  };
+
   // funções de extrair texto
   const handleExtraxtTexts = async (): Promise<PageTextData[]> => {
+    console.log(needsReExtraction());
+    if (!needsReExtraction()) {
+      return cachedExtractedTexts;
+    }
+
+    const controller = new AbortController();
+    setAbortController(controller);
+    setIsExtracting(true);
+    setExtractionStartTime(Date.now());
+
     const pdfDocument = pdfViewerRef.current?.getDocument();
     const hasRepeatAreas = areas.some((area) => area.repeatInPages);
     const holeId = areas.find((area) => area.dataType === "hole_id");
@@ -111,12 +144,16 @@ function Grid() {
       throw new Error("PDF não carregado");
     }
 
-    const extracted =
-      extractionMode === "text"
-        ? await extractText(areas, pdfDocument)
-        : await extractTextOCR(areas, pdfDocument);
+    const extracted = await extractText(
+      areas,
+      pdfDocument,
+      controller.signal,
+      setExtractionProgress
+    );
 
     setExtractedTexts(extracted);
+    setCachedExtractedTexts(extracted);
+    setLastExtractedFingerprint(generateAreasFingerprint(areas, selectedFile));
 
     return extracted;
   };
@@ -202,6 +239,20 @@ function Grid() {
     );
   };
 
+  const handleToggleAreaOCR = (areaId: string, ocr: boolean) => {
+    setAreas((prev) =>
+      prev.map((area) => (area.id === areaId ? { ...area, ocr: ocr } : area))
+    );
+  };
+
+  const handleChangeExtractionMode = (mode: ExtractionType) => {
+    setExtractionMode(mode);
+    if (mode !== "both") {
+      const isOCR = mode === "ocr";
+      setAreas((prev) => prev.map((area) => ({ ...area, ocr: isOCR })));
+    }
+  };
+
   const handleChangeAreaType = (areaId: string, newType: DataType) => {
     const repeat = REPEATING_TYPES.includes(newType);
     const mandatory = MANDATORY_TYPES.includes(newType);
@@ -224,6 +275,12 @@ function Grid() {
           : area
       )
     );
+  };
+
+  const handleCancelExtraction = () => {
+    if (abortController) {
+      abortController.abort();
+    }
   };
 
   return (
@@ -254,17 +311,24 @@ function Grid() {
                   onToggleMandatory={handleToggleMandatory}
                   onToggleRepeat={handleToggleRepeat}
                   onChangeAreaType={handleChangeAreaType}
+                  onToggleAreaOCR={handleToggleAreaOCR}
                   areas={areas}
                   hasFile={!!selectedFile}
-                  setExtractionMode={setExtractionMode}
+                  extractionMode={extractionMode}
+                  onChangeExtractionMode={handleChangeExtractionMode}
                 />
               }
               extractMenu={
                 <ExtractButtons
                   onPreview={handlePreview}
                   onExtractTexts={handleExtraxtTexts}
+                  onCancelExtraction={handleCancelExtraction}
                   areas={areas}
                   hasFile={!!selectedFile}
+                  isExtracting={isExtracting}
+                  extractionProgress={extractionProgress}
+                  extractionStartTime={extractionStartTime}
+                  fileName={selectedFile?.name}
                 />
               }
             ></MenuCard>
@@ -284,6 +348,7 @@ function Grid() {
               extractedTexts={extractedTexts}
               areas={areas}
               isExtracting={isExtracting}
+              fileName={selectedFile?.name || undefined}
             />
           </div>
         </div>

@@ -7,7 +7,11 @@ import {
   type SelectionArea,
 } from "../types";
 
-export const addNewArea = (areas: Area[], type?: DataType): Area[] => {
+export const addNewArea = (
+  areas: Area[],
+  ocr: boolean,
+  type?: DataType
+): Area[] => {
   const newId = `area-${Date.now()}-${Math.random()
     .toString(36)
     .substring(2, 9)}`;
@@ -22,6 +26,7 @@ export const addNewArea = (areas: Area[], type?: DataType): Area[] => {
     isMandatory: type ? MANDATORY_TYPES.includes(type) : false,
     repeatInPages: type ? REPEATING_TYPES.includes(type) : false,
     dataType: type,
+    ocr: ocr,
   };
   return [...areas, newArea];
 };
@@ -109,4 +114,30 @@ const getUnusedDefaultColor = (areas: Area[]): string => {
   return (
     DEFAULT_COLORS.find((color) => !usedColors.includes(color)) ?? "#000000"
   );
+};
+
+export const generateAreasFingerprint = (
+  areas: Area[],
+  file: File | null
+): string => {
+  const areasData = areas.map((area) => ({
+    id: area.id,
+    name: area.name,
+    dataType: area.dataType,
+    coordinates: area.coordinates,
+    isMandatory: area.isMandatory,
+    repeatInPages: area.repeatInPages,
+    ocr: area.ocr,
+  }));
+
+  const fileData = file
+    ? {
+        name: file.name,
+        size: file.size,
+        lastModified: file.lastModified,
+        type: file.type,
+      }
+    : null;
+
+  return JSON.stringify({ areas: areasData, file: fileData });
 };

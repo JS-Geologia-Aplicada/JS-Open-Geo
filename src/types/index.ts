@@ -16,6 +16,7 @@ export interface Area {
   isMandatory: boolean;
   dataType?: DataType;
   repeatInPages?: boolean;
+  ocr: boolean;
 }
 
 export interface AreaPreset {
@@ -96,6 +97,8 @@ export const EASY_ADD_TYPES: DataType[] = [
   "water_level",
   "interp",
 ];
+
+export type ExtractionType = "text" | "ocr" | "both";
 
 // Interface base para todos os dados do Leapfrog
 export interface BaseLeapfrogData {
@@ -186,4 +189,18 @@ export interface PalitoData {
     interval: number;
     values: string[];
   };
+}
+
+export interface ExtractionProgress {
+  stage:
+    | "starting"
+    | "validating"
+    | "hole_ids"
+    | "repeat_areas"
+    | "non_repeat_areas"
+    | "complete";
+  currentArea?: string;
+  currentPage?: number;
+  totalPages?: number;
+  message: string;
 }

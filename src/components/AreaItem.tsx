@@ -6,6 +6,7 @@ import {
   UNIQUE_TYPES,
   type Area,
   type DataType,
+  type ExtractionType,
 } from "../types";
 import { Tooltip } from "bootstrap";
 
@@ -13,12 +14,14 @@ interface AreaItemProps {
   hasFile: boolean;
   area: Area;
   areas: Area[];
+  extractionMode: ExtractionType;
   onStartSelection: (areaId: string) => void;
   onClearArea: (areaId: string) => void;
   onDeleteArea: (areaId: string) => void;
   onRenameArea: (areaId: string, newName: string) => void;
   onToggleMandatory: (areaId: string, mandatory: boolean) => void;
   onToggleRepeat: (areaId: string, repeat: boolean) => void;
+  onToggleAreaOCR: (areaId: string, ocr: boolean) => void;
   onChangeAreaType: (areaId: string, newType: DataType) => void;
 }
 
@@ -26,12 +29,14 @@ const AreaItem: React.FC<AreaItemProps> = ({
   hasFile,
   area,
   areas,
+  extractionMode,
   onStartSelection,
   onClearArea,
   onDeleteArea,
   onRenameArea,
   onToggleMandatory,
   onToggleRepeat,
+  onToggleAreaOCR,
   onChangeAreaType,
 }) => {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
@@ -222,6 +227,23 @@ const AreaItem: React.FC<AreaItemProps> = ({
             className="form-check form-switch"
             data-bs-toggle="tooltip"
             data-bs-placement="top"
+            data-bs-title="Extrair textos com OCR"
+          >
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id={`ocr-${area.id}`}
+              disabled={extractionMode !== "both"}
+              checked={area.ocr}
+              onChange={(e) => onToggleAreaOCR(area.id, e.target.checked)}
+            />
+            <label className="form-check-label small">OCR</label>
+          </div>
+
+          <div
+            className="form-check form-switch"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
             data-bs-title="Pular páginas sem texto nesta área"
           >
             <input
@@ -231,7 +253,7 @@ const AreaItem: React.FC<AreaItemProps> = ({
               checked={area.isMandatory}
               onChange={(e) => onToggleMandatory(area.id, e.target.checked)}
             />
-            <label className="form-check-label small">Obrigatório</label>
+            <label className="form-check-label small">Obrig.</label>
           </div>
 
           <div

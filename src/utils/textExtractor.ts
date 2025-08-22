@@ -1,5 +1,11 @@
+import { createWorker } from "tesseract.js";
 import type { TextItem } from "react-pdf";
-import type { Area, HorizontalLine, PageTextData } from "../types";
+import type {
+  Area,
+  ExtractionProgress,
+  HorizontalLine,
+  PageTextData,
+} from "../types";
 import {
   convertCoordinates,
   filterTextContent,
@@ -8,11 +14,28 @@ import {
   nsptToString,
   textItemToString,
 } from "./helpers";
+import {
+  ocrExtractLines,
+  pdfPageToCanvas,
+  processOCRLines,
+} from "./ocrExtractor";
 
 export const extractText = async (
   areas: Area[],
-  pdfDocument: any
+  pdfDocument: any,
+  abortSignal?: AbortSignal,
+  onProgress?: (progress: ExtractionProgress) => void
 ): Promise<PageTextData[]> => {
+  const checkAborted = () => {
+    if (abortSignal?.aborted) {
+      throw new Error("Extração cancelada pelo usuário");
+    }
+  };
+  onProgress?.({
+    stage: "starting",
+    message: "Iniciando extração...",
+  });
+
   const extractedTexts: PageTextData[] = [];
   const mandatoryAreas = areas.filter(
     (area) => area.isMandatory && area.coordinates
@@ -23,196 +46,337 @@ export const extractText = async (
     (area) => !area.repeatInPages && area.dataType !== "hole_id"
   );
 
-  const hasRequiredData = async (pageNum: number) => {
-    if (mandatoryAreas.length === 0) return true; // Se não tem obrigatórios, todas as páginas servem
+  const needsOCR = areas.some((area) => area.ocr);
+  const worker = needsOCR ? await createWorker("por") : null;
 
-    const page = await pdfDocument.getPage(pageNum);
-    const pageTexts = await page.getTextContent();
-    const originalViewport = page.getViewport({ scale: 1 });
+  checkAborted();
 
-    for (const area of mandatoryAreas) {
-      const pageCoordinates = convertCoordinates(
-        area.coordinates!,
-        1,
-        1,
-        originalViewport
-      );
-      const filteredItems = filterTextContent(pageTexts, pageCoordinates);
-      const textContent = textItemToString(filteredItems, []).join(" ").trim();
+  try {
+    // Cache de canvas por página (apenas se precisar de OCR)
+    let pageCanvasCache: Map<number, HTMLCanvasElement> | null = null;
+    let getPageCanvas:
+      | ((page: any, pageNum: number) => Promise<HTMLCanvasElement>)
+      | null = null;
 
-      if (!textContent) {
-        return false;
-      }
-    }
-    return true;
-  };
+    if (needsOCR) {
+      pageCanvasCache = new Map<number, HTMLCanvasElement>();
 
-  const validPages: number[] = [];
-  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    if (await hasRequiredData(pageNum)) {
-      validPages.push(pageNum);
-    }
-  }
-
-  // Extração específica para quando há hole_id
-  if (holeIdArea && holeIdArea.coordinates) {
-    const holeIdName = holeIdArea.name;
-    const holeIdsPerPage: { page: number; holeId: string }[] = [];
-    const pagesWithoutId: number[] = [];
-    const uniqueHoleIds: string[] = [];
-
-    // Extraindo os hole_id e identificando as páginas nos quais se repetem
-    for (const pageNum of validPages) {
-      const page = await pdfDocument.getPage(pageNum);
-      const pageTexts = await page.getTextContent();
-      const originalViewport = page.getViewport({ scale: 1 });
-
-      const pageCoordinates = convertCoordinates(
-        holeIdArea.coordinates,
-        1,
-        1,
-        originalViewport
-      );
-      const filteredItems = filterTextContent(pageTexts, pageCoordinates);
-      filteredItems.sort(
-        (a: { transform: number[] }, b: { transform: number[] }) =>
-          b.transform[5] - a.transform[5]
-      );
-      const holeIdText = textItemToString(filteredItems, []).join(" ").trim();
-      holeIdsPerPage.push({ page: pageNum, holeId: holeIdText });
-
-      if (holeIdText) {
-        const existingEntry = extractedTexts.find(
-          (textItem) =>
-            textItem[holeIdName] &&
-            Array.isArray(textItem[holeIdName]) &&
-            textItem[holeIdName][0] === holeIdText
-        );
-
-        if (existingEntry) {
-          existingEntry.pageNumber.push(pageNum);
-        } else {
-          uniqueHoleIds.push(holeIdText);
-          extractedTexts.push({
-            pageNumber: [pageNum],
-            [holeIdName]: [holeIdText],
-          });
+      getPageCanvas = async (
+        page: any,
+        pageNum: number
+      ): Promise<HTMLCanvasElement> => {
+        if (pageCanvasCache!.has(pageNum)) {
+          return pageCanvasCache!.get(pageNum)!;
         }
-      } else {
-        pagesWithoutId.push(pageNum);
-      }
+
+        const viewport2x = page.getViewport({ scale: 2 });
+        const canvas = await pdfPageToCanvas(page, viewport2x);
+        pageCanvasCache!.set(pageNum, canvas);
+        return canvas;
+      };
     }
 
-    const repeatDataAreas = areas.filter((area) => area.repeatInPages);
+    checkAborted();
 
-    // Adicionando textos que repetem entre páginas
-    if (repeatDataAreas.length > 0) {
-      // Loop para localizar textos em cada primeira página de sondagem
-      for (const entry of extractedTexts) {
-        const firstPage = entry.pageNumber[0];
-        const page = await pdfDocument.getPage(firstPage);
-        const operatorList = await page.getOperatorList();
-        const pageTexts = await page.getTextContent();
-        const originalViewport = page.getViewport({ scale: 1 });
-        const pageHorizontalLines = findHorizontalLines(operatorList);
+    const hasRequiredData = async (pageNum: number) => {
+      if (mandatoryAreas.length === 0) return true; // Se não tem obrigatórios, todas as páginas servem
+      const page = await pdfDocument.getPage(pageNum);
+      const originalViewport = page.getViewport({ scale: 1 });
+      const pageTexts = await page.getTextContent();
 
-        repeatDataAreas.forEach((area) => {
-          if (area.coordinates) {
-            const pageCoordinates = convertCoordinates(
-              area.coordinates,
-              1,
-              1,
-              originalViewport
-            );
-            const filteredTexts = filterTextContent(pageTexts, pageCoordinates);
-            filteredTexts.sort(
-              (a: TextItem, b: TextItem) => b.transform[5] - a.transform[5]
-            );
+      for (const area of mandatoryAreas) {
+        if (area.ocr) {
+          // Verificar áreas obrigatórias com ocr
+          if (!page || !worker || !area.coordinates) continue;
+          const dataLines = await ocrExtractLines(
+            area.coordinates,
+            page,
+            worker
+          );
+          if (dataLines.every((line) => !line.text.trim())) return false;
+        } else {
+          // Verificar áreas obrigatórias com texto normal
+          const pageCoordinates = convertCoordinates(
+            area.coordinates!,
+            1,
+            1,
+            originalViewport
+          );
+          const filteredItems = filterTextContent(pageTexts, pageCoordinates);
+          const textContent = textItemToString(filteredItems, [])
+            .join(" ")
+            .trim();
 
-            const textArr =
-              area.dataType === "nspt"
-                ? nsptToString(filteredTexts)
-                : textItemToString(filteredTexts, pageHorizontalLines);
-            entry[area.name] = formatDataByType(textArr, area.dataType);
-          }
-        });
+          if (!textContent) return false;
+        }
       }
-    }
-  } else {
-    for (const pageNum of validPages) {
-      extractedTexts.push({
-        pageNumber: [pageNum],
+      return true;
+    };
+
+    const validPages: number[] = [];
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      checkAborted();
+      onProgress?.({
+        stage: "validating",
+        message: `Verificando páginas obrigatórias ${pageNum}/${numPages}`,
       });
+      if (await hasRequiredData(pageNum)) {
+        validPages.push(pageNum);
+      }
     }
-  }
 
-  // Processando dados que não repetem em páginas diferentes da mesma sondagem
-  // A mesma lógica é aplicada para quando não há hole_id
-  if (nonRepeatDataAreas.length > 0) {
-    for (const textEntry of extractedTexts) {
-      for (const entryPage of textEntry.pageNumber) {
-        const page = await pdfDocument.getPage(entryPage);
-        const operatorList = await page.getOperatorList();
-        const pageTexts = await page.getTextContent();
-        const originalViewport = page.getViewport({ scale: 1 });
-        const pageHorizontalLines = findHorizontalLines(operatorList);
+    // Extração específica para quando há hole_id
+    if (holeIdArea && holeIdArea.coordinates) {
+      const holeIdName = holeIdArea.name;
+      const holeIdsPerPage: { page: number; holeId: string }[] = [];
+      const pagesWithoutId: number[] = [];
+      const uniqueHoleIds: string[] = [];
 
-        nonRepeatDataAreas.forEach((area) => {
-          if (area.coordinates) {
-            const pageCoordinates = convertCoordinates(
-              area.coordinates,
-              1,
-              1,
-              originalViewport
-            );
-            const filteredTexts = filterTextContent(pageTexts, pageCoordinates);
-            filteredTexts.sort(
-              (a: TextItem, b: TextItem) => b.transform[5] - a.transform[5]
-            );
+      // Extraindo os hole_id e identificando as páginas nos quais se repetem
+      let holePageIndex = 0;
+      for (const pageNum of validPages) {
+        checkAborted();
+        holePageIndex++;
+        onProgress?.({
+          stage: "hole_ids",
+          message: `Extraindo IDs de sondagem da página ${holePageIndex}/${validPages.length}`,
+        });
+        const page = await pdfDocument.getPage(pageNum);
+        let holeIdText = "";
 
-            const textArr =
-              area.dataType === "nspt"
-                ? nsptToString(filteredTexts)
-                : textItemToString(filteredTexts, pageHorizontalLines);
+        if (holeIdArea.ocr) {
+          if (!worker) continue;
+          const dataLines = await ocrExtractLines(
+            holeIdArea.coordinates,
+            page,
+            worker
+          );
+          holeIdText = dataLines
+            .map((line) => line.text.trim())
+            .filter((text) => text)
+            .join(" ")
+            .trim();
+        } else {
+          const pageTexts = await page.getTextContent();
+          const originalViewport = page.getViewport({ scale: 1 });
 
-            const formattedData = formatDataByType(textArr, area.dataType);
+          const pageCoordinates = convertCoordinates(
+            holeIdArea.coordinates,
+            1,
+            1,
+            originalViewport
+          );
+          const filteredItems = filterTextContent(pageTexts, pageCoordinates);
+          filteredItems.sort(
+            (a: { transform: number[] }, b: { transform: number[] }) =>
+              b.transform[5] - a.transform[5]
+          );
+          holeIdText = textItemToString(filteredItems, []).join(" ").trim();
+        }
+        holeIdsPerPage.push({ page: pageNum, holeId: holeIdText });
 
-            if (!textEntry[area.name]) {
-              textEntry[area.name] = [];
-            }
-            const currentTexts = textEntry[area.name] as string[];
-            // Para tipos únicos, substitui o valor existente
-            if (isUniqueValueType(area.dataType)) {
-              if (formattedData.length > 0) {
-                textEntry[area.name] = formattedData; // substitui
-              }
-            } else {
-              // Para tipos array, adiciona evitando duplicações
-              const newTexts = [...formattedData];
-              if (currentTexts.length > 0 && newTexts.length > 0) {
-                const lastExisting = currentTexts[currentTexts.length - 1]
-                  .trim()
-                  .toLowerCase()
-                  .replace(/\s+/g, " ");
-                const firstNew = newTexts[0]
-                  .trim()
-                  .toLowerCase()
-                  .replace(/\s+/g, " ");
+        if (holeIdText) {
+          const existingEntry = extractedTexts.find(
+            (textItem) =>
+              textItem[holeIdName] &&
+              Array.isArray(textItem[holeIdName]) &&
+              textItem[holeIdName][0] === holeIdText
+          );
 
-                if (lastExisting === firstNew) {
-                  newTexts.shift();
+          if (existingEntry) {
+            existingEntry.pageNumber.push(pageNum);
+          } else {
+            uniqueHoleIds.push(holeIdText);
+            extractedTexts.push({
+              pageNumber: [pageNum],
+              [holeIdName]: [holeIdText],
+            });
+          }
+        } else {
+          pagesWithoutId.push(pageNum);
+        }
+      }
+
+      const repeatDataAreas = areas.filter((area) => area.repeatInPages);
+
+      // Adicionando textos que repetem entre páginas
+      if (repeatDataAreas.length > 0) {
+        // Loop para localizar textos em cada primeira página de sondagem
+        let repeatEntryIndex = 0;
+        for (const entry of extractedTexts) {
+          checkAborted();
+          repeatEntryIndex++;
+          onProgress?.({
+            stage: "repeat_areas",
+            message: `Processando áreas únicas da sondagem ${repeatEntryIndex}/${extractedTexts.length}`,
+          });
+          const firstPage = entry.pageNumber[0];
+          const page = await pdfDocument.getPage(firstPage);
+          const operatorList = await page.getOperatorList();
+          const pageTexts = await page.getTextContent();
+          const originalViewport = page.getViewport({ scale: 1 });
+          const pageHorizontalLines = findHorizontalLines(operatorList);
+          const viewport2x = page.getViewport({ scale: 2 });
+          const pageCanvas = getPageCanvas
+            ? await getPageCanvas(page, firstPage)
+            : await pdfPageToCanvas(page, viewport2x);
+
+          for (const area of repeatDataAreas) {
+            if (area.coordinates) {
+              try {
+                let textArr: string[] = [];
+                if (area.ocr) {
+                  if (!worker) continue;
+                  const dataLines = await ocrExtractLines(
+                    area.coordinates,
+                    page,
+                    worker,
+                    pageCanvas
+                  );
+                  textArr = processOCRLines(dataLines, area.dataType);
+                } else {
+                  const pageCoordinates = convertCoordinates(
+                    area.coordinates,
+                    1,
+                    1,
+                    originalViewport
+                  );
+                  const filteredTexts = filterTextContent(
+                    pageTexts,
+                    pageCoordinates
+                  );
+                  filteredTexts.sort(
+                    (a: TextItem, b: TextItem) =>
+                      b.transform[5] - a.transform[5]
+                  );
+
+                  textArr =
+                    area.dataType === "nspt"
+                      ? nsptToString(filteredTexts)
+                      : textItemToString(filteredTexts, pageHorizontalLines);
                 }
+                entry[area.name] = formatDataByType(textArr, area.dataType);
+              } catch (error) {
+                console.error(`Erro ao processar área ${area.name}: ${error}`);
+                entry[area.name] = [];
               }
-
-              currentTexts.push(...newTexts);
             }
           }
+        }
+      }
+    } else {
+      for (const pageNum of validPages) {
+        extractedTexts.push({
+          pageNumber: [pageNum],
         });
       }
     }
-  }
 
-  return extractedTexts;
+    // Processando dados que não repetem em páginas diferentes da mesma sondagem
+    // A mesma lógica é aplicada para quando não há hole_id
+    if (nonRepeatDataAreas.length > 0) {
+      let nonRepeatEntryIndex = 0;
+      for (const textEntry of extractedTexts) {
+        nonRepeatEntryIndex++;
+        let entryPageIndex = 0;
+        for (const entryPage of textEntry.pageNumber) {
+          checkAborted();
+          entryPageIndex++;
+          onProgress?.({
+            stage: "non_repeat_areas",
+            message: `Processando áreas não únicas da sondagem ${nonRepeatEntryIndex}/${extractedTexts.length}, página ${entryPageIndex}/${textEntry.pageNumber.length} ...`,
+          });
+          const page = await pdfDocument.getPage(entryPage);
+          const operatorList = await page.getOperatorList();
+          const pageTexts = await page.getTextContent();
+          const originalViewport = page.getViewport({ scale: 1 });
+          const pageHorizontalLines = findHorizontalLines(operatorList);
+          const viewport2x = page.getViewport({ scale: 2 });
+          const pageCanvas = getPageCanvas
+            ? await getPageCanvas(page, entryPage)
+            : await pdfPageToCanvas(page, viewport2x);
+
+          for (const area of nonRepeatDataAreas) {
+            if (area.coordinates) {
+              try {
+                let textArr: string[] = [];
+                if (area.ocr) {
+                  if (!worker) continue;
+                  const dataLines = await ocrExtractLines(
+                    area.coordinates,
+                    page,
+                    worker,
+                    pageCanvas
+                  );
+                  textArr = processOCRLines(dataLines, area.dataType);
+                } else {
+                  const pageCoordinates = convertCoordinates(
+                    area.coordinates,
+                    1,
+                    1,
+                    originalViewport
+                  );
+                  const filteredTexts = filterTextContent(
+                    pageTexts,
+                    pageCoordinates
+                  );
+                  filteredTexts.sort(
+                    (a: TextItem, b: TextItem) =>
+                      b.transform[5] - a.transform[5]
+                  );
+
+                  textArr =
+                    area.dataType === "nspt"
+                      ? nsptToString(filteredTexts)
+                      : textItemToString(filteredTexts, pageHorizontalLines);
+                }
+                const formattedData = formatDataByType(textArr, area.dataType);
+
+                if (!textEntry[area.name]) {
+                  textEntry[area.name] = [];
+                }
+                const currentTexts = textEntry[area.name] as string[];
+                // Para tipos únicos, substitui o valor existente
+                if (isUniqueValueType(area.dataType)) {
+                  if (formattedData.length > 0) {
+                    textEntry[area.name] = formattedData; // substitui
+                  }
+                } else {
+                  // Para tipos array, adiciona evitando duplicações
+                  const newTexts = [...formattedData];
+                  if (currentTexts.length > 0 && newTexts.length > 0) {
+                    const lastExisting = currentTexts[currentTexts.length - 1]
+                      .trim()
+                      .toLowerCase()
+                      .replace(/\s+/g, " ");
+                    const firstNew = newTexts[0]
+                      .trim()
+                      .toLowerCase()
+                      .replace(/\s+/g, " ");
+
+                    if (lastExisting === firstNew) {
+                      newTexts.shift();
+                    }
+                  }
+
+                  currentTexts.push(...newTexts);
+                }
+              } catch (error) {
+                console.error(`Erro ao processar área ${area.name}:`, error);
+              }
+            }
+          }
+        }
+      }
+    }
+    onProgress?.({
+      stage: "complete",
+      message: "Finalizando extração...",
+    });
+    return extractedTexts;
+  } finally {
+    if (worker) await worker.terminate();
+  }
 };
 
 const findHorizontalLines = (operatorList: any): HorizontalLine[] => {
