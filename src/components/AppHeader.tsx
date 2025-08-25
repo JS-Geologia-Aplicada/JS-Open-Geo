@@ -1,58 +1,92 @@
+import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
+
 const AppHeader = () => {
   return (
     <>
-      <header>
-        <div className="d-flex align-items-center justify-content-between py-3">
-          <div className="d-flex gap-3">
-            <a
-              href="https://www.instagram.com/js.geologia/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-decoration-none"
-              title="Instagram"
-            >
-              <i className="bi bi-instagram"></i>
-            </a>
+      <Navbar bg="white" expand="lg" className="border-bottom">
+        <Container fluid>
+          {/* Logo */}
+          <Navbar.Brand href="https://www.jsgeo.com.br/" target="_blank">
+            <img
+              src="js_logo_horizontal.png"
+              alt="JS Geologia Aplicada"
+              style={{ height: "40px" }}
+            />
+          </Navbar.Brand>
 
-            <a
-              href="https://www.linkedin.com/company/js-geologia-aplicada"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-decoration-none"
-              title="LinkedIn"
-            >
-              <i className="bi bi-linkedin"></i>
-            </a>
-          </div>
+          {/* Toggle para mobile */}
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
 
-          {/* Logo centralizado */}
-          <div className="flex-grow-1 text-center">
-            <a
-              href="https://www.jsgeo.com.br/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img
-                src="js_logo_horizontal.png"
-                alt="JS Geologia Aplicada"
-                style={{ maxHeight: "60px" }}
-              />
-            </a>
-          </div>
-
-          <div style={{ width: "56px" }}></div>
-        </div>
-      </header>
-
-      {/* Linha divisória */}
-      <hr
-        style={{
-          borderColor: "rgb(33,33,33)",
-          borderWidth: "0.88px",
-          padding: "0px 15px 0px 15px",
-          margin: "4px 0px 4px 0px",
-        }}
-      />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="ms-auto">
+              <Nav.Link href="https://www.jsgeo.com.br/" target="_blank">
+                Home
+              </Nav.Link>
+              <Nav.Link
+                href="https://www.jsgeo.com.br/quem-e-a-js"
+                target="_blank"
+              >
+                Quem é a JS
+              </Nav.Link>
+              <NavDropdown
+                title={
+                  <a
+                    href="https://www.jsgeo.com.br/areas-de-atuacao"
+                    target="_blank"
+                    className="text-decoration-none text-muted"
+                    onClick={(e) => e.stopPropagation()} // Previne que abra o dropdown
+                  >
+                    Áreas de atuação
+                  </a>
+                }
+                id="areas-dropdown"
+                className="text-secondary mx-1"
+                style={{ fontSize: "0.95rem" }}
+              >
+                <NavDropdown.Item
+                  href="https://www.jsgeo.com.br/clientes"
+                  target="_blank"
+                >
+                  Clientes
+                </NavDropdown.Item>
+                <NavDropdown.Item
+                  href="https://www.jsgeo.com.br/projetos"
+                  target="_blank"
+                >
+                  Projetos
+                </NavDropdown.Item>
+              </NavDropdown>
+              <Nav.Link
+                href="https://www.jsgeo.com.br/publicacoes"
+                target="_blank"
+              >
+                Publicações
+              </Nav.Link>
+              <Nav.Link
+                href="https://www.jsgeo.com.br/patrocinios"
+                target="_blank"
+              >
+                Patrocínios
+              </Nav.Link>
+              <Nav.Link
+                href="https://js-geologia-aplicada.github.io/JS-Open-Geo/"
+                target="_blank"
+              >
+                Open Geo
+              </Nav.Link>
+              <Nav.Link href="https://www.jsgeo.com.br/cursos" target="_blank">
+                Cursos
+              </Nav.Link>
+              <Nav.Link href="https://www.jsgeo.com.br/blog" target="_blank">
+                Blog
+              </Nav.Link>
+              <Nav.Link href="https://www.jsgeo.com.br/contato" target="_blank">
+                Contato
+              </Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
     </>
   );
 };
