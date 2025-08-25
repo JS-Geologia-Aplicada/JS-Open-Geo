@@ -26,28 +26,41 @@ import {
 import MenuCard from "./MenuCard";
 import { extractText } from "../utils/textExtractor";
 import ExtractedDataPanel from "./ExtractedDataPanel";
-import PageHeader from "./PageHeader";
 import ExtractButtons from "./ExtractButtons";
+import { Col, Row } from "react-bootstrap";
 
-function Grid() {
+interface DataExtractionPageProps {
+  areas: Area[];
+  setAreas: (areas: Area[]) => void;
+  selectedFile: File | null;
+  setSelectedFile: (file: File | null) => void;
+  extractedTexts: PageTextData[];
+  setExtractedTexts: (texts: PageTextData[]) => void;
+}
+
+function DataExtractionPage({
+  areas,
+  setAreas,
+  selectedFile,
+  setSelectedFile,
+  extractedTexts,
+  setExtractedTexts,
+}: DataExtractionPageProps) {
   // ref do pdfviewer para poder chamar função
   const pdfViewerRef = useRef<PdfViewerRef>(null);
 
   // state da extração de texto
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [extractionProgress, setExtractionProgress] =
     useState<ExtractionProgress | null>(null);
   const [extractionStartTime, setExtractionStartTime] = useState<number>(0);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
-  const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
 
   // modo da extração de texto
   const [extractionMode, setExtractionMode] = useState<ExtractionType>("text");
 
   // state para áreas selecionadas
-  const [areas, setAreas] = useState<Area[]>([]);
   const [isSelectionActive, setIsSelectionActive] = useState(false);
   const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
 
@@ -58,18 +71,18 @@ function Grid() {
       return;
     }
     const isOCR = extractionMode === "ocr";
-    setAreas((prev) => addNewArea(prev, isOCR, type));
+    setAreas(addNewArea(areas, isOCR, type));
   };
 
   // funções de manipulação das áreas
   const onDeleteArea = (areaId: string) => {
-    setAreas((prev) => deleteArea(prev, areaId));
+    setAreas(deleteArea(areas, areaId));
   };
   const onRenameArea = (areaId: string, newName: string) => {
-    setAreas((prev) => renameArea(prev, areaId, newName));
+    setAreas(renameArea(areas, areaId, newName));
   };
   const onClearArea = (areaId: string) => {
-    setAreas((prev) => clearArea(prev, areaId));
+    setAreas(clearArea(areas, areaId));
   };
 
   // funções de seleção de área
@@ -79,7 +92,7 @@ function Grid() {
   };
   const finishAreaSelection = (coords: SelectionArea) => {
     if (activeAreaId) {
-      setAreas((prev) => updateAreaCoordinates(prev, activeAreaId, coords));
+      setAreas(updateAreaCoordinates(areas, activeAreaId, coords));
     }
     setIsSelectionActive(false);
     setActiveAreaId(null);
@@ -112,50 +125,60 @@ function Grid() {
     setIsExtracting(true);
     setExtractionStartTime(Date.now());
 
-    const pdfDocument = pdfViewerRef.current?.getDocument();
-    const hasRepeatAreas = areas.some((area) => area.repeatInPages);
-    const holeId = areas.find((area) => area.dataType === "hole_id");
-    const areasWithoutCoords = areas
-      .filter((area) => !area.coordinates)
-      .map((area) => area.name);
+    try {
+      const pdfDocument = pdfViewerRef.current?.getDocument();
+      const hasRepeatAreas = areas.some((area) => area.repeatInPages);
+      const holeId = areas.find((area) => area.dataType === "hole_id");
+      const areasWithoutCoords = areas
+        .filter((area) => !area.coordinates)
+        .map((area) => area.name);
 
-    if (areasWithoutCoords.length > 0) {
-      const proceed = confirm(
-        "A(s) seguinte(s) área(s) não possue(m) coordenadas:\n" +
-          areasWithoutCoords.join(", ") +
-          "\n" +
-          "Deseja continuar mesmo assim?"
-      );
-      if (!proceed) {
-        throw new Error("Extração cancelada pelo usuário");
+      if (areasWithoutCoords.length > 0) {
+        const proceed = confirm(
+          "A(s) seguinte(s) área(s) não possue(m) coordenadas:\n" +
+            areasWithoutCoords.join(", ") +
+            "\n" +
+            "Deseja continuar mesmo assim?"
+        );
+        if (!proceed) {
+          throw new Error("Extração cancelada pelo usuário");
+        }
       }
-    }
-    if (!holeId && hasRepeatAreas) {
-      const proceed = confirm(
-        "Algumas áreas estão configuradas como 'Único' mas não há uma área de ID da Sondagem. " +
-          "A função não vai funcionar corretamente. Deseja continuar mesmo assim?"
-      );
-      if (!proceed) {
-        throw new Error("Extração cancelada pelo usuário");
+      if (!holeId && hasRepeatAreas) {
+        const proceed = confirm(
+          "Algumas áreas estão configuradas como 'Único' mas não há uma área de ID da Sondagem. " +
+            "A função não vai funcionar corretamente. Deseja continuar mesmo assim?"
+        );
+        if (!proceed) {
+          throw new Error("Extração cancelada pelo usuário");
+        }
       }
+
+      if (!pdfDocument) {
+        throw new Error("PDF não carregado");
+      }
+
+      const extracted = await extractText(
+        areas,
+        pdfDocument,
+        controller.signal,
+        setExtractionProgress
+      );
+
+      setExtractedTexts(extracted);
+      setCachedExtractedTexts(extracted);
+      setLastExtractedFingerprint(
+        generateAreasFingerprint(areas, selectedFile)
+      );
+
+      return extracted;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsExtracting(false);
+      setExtractionProgress(null);
+      setAbortController(null);
     }
-
-    if (!pdfDocument) {
-      throw new Error("PDF não carregado");
-    }
-
-    const extracted = await extractText(
-      areas,
-      pdfDocument,
-      controller.signal,
-      setExtractionProgress
-    );
-
-    setExtractedTexts(extracted);
-    setCachedExtractedTexts(extracted);
-    setLastExtractedFingerprint(generateAreasFingerprint(areas, selectedFile));
-
-    return extracted;
   };
 
   const handlePreview = async () => {
@@ -224,24 +247,24 @@ function Grid() {
   };
 
   const handleToggleMandatory = (areaId: string, mandatory: boolean) => {
-    setAreas((prev) =>
-      prev.map((area) =>
+    setAreas(
+      areas.map((area) =>
         area.id === areaId ? { ...area, isMandatory: mandatory } : area
       )
     );
   };
 
   const handleToggleRepeat = (areaId: string, repeat: boolean) => {
-    setAreas((prev) =>
-      prev.map((area) =>
+    setAreas(
+      areas.map((area) =>
         area.id === areaId ? { ...area, repeatInPages: repeat } : area
       )
     );
   };
 
   const handleToggleAreaOCR = (areaId: string, ocr: boolean) => {
-    setAreas((prev) =>
-      prev.map((area) => (area.id === areaId ? { ...area, ocr: ocr } : area))
+    setAreas(
+      areas.map((area) => (area.id === areaId ? { ...area, ocr: ocr } : area))
     );
   };
 
@@ -249,7 +272,7 @@ function Grid() {
     setExtractionMode(mode);
     if (mode !== "both") {
       const isOCR = mode === "ocr";
-      setAreas((prev) => prev.map((area) => ({ ...area, ocr: isOCR })));
+      setAreas(areas.map((area) => ({ ...area, ocr: isOCR })));
     }
   };
 
@@ -257,8 +280,8 @@ function Grid() {
     const repeat = REPEATING_TYPES.includes(newType);
     const mandatory = MANDATORY_TYPES.includes(newType);
 
-    setAreas((prev) =>
-      prev.map((area) =>
+    setAreas(
+      areas.map((area) =>
         area.id === areaId
           ? {
               ...area,
@@ -267,9 +290,9 @@ function Grid() {
               isMandatory: mandatory,
               name:
                 shouldRename(area.name) && newType === "default"
-                  ? getUniqueName("Nova Área", prev)
+                  ? getUniqueName("Nova Área", areas)
                   : shouldRename(area.name)
-                  ? getUniqueName(DATA_TYPE_LABELS[newType], prev)
+                  ? getUniqueName(DATA_TYPE_LABELS[newType], areas)
                   : area.name,
             }
           : area
@@ -286,75 +309,72 @@ function Grid() {
   return (
     <>
       {isSelectionActive && <div className="selection-mode-overlay" />}
-      <div className="container-fluid text-center px-xl-5">
-        <div className="row justify-content-center">
-          <PageHeader />
-        </div>
 
-        <div className="row justify-content-center">
-          <div
-            className="col-12 col-lg-6 col-xxl-4 col-xxxl-4"
-            style={{ maxWidth: "450px", minWidth: "300px" }}
-          >
-            <MenuCard
-              areas={areas}
-              areasMenu={
-                <Menu
-                  onFileSelect={setSelectedFile}
-                  onStartAreaSelection={startAreaSelection}
-                  onClearArea={onClearArea}
-                  onDeleteArea={onDeleteArea}
-                  onRenameArea={onRenameArea}
-                  onAddNewArea={onAddNewArea}
-                  onLoadPreset={onLoadPreset}
-                  onDragEnd={handleDragEnd}
-                  onToggleMandatory={handleToggleMandatory}
-                  onToggleRepeat={handleToggleRepeat}
-                  onChangeAreaType={handleChangeAreaType}
-                  onToggleAreaOCR={handleToggleAreaOCR}
-                  areas={areas}
-                  hasFile={!!selectedFile}
-                  extractionMode={extractionMode}
-                  onChangeExtractionMode={handleChangeExtractionMode}
-                />
-              }
-              extractMenu={
-                <ExtractButtons
-                  onPreview={handlePreview}
-                  onExtractTexts={handleExtraxtTexts}
-                  onCancelExtraction={handleCancelExtraction}
-                  areas={areas}
-                  hasFile={!!selectedFile}
-                  isExtracting={isExtracting}
-                  extractionProgress={extractionProgress}
-                  extractionStartTime={extractionStartTime}
-                  fileName={selectedFile?.name}
-                />
-              }
-            ></MenuCard>
-          </div>
-          <div className="col-12 col-lg-6 col-xxl-5 col-xxxl-4">
-            <PdfViewer
-              ref={pdfViewerRef}
-              file={selectedFile}
-              isSelectingActive={isSelectionActive}
-              activeAreaId={activeAreaId}
-              onFinishSelection={finishAreaSelection}
-              areas={areas}
-            />
-          </div>
-          <div className="col-12 col-lg-6 col-xxl-3 col-xxxl-4">
-            <ExtractedDataPanel
-              extractedTexts={extractedTexts}
-              areas={areas}
-              isExtracting={isExtracting}
-              fileName={selectedFile?.name || undefined}
-            />
-          </div>
-        </div>
-      </div>
+      <Row className="justify-content-center">
+        <Col
+          xs={12}
+          lg={6}
+          xxl={4}
+          style={{ maxWidth: "450px", minWidth: "300px" }}
+        >
+          <MenuCard
+            areas={areas}
+            areasMenu={
+              <Menu
+                onFileSelect={setSelectedFile}
+                onStartAreaSelection={startAreaSelection}
+                onClearArea={onClearArea}
+                onDeleteArea={onDeleteArea}
+                onRenameArea={onRenameArea}
+                onAddNewArea={onAddNewArea}
+                onLoadPreset={onLoadPreset}
+                onDragEnd={handleDragEnd}
+                onToggleMandatory={handleToggleMandatory}
+                onToggleRepeat={handleToggleRepeat}
+                onChangeAreaType={handleChangeAreaType}
+                onToggleAreaOCR={handleToggleAreaOCR}
+                areas={areas}
+                hasFile={!!selectedFile}
+                extractionMode={extractionMode}
+                onChangeExtractionMode={handleChangeExtractionMode}
+              />
+            }
+            extractMenu={
+              <ExtractButtons
+                onPreview={handlePreview}
+                onExtractTexts={handleExtraxtTexts}
+                onCancelExtraction={handleCancelExtraction}
+                areas={areas}
+                hasFile={!!selectedFile}
+                isExtracting={isExtracting}
+                extractionProgress={extractionProgress}
+                extractionStartTime={extractionStartTime}
+                fileName={selectedFile?.name}
+              />
+            }
+          ></MenuCard>
+        </Col>
+        <Col xs={12} lg={6} xxl={5} xxxl={4}>
+          <PdfViewer
+            ref={pdfViewerRef}
+            file={selectedFile}
+            isSelectingActive={isSelectionActive}
+            activeAreaId={activeAreaId}
+            onFinishSelection={finishAreaSelection}
+            areas={areas}
+          />
+        </Col>
+        <Col xs={12} lg={6} xxl={3} xxxl={4}>
+          <ExtractedDataPanel
+            extractedTexts={extractedTexts}
+            areas={areas}
+            isExtracting={isExtracting}
+            fileName={selectedFile?.name || undefined}
+          />
+        </Col>
+      </Row>
     </>
   );
 }
 
-export default Grid;
+export default DataExtractionPage;

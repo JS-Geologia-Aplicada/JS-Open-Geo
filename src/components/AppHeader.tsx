@@ -1,6 +1,4 @@
-import React from "react";
-
-const PageHeader: React.FC = () => {
+const AppHeader = () => {
   return (
     <>
       <header>
@@ -59,4 +57,4 @@ const PageHeader: React.FC = () => {
   );
 };
 
-export default PageHeader;
+export default AppHeader;

@@ -20,6 +20,25 @@ import {
 import JSZip from "jszip";
 
 export const exportJSON = (areas: Area[], extractedTexts: PageTextData[]) => {
+  const structuredData = convertToPalitoData(areas, extractedTexts);
+
+  // Download
+  const dataStr = JSON.stringify(structuredData, null, 2);
+  const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "dados-estruturados.json";
+  link.click();
+
+  URL.revokeObjectURL(url);
+};
+
+export const convertToPalitoData = (
+  areas: Area[],
+  extractedTexts: PageTextData[]
+): PalitoData[] => {
   const typeToAreaName = createTypeToAreaNameMap(areas);
   const structuredData: PalitoData[] = [];
 
@@ -110,17 +129,7 @@ export const exportJSON = (areas: Area[], extractedTexts: PageTextData[]) => {
     structuredData.push(palitoEntry);
   });
 
-  // Download
-  const dataStr = JSON.stringify(structuredData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: "application/json" });
-
-  const url = URL.createObjectURL(dataBlob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "dados-estruturados.json";
-  link.click();
-
-  URL.revokeObjectURL(url);
+  return structuredData;
 };
 
 export const exportCSV = (areas: Area[], extractedTexts: PageTextData[]) => {
