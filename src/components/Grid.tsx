@@ -112,50 +112,60 @@ function Grid() {
     setIsExtracting(true);
     setExtractionStartTime(Date.now());
 
-    const pdfDocument = pdfViewerRef.current?.getDocument();
-    const hasRepeatAreas = areas.some((area) => area.repeatInPages);
-    const holeId = areas.find((area) => area.dataType === "hole_id");
-    const areasWithoutCoords = areas
-      .filter((area) => !area.coordinates)
-      .map((area) => area.name);
+    try {
+      const pdfDocument = pdfViewerRef.current?.getDocument();
+      const hasRepeatAreas = areas.some((area) => area.repeatInPages);
+      const holeId = areas.find((area) => area.dataType === "hole_id");
+      const areasWithoutCoords = areas
+        .filter((area) => !area.coordinates)
+        .map((area) => area.name);
 
-    if (areasWithoutCoords.length > 0) {
-      const proceed = confirm(
-        "A(s) seguinte(s) área(s) não possue(m) coordenadas:\n" +
-          areasWithoutCoords.join(", ") +
-          "\n" +
-          "Deseja continuar mesmo assim?"
-      );
-      if (!proceed) {
-        throw new Error("Extração cancelada pelo usuário");
+      if (areasWithoutCoords.length > 0) {
+        const proceed = confirm(
+          "A(s) seguinte(s) área(s) não possue(m) coordenadas:\n" +
+            areasWithoutCoords.join(", ") +
+            "\n" +
+            "Deseja continuar mesmo assim?"
+        );
+        if (!proceed) {
+          throw new Error("Extração cancelada pelo usuário");
+        }
       }
-    }
-    if (!holeId && hasRepeatAreas) {
-      const proceed = confirm(
-        "Algumas áreas estão configuradas como 'Único' mas não há uma área de ID da Sondagem. " +
-          "A função não vai funcionar corretamente. Deseja continuar mesmo assim?"
-      );
-      if (!proceed) {
-        throw new Error("Extração cancelada pelo usuário");
+      if (!holeId && hasRepeatAreas) {
+        const proceed = confirm(
+          "Algumas áreas estão configuradas como 'Único' mas não há uma área de ID da Sondagem. " +
+            "A função não vai funcionar corretamente. Deseja continuar mesmo assim?"
+        );
+        if (!proceed) {
+          throw new Error("Extração cancelada pelo usuário");
+        }
       }
+
+      if (!pdfDocument) {
+        throw new Error("PDF não carregado");
+      }
+
+      const extracted = await extractText(
+        areas,
+        pdfDocument,
+        controller.signal,
+        setExtractionProgress
+      );
+
+      setExtractedTexts(extracted);
+      setCachedExtractedTexts(extracted);
+      setLastExtractedFingerprint(
+        generateAreasFingerprint(areas, selectedFile)
+      );
+
+      return extracted;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsExtracting(false);
+      setExtractionProgress(null);
+      setAbortController(null);
     }
-
-    if (!pdfDocument) {
-      throw new Error("PDF não carregado");
-    }
-
-    const extracted = await extractText(
-      areas,
-      pdfDocument,
-      controller.signal,
-      setExtractionProgress
-    );
-
-    setExtractedTexts(extracted);
-    setCachedExtractedTexts(extracted);
-    setLastExtractedFingerprint(generateAreasFingerprint(areas, selectedFile));
-
-    return extracted;
   };
 
   const handlePreview = async () => {

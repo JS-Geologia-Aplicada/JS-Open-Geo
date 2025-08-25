@@ -69,6 +69,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       const extractedTexts = await onExtractTexts();
       exportExcel(areas, extractedTexts);
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Extração cancelada pelo usuário"
+      ) {
+        console.log("Download cancelado pelo usuário");
+        return;
+      }
       console.error("Download cancelado:", error);
     }
   };
@@ -78,6 +85,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       const extractedTexts = await onExtractTexts();
       exportCSV(areas, extractedTexts);
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Extração cancelada pelo usuário"
+      ) {
+        console.log("Download cancelado pelo usuário");
+        return;
+      }
       console.error("Download cancelado:", error);
     }
   };
@@ -86,6 +100,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       const extractedTexts = await onExtractTexts();
       exportJSON(areas, extractedTexts);
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Extração cancelada pelo usuário"
+      ) {
+        console.log("Download cancelado pelo usuário");
+        return;
+      }
       console.error("Download cancelado:", error);
     }
   };
@@ -94,6 +115,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       const extractedTexts = await onExtractTexts();
       downloadZip(areas, extractedTexts, advancedDownload);
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Extração cancelada pelo usuário"
+      ) {
+        console.log("Download cancelado pelo usuário");
+        return;
+      }
       console.error("Download cancelado:", error);
     }
   };
@@ -102,6 +130,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       const extractedTexts = await onExtractTexts();
       downloadSingleCSV(areas, extractedTexts, type);
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Extração cancelada pelo usuário"
+      ) {
+        console.log("Download cancelado pelo usuário");
+        return;
+      }
       console.error("Download cancelado:", error);
     }
   };
