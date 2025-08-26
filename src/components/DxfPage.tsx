@@ -118,6 +118,13 @@ const DxfPage = ({ areas, extractedTexts }: DxfPageProps) => {
     }
   };
 
+  // Atualizar palito específico
+  const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
+    setPalitoData((prev) =>
+      prev.map((palito, i) => (index === i ? updatedPalito : palito))
+    );
+  };
+
   return (
     <Container fluid>
       <Row className="justify-content-center">
@@ -231,7 +238,10 @@ const DxfPage = ({ areas, extractedTexts }: DxfPageProps) => {
           </Card>
         </Col>
         <Col md={6} lg={4}>
-          <PalitoPreviewCard palitoData={palitoData} />
+          <PalitoPreviewCard
+            palitoData={palitoData}
+            onUpdatePalito={handleUpdatePalito}
+          />
         </Col>
       </Row>
     </Container>

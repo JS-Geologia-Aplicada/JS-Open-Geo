@@ -122,8 +122,7 @@ export const generateDXF = async (data: PalitoData[]) => {
     try {
       // Parâmetros individuais do palito
       const currentOrigin = point3d(firstOrigin.x + gap * index, firstOrigin.y);
-      const maxDepth =
-        sondagem.max_depth || sondagem.depths[sondagem.depths.length];
+      const maxDepth = sondagem.depths[sondagem.depths.length - 1];
 
       // Fazendo o cabeçalho
       dxf.addLine(
