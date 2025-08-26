@@ -1,8 +1,17 @@
-import { Alert, Button, Card, Col, Form, Row } from "react-bootstrap";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  Row,
+} from "react-bootstrap";
 import { generateDXF } from "../utils/dxfGenerator";
 import { useState } from "react";
 import type { Area, PageTextData, PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";
+import PalitoPreviewCard from "./PalitoPreviewCard";
 
 interface DxfPageProps {
   areas: Area[];
@@ -110,117 +119,122 @@ const DxfPage = ({ areas, extractedTexts }: DxfPageProps) => {
   };
 
   return (
-    <Row className="justify-content-center">
-      <Col md={8}>
-        <Card>
-          <Card.Header>
-            <h3 className="mb-0">Gerador de Palitos DXF</h3>
-          </Card.Header>
-          <Card.Body>
-            {/* Mensagens */}
-            {message && (
-              <Alert
-                variant={
-                  message.type === "success"
-                    ? "success"
-                    : message.type === "warning"
-                    ? "warning"
-                    : "danger"
-                }
-                onClose={() => setMessage(null)}
-                dismissible
-              >
-                {message.text}
-              </Alert>
-            )}
-
-            {/* Seção de carregamento de dados */}
-            <div className="mb-4">
-              <h5>1. Carregar Dados</h5>
-              <Row>
-                <Col md={4}>
-                  <Button
-                    variant="outline-primary"
-                    onClick={loadTestData}
-                    disabled={isLoading}
-                    className="w-100 mb-2"
-                  >
-                    {isLoading ? "Carregando..." : "Usar Dados de Teste"}
-                  </Button>
-                </Col>
-                <Col md={4}>
-                  <Button
-                    variant="outline-primary"
-                    onClick={loadExtractedData}
-                    disabled={isLoading}
-                    className="w-100 mb-2"
-                  >
-                    {isLoading ? "Carregando..." : "Usar Dados Extraídos"}
-                  </Button>
-                </Col>
-                <Col md={4}>
-                  <Form.Group>
-                    <Form.Label>Ou fazer upload de JSON:</Form.Label>
-                    <Form.Control
-                      type="file"
-                      accept=".json"
-                      onChange={handleFileUpload}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-            </div>
-
-            {/* Preview dos dados */}
-            {palitoData.length > 0 && (
-              <div className="mb-4">
-                <h5>2. Dados Carregados</h5>
-                <div className="bg-light p-3 rounded">
-                  <strong>Sondagens encontradas:</strong> {palitoData.length}
-                </div>
-              </div>
-            )}
-
-            {/* Botão de gerar DXF */}
-            <div className="mb-4">
-              <h5>3. Gerar DXF</h5>
-              <Button
-                variant="success"
-                size="lg"
-                onClick={handleGenerateDXF}
-                disabled={isLoading || palitoData.length === 0}
-                className="w-100"
-              >
-                {isLoading
-                  ? "Gerando..."
-                  : `Gerar DXF (${palitoData.length} palito${
-                      palitoData.length !== 1 ? "s" : ""
-                    })`}
-              </Button>
-            </div>
-
-            {/* Debug info */}
-            {palitoData.length > 0 && (
-              <details className="mt-4">
-                <summary className="btn btn-link">
-                  Ver dados JSON (debug)
-                </summary>
-                <pre
-                  className="bg-light p-3 mt-2"
-                  style={{
-                    fontSize: "12px",
-                    maxHeight: "300px",
-                    overflow: "auto",
-                  }}
+    <Container fluid>
+      <Row className="justify-content-center">
+        <Col md={6} lg={4}>
+          <Card>
+            <Card.Header>
+              <h3 className="mb-0">Gerador de Palitos DXF</h3>
+            </Card.Header>
+            <Card.Body>
+              {/* Mensagens */}
+              {message && (
+                <Alert
+                  variant={
+                    message.type === "success"
+                      ? "success"
+                      : message.type === "warning"
+                      ? "warning"
+                      : "danger"
+                  }
+                  onClose={() => setMessage(null)}
+                  dismissible
                 >
-                  {JSON.stringify(palitoData, null, 2)}
-                </pre>
-              </details>
-            )}
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
+                  {message.text}
+                </Alert>
+              )}
+
+              {/* Seção de carregamento de dados */}
+              <div className="mb-4">
+                <h5>1. Carregar Dados</h5>
+                <Row>
+                  <Col md={4}>
+                    <Button
+                      variant="outline-primary"
+                      onClick={loadTestData}
+                      disabled={isLoading}
+                      className="w-100 mb-2"
+                    >
+                      {isLoading ? "Carregando..." : "Usar Dados de Teste"}
+                    </Button>
+                  </Col>
+                  <Col md={4}>
+                    <Button
+                      variant="outline-primary"
+                      onClick={loadExtractedData}
+                      disabled={isLoading}
+                      className="w-100 mb-2"
+                    >
+                      {isLoading ? "Carregando..." : "Usar Dados Extraídos"}
+                    </Button>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Group>
+                      <Form.Label>Ou fazer upload de JSON:</Form.Label>
+                      <Form.Control
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileUpload}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* Preview dos dados */}
+              {palitoData.length > 0 && (
+                <div className="mb-4">
+                  <h5>2. Dados Carregados</h5>
+                  <div className="bg-light p-3 rounded">
+                    <strong>Sondagens encontradas:</strong> {palitoData.length}
+                  </div>
+                </div>
+              )}
+
+              {/* Botão de gerar DXF */}
+              <div className="mb-4">
+                <h5>3. Gerar DXF</h5>
+                <Button
+                  variant="success"
+                  size="lg"
+                  onClick={handleGenerateDXF}
+                  disabled={isLoading || palitoData.length === 0}
+                  className="w-100"
+                >
+                  {isLoading
+                    ? "Gerando..."
+                    : `Gerar DXF (${palitoData.length} palito${
+                        palitoData.length !== 1 ? "s" : ""
+                      })`}
+                </Button>
+              </div>
+
+              {/* Debug info */}
+              {palitoData.length > 0 && (
+                <details className="mt-4">
+                  <summary className="btn btn-link">
+                    Ver dados JSON (debug)
+                  </summary>
+                  <pre
+                    className="bg-light p-3 mt-2"
+                    style={{
+                      fontSize: "12px",
+                      maxHeight: "300px",
+                      overflow: "auto",
+                    }}
+                  >
+                    {JSON.stringify(palitoData, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={6} lg={4}>
+          <PalitoPreviewCard palitoData={palitoData} />
+        </Col>
+      </Row>
+    </Container>
   );
 };
 
