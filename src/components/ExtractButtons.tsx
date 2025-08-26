@@ -17,9 +17,9 @@ import {
   getDropdownItemClass,
 } from "../utils/downloadUtils";
 import { validateExportRequirements } from "../utils/leapfrogExport";
-import { Tooltip } from "bootstrap";
 import { Download, Eye } from "lucide-react";
 import { millisecondsToTimerFormat } from "../utils/helpers";
+import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 interface ExtractButtonProps {
   areas: Area[];
@@ -51,17 +51,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
   const [elapsedTimeString, setElapsedTimeString] = useState<string>("");
   useEffect(() => {
     setValidationData(downloadAllValidation(areas));
-    const tooltipElements = document.querySelectorAll(
-      '[data-bs-toggle="tooltip"]'
-    );
-
-    tooltipElements.forEach((element) => {
-      const existingTooltip = Tooltip.getInstance(element);
-      if (existingTooltip) {
-        existingTooltip.dispose();
-      }
-      new Tooltip(element);
-    });
   }, [areas, advancedDownload]);
 
   const handleDownloadExcel = async () => {
@@ -147,7 +136,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       setElapsedTimeString("");
       return;
     }
-
     const interval = setInterval(() => {
       const elapsed = Date.now() - extractionStartTime;
       setElapsedTimeString(millisecondsToTimerFormat(elapsed, 10));
@@ -201,18 +189,18 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
 
       {/* Dropdown de Download completo */}
       <div className="btn-group dropup">
-        <button
-          className="btn btn-secondary"
-          type="button"
-          onClick={handleDownloadExcel}
-          data-bs-toggle="tooltip"
-          data-bs-target="tooltip"
-          data-bs-placement="top"
-          data-bs-title="Download XLS"
+        <OverlayTrigger
+          overlay={<Tooltip id="xls-tooltip">Download XLS</Tooltip>}
         >
-          <Download className="me-1" size={16} />
-          Excel
-        </button>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={handleDownloadExcel}
+          >
+            <Download className="me-1" size={16} />
+            Excel
+          </Button>
+        </OverlayTrigger>
         <button
           className="btn btn-secondary dropdown-toggle dropdown-toggle-split"
           type="button"

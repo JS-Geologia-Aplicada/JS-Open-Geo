@@ -204,3 +204,23 @@ export interface ExtractionProgress {
   totalPages?: number;
   message: string;
 }
+
+export interface Cluster {
+  startIndex: number;
+  endIndex: number;
+  layers: number[];
+  totalNeeded: number;
+  totalAvailable: number;
+  needsExtraSpace: number;
+  layerSizes: LayerSize[];
+  unchanged?: boolean;
+}
+
+export interface LayerSize {
+  layerIndex?: number;
+  originalHeight: number;
+  textHeight: number;
+  finalHeight: number;
+  from: number;
+  to: number;
+}

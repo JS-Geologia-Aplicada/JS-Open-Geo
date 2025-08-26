@@ -150,3 +150,7 @@ input[type="number"] {
   appearance: none;
   -moz-appearance: textfield;
 }
+
+.navbar-nav .nav-item.dropdown:hover .dropdown-menu {
+  display: block;
+}
