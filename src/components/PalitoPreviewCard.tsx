@@ -101,75 +101,158 @@ const PalitoPreviewCard = ({
       </Card.Header>
 
       <Card.Body>
-        {/* Dados básicos */}
-        <div className="mb-3">
-          <Row>
-            <Col xs={3}>
-              <strong>Sondagem:</strong>
-              <br />
-              {isEditing ? (
-                <>
-                  <Form.Control
-                    type="text"
-                    size="sm"
-                    value={editedPalito?.hole_id || ""}
-                    onChange={(e) => {
-                      setEditedPalito((prev) =>
-                        prev ? { ...prev, hole_id: e.target.value } : null
-                      );
-                    }}
-                  ></Form.Control>
-                </>
-              ) : (
-                <span>{currentPalito.hole_id}</span>
-              )}
-            </Col>
-            <Col xs={3}>
-              <strong>Cota:</strong>
-              <br />
-              {isEditing ? (
-                <Form.Control
-                  type="number"
-                  size="sm"
-                  value={editedPalito?.z || "0"}
-                  onChange={(e) => {
-                    setEditedPalito((prev) =>
-                      prev ? { ...prev, z: parseFloat(e.target.value) } : null
-                    );
-                  }}
-                ></Form.Control>
-              ) : (
-                <span>{currentPalito.z ?? 0}m</span>
-              )}
-            </Col>
-            <Col xs={3}>
-              <strong>Prof. Total:</strong>
-              <br />
-              <span>
-                {isEditing
-                  ? editedPalito?.depths[editedPalito?.depths.length - 1]
-                  : currentPalito.depths[currentPalito.depths.length - 1]}
-                m
-              </span>
-            </Col>
-            <Col xs={3}>
-              {isEditing ? (
-                <>
-                  <ButtonGroup>
-                    <Button variant="success" onClick={handleConfirmEdit}>
-                      <Check size={16} />
-                    </Button>
-                    <Button variant="danger" onClick={handleCancelEdit}>
-                      <X size={16} />
-                    </Button>
-                  </ButtonGroup>
-                </>
-              ) : (
-                <Button onClick={handleStartEdit}>Editar</Button>
-              )}
-            </Col>
-          </Row>
-        </div>
+        <Row>
+          <Col xs={9} className="mb-3">
+            <Row className="text-start g-0">
+              <Col xs={7} className="pb-1 pe-1">
+                <div
+                  className={`d-flex align-items-center ${
+                    isEditing
+                      ? "justify-content-between"
+                      : "justify-content-start gap-1"
+                  }`}
+                >
+                  <strong>{"Sondagem: "}</strong>
+                  {isEditing ? (
+                    <>
+                      <Form.Control
+                        type="text"
+                        size="sm"
+                        value={editedPalito?.hole_id || ""}
+                        style={{ width: "100px" }}
+                        onChange={(e) => {
+                          setEditedPalito((prev) =>
+                            prev ? { ...prev, hole_id: e.target.value } : null
+                          );
+                        }}
+                      ></Form.Control>
+                    </>
+                  ) : (
+                    <span>{currentPalito.hole_id}</span>
+                  )}
+                </div>
+              </Col>
+              <Col xs={5} className="pb-1 pe-1">
+                <div
+                  className={`d-flex align-items-center ${
+                    isEditing
+                      ? "justify-content-between"
+                      : "justify-content-start gap-1"
+                  }`}
+                >
+                  <strong>{"Cota: "}</strong>
+                  {isEditing ? (
+                    <Form.Control
+                      type="number"
+                      size="sm"
+                      value={editedPalito?.z || "0"}
+                      style={{ width: "50px" }}
+                      onChange={(e) => {
+                        setEditedPalito((prev) =>
+                          prev
+                            ? { ...prev, z: parseFloat(e.target.value) }
+                            : null
+                        );
+                      }}
+                    ></Form.Control>
+                  ) : (
+                    <span>{currentPalito.z ?? 0}m</span>
+                  )}
+                </div>
+              </Col>
+              <Col xs={7} className="pb-1 pe-1">
+                <div
+                  className={`d-flex align-items-center ${
+                    isEditing
+                      ? "justify-content-between"
+                      : "justify-content-start gap-1"
+                  }`}
+                >
+                  <strong>{"Nível d'água: "}</strong>
+                  {isEditing ? (
+                    <Form.Control
+                      type="number"
+                      size="sm"
+                      value={editedPalito?.water_level || "SECO"}
+                      style={{ width: "80px" }}
+                      onChange={(e) => {
+                        setEditedPalito((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                water_level: parseFloat(e.target.value),
+                              }
+                            : null
+                        );
+                      }}
+                    ></Form.Control>
+                  ) : (
+                    <span>
+                      {currentPalito.water_level
+                        ? currentPalito.water_level.toString() + "m"
+                        : "SECO"}
+                    </span>
+                  )}
+                </div>
+              </Col>
+              <Col xs={5} className="pb-1 pe-1">
+                <div
+                  className={`d-flex align-items-center ${
+                    isEditing
+                      ? "justify-content-between"
+                      : "justify-content-start gap-1"
+                  }`}
+                >
+                  <strong>{"Prof. Total: "}</strong>
+                  <span>
+                    {isEditing ? (
+                      <Form.Control
+                        style={{ width: "50px" }}
+                        type="number"
+                        size="sm"
+                        value={
+                          editedPalito?.depths[
+                            editedPalito?.depths.length - 1
+                          ] || "0"
+                        }
+                        onChange={(e) => {
+                          setEditedPalito((prev) => {
+                            if (!prev || !editedPalito) return null;
+                            const newDepths = prev.depths.map((d, i) =>
+                              i === editedPalito.depths.length - 1
+                                ? parseFloat(e.target.value) || 0
+                                : d
+                            );
+                            return { ...prev, depths: newDepths };
+                          });
+                        }}
+                      ></Form.Control>
+                    ) : (
+                      currentPalito.depths[currentPalito.depths.length - 1] +
+                      "m"
+                    )}
+                  </span>
+                </div>
+              </Col>
+            </Row>
+          </Col>
+          <Col xs={3}>
+            {isEditing ? (
+              <>
+                <ButtonGroup>
+                  <Button variant="success" onClick={handleConfirmEdit}>
+                    <Check size={16} />
+                  </Button>
+                  <Button variant="danger" onClick={handleCancelEdit}>
+                    <X size={16} />
+                  </Button>
+                </ButtonGroup>
+              </>
+            ) : (
+              <Button onClick={handleStartEdit}>Editar</Button>
+            )}
+          </Col>
+        </Row>
 
         <hr />
 
