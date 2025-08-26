@@ -105,14 +105,10 @@ const PalitoPreviewCard = ({
           <Col xs={9} className="mb-3">
             <Row className="text-start g-0">
               <Col xs={7} className="pb-1 pe-1">
-                <div
-                  className={`d-flex align-items-center ${
-                    isEditing
-                      ? "justify-content-between"
-                      : "justify-content-start gap-1"
-                  }`}
-                >
-                  <strong>{"Sondagem: "}</strong>
+                <div className="d-flex align-items-centerjustify-content-start gap-1">
+                  <span className="fw-bold" style={{ width: "120px" }}>
+                    {"Sondagem: "}
+                  </span>
                   {isEditing ? (
                     <>
                       <Form.Control
@@ -133,20 +129,16 @@ const PalitoPreviewCard = ({
                 </div>
               </Col>
               <Col xs={5} className="pb-1 pe-1">
-                <div
-                  className={`d-flex align-items-center ${
-                    isEditing
-                      ? "justify-content-between"
-                      : "justify-content-start gap-1"
-                  }`}
-                >
-                  <strong>{"Cota: "}</strong>
+                <div className="d-flex align-items-centerjustify-content-start gap-1">
+                  <span className="fw-bold" style={{ width: "120px" }}>
+                    {"Cota: "}
+                  </span>
                   {isEditing ? (
                     <Form.Control
                       type="number"
                       size="sm"
                       value={editedPalito?.z || "0"}
-                      style={{ width: "50px" }}
+                      style={{ width: "100px" }}
                       onChange={(e) => {
                         setEditedPalito((prev) =>
                           prev
@@ -161,20 +153,16 @@ const PalitoPreviewCard = ({
                 </div>
               </Col>
               <Col xs={7} className="pb-1 pe-1">
-                <div
-                  className={`d-flex align-items-center ${
-                    isEditing
-                      ? "justify-content-between"
-                      : "justify-content-start gap-1"
-                  }`}
-                >
-                  <strong>{"Nível d'água: "}</strong>
+                <div className="d-flex align-items-centerjustify-content-start gap-1">
+                  <span className="fw-bold" style={{ width: "120px" }}>
+                    {"Nível d'água: "}
+                  </span>
                   {isEditing ? (
                     <Form.Control
                       type="number"
                       size="sm"
                       value={editedPalito?.water_level || "SECO"}
-                      style={{ width: "80px" }}
+                      style={{ width: "100px" }}
                       onChange={(e) => {
                         setEditedPalito((prev) =>
                           prev
@@ -196,18 +184,14 @@ const PalitoPreviewCard = ({
                 </div>
               </Col>
               <Col xs={5} className="pb-1 pe-1">
-                <div
-                  className={`d-flex align-items-center ${
-                    isEditing
-                      ? "justify-content-between"
-                      : "justify-content-start gap-1"
-                  }`}
-                >
-                  <strong>{"Prof. Total: "}</strong>
+                <div className="d-flex align-items-centerjustify-content-start gap-1">
+                  <span className="fw-bold" style={{ width: "120px" }}>
+                    {"Prof. Total: "}
+                  </span>
                   <span>
                     {isEditing ? (
                       <Form.Control
-                        style={{ width: "50px" }}
+                        style={{ width: "100px" }}
                         type="number"
                         size="sm"
                         value={
@@ -256,101 +240,216 @@ const PalitoPreviewCard = ({
 
         <hr />
 
-        {/* Geologia intercalada */}
-        <div>
-          <strong>Descrição Geológica:</strong>
-          <div
-            className="mt-2"
-            style={{ maxHeight: "50vh", overflowY: "auto" }}
-          >
-            {currentPalito.depths.map((depth, index) => {
-              const nextDepth = currentPalito.depths[index + 1];
-              const description = currentPalito.geology[index];
+        <Row>
+          {/* Descrição Geológica */}
+          <Col xs={10}>
+            <strong>Descrição Geológica:</strong>
+            <div
+              className="mt-2"
+              style={{ maxHeight: "50vh", overflowY: "auto" }}
+            >
+              {currentPalito.depths.map((depth, index) => {
+                const nextDepth = currentPalito.depths[index + 1];
+                const description = currentPalito.geology[index];
 
-              if (!nextDepth) return null; // Skip último depth
+                if (!nextDepth) return null; // Skip último depth
 
-              return (
-                <div key={index} className="border rounded mb-2 bg-light">
-                  <Row className="g-0 ps-3 mt-1">
-                    <Col sm={4} className="text-start">
-                      {"Início: "}
-                      {isEditing ? (
-                        <Form.Control
-                          style={{ width: "50px" }}
-                          type="number"
-                          size="sm"
-                          value={editedPalito?.depths[index] || "0"}
-                          onChange={(e) => {
-                            setEditedPalito((prev) => {
-                              if (!prev) return null;
-                              const newDepths = prev.depths.map((d, i) =>
-                                i === index
-                                  ? parseFloat(e.target.value) || 0
-                                  : d
-                              );
-                              return { ...prev, depths: newDepths };
-                            });
-                          }}
-                        ></Form.Control>
-                      ) : (
-                        <span className="fw-bold">{depth}m</span>
-                      )}
-                    </Col>
-                    <Col sm={4} className="text-start">
-                      {"Fim: "}
-                      {isEditing ? (
-                        <Form.Control
-                          style={{ width: "50px" }}
-                          type="number"
-                          size="sm"
-                          value={editedPalito?.depths[index + 1] || "0"}
-                          onChange={(e) => {
-                            setEditedPalito((prev) => {
-                              if (!prev) return null;
-                              const newDepths = prev.depths.map((d, i) =>
-                                i === index + 1
-                                  ? parseFloat(e.target.value) || 0
-                                  : d
-                              );
-                              return { ...prev, depths: newDepths };
-                            });
-                          }}
-                        ></Form.Control>
-                      ) : (
-                        <span className="fw-bold">{nextDepth}m</span>
-                      )}
-                    </Col>
-                  </Row>
-                  <Row className="g-0 ps-3">
-                    <Col xs={12} className="my-1 text-start text-muted small">
+                return (
+                  <div key={index} className="border rounded mb-2 bg-light">
+                    <Row className="g-0 ps-3 mt-1">
+                      <Col sm={4} className="text-start">
+                        <div className="d-flex align-items-start">
+                          <span className="pe-2">{"Início: "}</span>
+                          {isEditing ? (
+                            <Form.Control
+                              style={{ width: "50px", marginLeft: "10px" }}
+                              type="number"
+                              size="sm"
+                              value={editedPalito?.depths[index] || "0"}
+                              onChange={(e) => {
+                                setEditedPalito((prev) => {
+                                  if (!prev) return null;
+                                  const newDepths = prev.depths.map((d, i) =>
+                                    i === index
+                                      ? parseFloat(e.target.value) || 0
+                                      : d
+                                  );
+                                  return { ...prev, depths: newDepths };
+                                });
+                              }}
+                            ></Form.Control>
+                          ) : (
+                            <span className="fw-bold">{depth}m</span>
+                          )}
+                        </div>
+                      </Col>
+                      <Col sm={4} className="text-start">
+                        <div className="d-flex align-items-start">
+                          <span className="pe-2">{"Fim: "}</span>
+                          {isEditing ? (
+                            <Form.Control
+                              style={{ width: "50px", marginLeft: "10px" }}
+                              type="number"
+                              size="sm"
+                              value={editedPalito?.depths[index + 1] || "0"}
+                              onChange={(e) => {
+                                setEditedPalito((prev) => {
+                                  if (!prev) return null;
+                                  const newDepths = prev.depths.map((d, i) =>
+                                    i === index + 1
+                                      ? parseFloat(e.target.value) || 0
+                                      : d
+                                  );
+                                  return { ...prev, depths: newDepths };
+                                });
+                              }}
+                            ></Form.Control>
+                          ) : (
+                            <span className="fw-bold">{nextDepth}m</span>
+                          )}
+                        </div>
+                      </Col>
+                    </Row>
+                    <Row className="g-0 ps-3">
+                      <Col
+                        xs={12}
+                        className="my-1 text-start text-muted small pe-2"
+                      >
+                        {isEditing ? (
+                          <Form.Control
+                            type="text"
+                            as="textarea"
+                            size="sm"
+                            value={editedPalito?.geology[index] || "0"}
+                            onChange={(e) => {
+                              setEditedPalito((prev) => {
+                                if (!prev) return null;
+                                const newGeology = prev.geology.map((g, i) =>
+                                  i === index
+                                    ? e.target.value || "Sem descrição"
+                                    : g
+                                );
+                                return { ...prev, geology: newGeology };
+                              });
+                            }}
+                          ></Form.Control>
+                        ) : (
+                          description || "Sem descrição"
+                        )}
+                      </Col>
+                    </Row>
+                  </div>
+                );
+              })}
+            </div>
+          </Col>
+          {/* NSPTs */}
+          <Col xs={2}>
+            <strong>NSPT:</strong>
+            {/* No topo colocar a profundidade do primeiro, editável. Fazer parecido com as descrições geológicas, colocar profundidade e NSPT. Aqui só o NSPT é editável. NSPTs em uma profundidade superior à última profundidade da sondagem aparecem em uma cor diferente, indicando que não vão aparecer no palito */}
+            {/* Configuração do primeiro NSPT - editável */}
+            <div className="mt-2 mb-3 p-2 border rounded bg-light">
+              <div className="d-flex align-items-center justify-content-between">
+                <span className="small">Inicia em:</span>
+                {isEditing ? (
+                  <Form.Control
+                    type="number"
+                    size="sm"
+                    style={{ width: "60px" }}
+                    value={
+                      editedPalito?.nspt.start_depth ||
+                      currentPalito.nspt.start_depth
+                    }
+                    onChange={(e) => {
+                      setEditedPalito((prev) => {
+                        if (!prev) return null;
+                        return {
+                          ...prev,
+                          nspt: {
+                            ...prev.nspt,
+                            start_depth: parseFloat(e.target.value) || 0,
+                          },
+                        };
+                      });
+                    }}
+                  />
+                ) : (
+                  <span className="fw-bold">
+                    {currentPalito.nspt.start_depth}m
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Lista de NSPTs */}
+            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
+              {currentPalito.nspt.values.map((nsptValue, index) => {
+                const nsptDepth =
+                  currentPalito.nspt.start_depth +
+                  index * currentPalito.nspt.interval;
+                const maxDepth =
+                  currentPalito.depths[currentPalito.depths.length - 1];
+                const isOutOfRange = nsptDepth > maxDepth;
+
+                return (
+                  <div
+                    key={index}
+                    className={`border rounded mb-2 p-2 ${
+                      isOutOfRange
+                        ? "bg-warning-subtle border-warning"
+                        : "bg-light"
+                    }`}
+                  >
+                    <div className="d-flex align-items-center justify-content-between">
+                      <span
+                        className={`small ${
+                          isOutOfRange ? "text-warning-emphasis" : ""
+                        }`}
+                      >
+                        {nsptDepth}m:
+                      </span>
                       {isEditing ? (
                         <Form.Control
                           type="text"
-                          as="textarea"
                           size="sm"
-                          value={editedPalito?.geology[index] || "0"}
+                          style={{ width: "60px" }}
+                          value={editedPalito?.nspt.values[index] || nsptValue}
                           onChange={(e) => {
                             setEditedPalito((prev) => {
                               if (!prev) return null;
-                              const newGeology = prev.geology.map((g, i) =>
-                                i === index
-                                  ? e.target.value || "Sem descrição"
-                                  : g
-                              );
-                              return { ...prev, geology: newGeology };
+                              const newValues = [...prev.nspt.values];
+                              newValues[index] = e.target.value;
+                              return {
+                                ...prev,
+                                nspt: {
+                                  ...prev.nspt,
+                                  values: newValues,
+                                },
+                              };
                             });
                           }}
-                        ></Form.Control>
+                        />
                       ) : (
-                        description || "Sem descrição"
+                        <span
+                          className={`fw-bold ${
+                            isOutOfRange ? "text-warning-emphasis" : ""
+                          }`}
+                        >
+                          {nsptValue}
+                        </span>
                       )}
-                    </Col>
-                  </Row>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                    </div>
+                    {isOutOfRange && (
+                      <small className="text-warning-emphasis">
+                        Fora da sondagem
+                      </small>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Col>
+        </Row>
       </Card.Body>
     </Card>
   );

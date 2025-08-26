@@ -128,7 +128,7 @@ const DxfPage = ({ areas, extractedTexts }: DxfPageProps) => {
   return (
     <Container fluid>
       <Row className="justify-content-center">
-        <Col md={6} lg={4}>
+        <Col md={6} lg={5}>
           <Card>
             <Card.Header>
               <h3 className="mb-0">Gerador de Palitos DXF</h3>
@@ -206,7 +206,7 @@ const DxfPage = ({ areas, extractedTexts }: DxfPageProps) => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={6} lg={4}>
+        <Col md={6} lg={7}>
           <PalitoPreviewCard
             palitoData={palitoData}
             onUpdatePalito={handleUpdatePalito}
