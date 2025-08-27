@@ -4,7 +4,7 @@ import AppHeader from "./components/AppHeader";
 import DxfPage from "./components/DxfPage";
 import AppNavigation from "./components/AppNavigation";
 import { Col, Container, Row } from "react-bootstrap";
-import type { Area, PageTextData } from "./types";
+import type { Area, PageTextData, PalitoData } from "./types";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<"extraction" | "dxf">(
@@ -13,6 +13,7 @@ function App() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
+  const [palitoData, setPalitoData] = useState<PalitoData[]>([]);
 
   return (
     <Container fluid className="text-center px-xl-5">
@@ -39,7 +40,12 @@ function App() {
           setExtractedTexts={setExtractedTexts}
         />
       ) : (
-        <DxfPage areas={areas} extractedTexts={extractedTexts} />
+        <DxfPage
+          areas={areas}
+          extractedTexts={extractedTexts}
+          palitoData={palitoData}
+          setPalitoData={setPalitoData}
+        />
       )}
     </Container>
   );

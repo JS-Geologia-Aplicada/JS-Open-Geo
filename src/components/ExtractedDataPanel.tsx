@@ -1,3 +1,4 @@
+import { Table } from "react-bootstrap";
 import { type Area, type PageTextData } from "../types";
 import { formatPageNumbers } from "../utils/helpers";
 
@@ -35,8 +36,8 @@ const ExtractedDataPanel = ({
             className="data-table mb-3"
             style={{ maxHeight: "65vh", overflowY: "auto" }}
           >
-            <table className="table table-hover">
-              <thead>
+            <Table striped>
+              <thead className="sticky-top">
                 <tr>
                   <th scope="col" style={{ minWidth: "100px" }}>
                     Páginas
@@ -73,7 +74,7 @@ const ExtractedDataPanel = ({
                   );
                 })}
               </tbody>
-            </table>
+            </Table>
           </div>
         </>
       )}

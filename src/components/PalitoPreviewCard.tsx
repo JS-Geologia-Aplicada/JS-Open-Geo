@@ -350,33 +350,39 @@ const PalitoPreviewCard = ({
             {/* Configuração do primeiro NSPT - editável */}
             <div className="mt-2 mb-3 p-2 border rounded bg-light">
               <div className="d-flex align-items-center justify-content-between">
-                <span className="small">Inicia em:</span>
-                {isEditing ? (
-                  <Form.Control
-                    type="number"
-                    size="sm"
-                    style={{ width: "60px" }}
-                    value={
-                      editedPalito?.nspt.start_depth ||
-                      currentPalito.nspt.start_depth
-                    }
-                    onChange={(e) => {
-                      setEditedPalito((prev) => {
-                        if (!prev) return null;
-                        return {
-                          ...prev,
-                          nspt: {
-                            ...prev.nspt,
-                            start_depth: parseFloat(e.target.value) || 0,
-                          },
-                        };
-                      });
-                    }}
-                  />
+                {currentPalito.nspt.values.length === 0 ? (
+                  <span className="small">Não possui</span>
                 ) : (
-                  <span className="fw-bold">
-                    {currentPalito.nspt.start_depth}m
-                  </span>
+                  <>
+                    <span className="small">Inicia em:</span>
+                    isEditing ? (
+                    <Form.Control
+                      type="number"
+                      size="sm"
+                      style={{ width: "60px" }}
+                      value={
+                        editedPalito?.nspt.start_depth ||
+                        currentPalito.nspt.start_depth
+                      }
+                      onChange={(e) => {
+                        setEditedPalito((prev) => {
+                          if (!prev) return null;
+                          return {
+                            ...prev,
+                            nspt: {
+                              ...prev.nspt,
+                              start_depth: parseFloat(e.target.value) || 0,
+                            },
+                          };
+                        });
+                      }}
+                    />
+                    ) : (
+                    <span className="fw-bold">
+                      {currentPalito.nspt.start_depth}m
+                    </span>
+                    )
+                  </>
                 )}
               </div>
             </div>

@@ -16,10 +16,16 @@ import PalitoPreviewCard from "./PalitoPreviewCard";
 interface DxfPageProps {
   areas: Area[];
   extractedTexts: PageTextData[];
+  palitoData: PalitoData[];
+  setPalitoData: (palitoData: PalitoData[]) => void;
 }
 
-const DxfPage = ({ areas, extractedTexts }: DxfPageProps) => {
-  const [palitoData, setPalitoData] = useState<PalitoData[]>([]);
+const DxfPage = ({
+  areas,
+  extractedTexts,
+  palitoData,
+  setPalitoData,
+}: DxfPageProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error" | "warning";
@@ -120,8 +126,8 @@ const DxfPage = ({ areas, extractedTexts }: DxfPageProps) => {
 
   // Atualizar palito específico
   const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
-    setPalitoData((prev) =>
-      prev.map((palito, i) => (index === i ? updatedPalito : palito))
+    setPalitoData(
+      palitoData.map((palito, i) => (index === i ? updatedPalito : palito))
     );
   };
 
