@@ -57,8 +57,8 @@ export type DataType = (typeof DATA_TYPES)[number];
 export const DATA_TYPE_LABELS: Record<DataType, string> = {
   default: "Padrão",
   hole_id: "ID da Sondagem",
-  x: "Coordenada X",
-  y: "Coordenada Y",
+  x: "Coordenada E (X)",
+  y: "Coordenada N (Y)",
   z: "Cota",
   depth: "Profundidade Total",
   date: "Data",

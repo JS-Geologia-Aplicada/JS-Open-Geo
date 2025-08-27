@@ -8,7 +8,7 @@ import {
   type DataType,
   type ExtractionType,
 } from "../types";
-import { Tooltip } from "bootstrap";
+import { Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 interface AreaItemProps {
   hasFile: boolean;
@@ -42,21 +42,6 @@ const AreaItem: React.FC<AreaItemProps> = ({
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [editName, setEditName] = useState(area.name);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Inicializando os tooltips deste componente
-  useEffect(() => {
-    const tooltips = Array.from(
-      document.querySelectorAll('[data-bs-toggle="tooltip"]')
-    );
-    tooltips.forEach((el) => new Tooltip(el));
-    return () => {
-      tooltips.forEach((el) => {
-        const tooltip = Tooltip.getInstance(el);
-        if (tooltip) tooltip.dispose();
-      });
-    };
-  }, [area]);
-
   useEffect(() => {
     if (isEditingName && inputRef.current) {
       inputRef.current.focus();
@@ -165,36 +150,52 @@ const AreaItem: React.FC<AreaItemProps> = ({
                   {area.name}
                 </span>
               </div>
-              <button
-                className="menu-btn menu-btn-cta"
-                disabled={!hasFile}
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                data-bs-title="Selecionar área"
-                onClick={handleStartSelection}
+              <OverlayTrigger
+                overlay={
+                  <Tooltip style={{ position: "fixed" }}>
+                    Selecionar área
+                  </Tooltip>
+                }
               >
-                <TextSelect size={16} />
-              </button>
-              {area.coordinates && (
-                <button
-                  className="menu-btn menu-btn-alert"
-                  onClick={handleClearArea}
-                  data-bs-toggle="tooltip"
-                  data-bs-placement="top"
-                  data-bs-title="Limpar seleção"
+                <Button
+                  variant="menu"
+                  className="btn-menu-cta"
+                  disabled={!hasFile}
+                  onClick={handleStartSelection}
                 >
-                  <Eraser size={16} />
-                </button>
+                  <TextSelect size={16} />
+                </Button>
+              </OverlayTrigger>
+              {area.coordinates && (
+                <OverlayTrigger
+                  overlay={
+                    <Tooltip style={{ position: "fixed" }}>
+                      Limpar seleção
+                    </Tooltip>
+                  }
+                >
+                  <Button
+                    variant="menu"
+                    className="btn-menu-alert"
+                    onClick={handleClearArea}
+                  >
+                    <Eraser size={16} />
+                  </Button>
+                </OverlayTrigger>
               )}
-              <button
-                className="menu-btn menu-btn-warning area-delete"
-                onClick={handleDeleteArea}
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                data-bs-title="Excluir área"
+              <OverlayTrigger
+                overlay={
+                  <Tooltip style={{ position: "fixed" }}>Excluir área</Tooltip>
+                }
               >
-                <Trash size={14} />
-              </button>
+                <Button
+                  variant="menu"
+                  className="btn-menu-warning area-delete"
+                  onClick={handleDeleteArea}
+                >
+                  <Trash size={14} />
+                </Button>
+              </OverlayTrigger>
             </>
           )}
         </div>
@@ -222,60 +223,63 @@ const AreaItem: React.FC<AreaItemProps> = ({
               ))}
             </select>
           </div>
-
-          <div
-            className="form-check form-switch"
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-            data-bs-title="Extrair textos com OCR"
-          >
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id={`ocr-${area.id}`}
-              disabled={extractionMode !== "both"}
-              checked={area.ocr}
-              onChange={(e) => onToggleAreaOCR(area.id, e.target.checked)}
-            />
-            <label className="form-check-label small">OCR</label>
-          </div>
-
-          <div
-            className="form-check form-switch"
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-            data-bs-title="Pular páginas sem texto nesta área"
-          >
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id={`mandatory-${area.id}`}
-              checked={area.isMandatory}
-              onChange={(e) => onToggleMandatory(area.id, e.target.checked)}
-            />
-            <label className="form-check-label small">Obrig.</label>
-          </div>
-
-          <div
-            className="form-check form-switch"
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-            data-bs-title={
-              areas.find((a) => a.dataType === "hole_id")
-                ? "Usar um único valor por sondagem"
-                : "Adicione uma área como ID da Sondagem para utilizar essa opção"
+          <OverlayTrigger
+            overlay={
+              <Tooltip style={{ position: "fixed" }}>
+                Extrair textos com OCR
+              </Tooltip>
             }
           >
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id={`repeat-${area.id}`}
-              checked={area.repeatInPages}
-              onChange={(e) => onToggleRepeat(area.id, e.target.checked)}
-              disabled={!areas.find((a) => a.dataType === "hole_id")}
-            />
-            <label className="form-check-label small">Único</label>
-          </div>
+            <Form>
+              <Form.Check
+                type="switch"
+                label="OCR"
+                id={`ocr-${area.id}`}
+                disabled={extractionMode !== "both"}
+                checked={area.ocr}
+                onChange={(e) => onToggleAreaOCR(area.id, e.target.checked)}
+              />
+            </Form>
+          </OverlayTrigger>
+
+          <OverlayTrigger
+            overlay={
+              <Tooltip style={{ position: "fixed" }}>
+                Pular páginas sem texto nesta área
+              </Tooltip>
+            }
+          >
+            <Form>
+              <Form.Check
+                type="switch"
+                label="Obrig."
+                id={`mandatory-${area.id}`}
+                checked={area.isMandatory}
+                onChange={(e) => onToggleMandatory(area.id, e.target.checked)}
+              />
+            </Form>
+          </OverlayTrigger>
+
+          <OverlayTrigger
+            overlay={
+              <Tooltip style={{ position: "fixed" }}>
+                {areas.find((a) => a.dataType === "hole_id")
+                  ? "Usar um único valor por sondagem"
+                  : "Adicione uma área como ID da Sondagem para utilizar essa opção"}
+              </Tooltip>
+            }
+          >
+            <Form>
+              <Form.Check
+                type="switch"
+                label="Único"
+                id={`repeat-${area.id}`}
+                checked={area.repeatInPages}
+                onChange={(e) => onToggleRepeat(area.id, e.target.checked)}
+                disabled={!areas.find((a) => a.dataType === "hole_id")}
+              />
+            </Form>
+          </OverlayTrigger>
         </div>
       </div>
     </>

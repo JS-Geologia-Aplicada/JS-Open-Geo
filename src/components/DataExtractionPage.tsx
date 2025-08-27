@@ -4,6 +4,7 @@ import PdfViewer, { type PdfViewerRef } from "./PdfViewer";
 import Menu from "./Menu";
 import {
   DATA_TYPE_LABELS,
+  EASY_ADD_TYPES,
   MANDATORY_TYPES,
   REPEATING_TYPES,
   type Area,
@@ -36,6 +37,7 @@ interface DataExtractionPageProps {
   setSelectedFile: (file: File | null) => void;
   extractedTexts: PageTextData[];
   setExtractedTexts: (texts: PageTextData[]) => void;
+  onShowHelp: () => void;
 }
 
 function DataExtractionPage({
@@ -45,6 +47,7 @@ function DataExtractionPage({
   setSelectedFile,
   extractedTexts,
   setExtractedTexts,
+  onShowHelp,
 }: DataExtractionPageProps) {
   // ref do pdfviewer para poder chamar função
   const pdfViewerRef = useRef<PdfViewerRef>(null);
@@ -78,6 +81,28 @@ function DataExtractionPage({
   const onDeleteArea = (areaId: string) => {
     setAreas(deleteArea(areas, areaId));
   };
+  const handleDeleteAllAreas = () => {
+    setAreas([]);
+  };
+  const handleCreateMissingAreas = () => {
+    const typesToAdd = EASY_ADD_TYPES.filter(
+      (type) => !areas.find((area) => area.dataType === type)
+    );
+
+    if (areas.length + typesToAdd.length > 15) {
+      alert("Não é possível adicionar todas - excederia o limite de 15 áreas");
+      return;
+    }
+
+    let currentAreas = [...areas];
+    const isOCR = extractionMode === "ocr";
+    typesToAdd.forEach((type) => {
+      currentAreas = addNewArea(currentAreas, isOCR, type);
+    });
+    // Adiciona todas de uma vez
+    setAreas(currentAreas);
+  };
+
   const onRenameArea = (areaId: string, newName: string) => {
     setAreas(renameArea(areas, areaId, newName));
   };
@@ -325,8 +350,10 @@ function DataExtractionPage({
                 onStartAreaSelection={startAreaSelection}
                 onClearArea={onClearArea}
                 onDeleteArea={onDeleteArea}
+                onDeleteAllAreas={handleDeleteAllAreas}
                 onRenameArea={onRenameArea}
                 onAddNewArea={onAddNewArea}
+                onCreateMissingAreas={handleCreateMissingAreas}
                 onLoadPreset={onLoadPreset}
                 onDragEnd={handleDragEnd}
                 onToggleMandatory={handleToggleMandatory}
@@ -337,6 +364,7 @@ function DataExtractionPage({
                 hasFile={!!selectedFile}
                 extractionMode={extractionMode}
                 onChangeExtractionMode={handleChangeExtractionMode}
+                onShowHelp={onShowHelp}
               />
             }
             extractMenu={

@@ -5,6 +5,7 @@ import DxfPage from "./components/DxfPage";
 import AppNavigation from "./components/AppNavigation";
 import { Col, Container, Row } from "react-bootstrap";
 import type { Area, PageTextData, PalitoData } from "./types";
+import HelpModal from "./components/HelpModal";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<"extraction" | "dxf">(
@@ -15,8 +16,28 @@ function App() {
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
   const [palitoData, setPalitoData] = useState<PalitoData[]>([]);
 
+  // Lidando com o Modal de ajuda
+  const [openHelpOnLoad, setOpenHelpOnLoad] = useState(() => {
+    const saved = localStorage.getItem("showHelpOnLoad");
+    return saved !== "false";
+  });
+  const [showHelp, setShowHelp] = useState(openHelpOnLoad);
+  const handleShowHelp = () => {
+    setShowHelp(true);
+  };
+  const toggleShowHelpOnLoad = (show: boolean) => {
+    setOpenHelpOnLoad(show);
+    localStorage.setItem("showHelpOnLoad", show.toString());
+  };
+
   return (
     <Container fluid className="text-center px-xl-5">
+      <HelpModal
+        showOnLoad={openHelpOnLoad}
+        onToggleShowOnLoad={toggleShowHelpOnLoad}
+        show={showHelp}
+        setShow={setShowHelp}
+      />
       <Row className="justify-content-center">
         <Col>
           <AppHeader />
@@ -38,6 +59,7 @@ function App() {
           setSelectedFile={setSelectedFile}
           extractedTexts={extractedTexts}
           setExtractedTexts={setExtractedTexts}
+          onShowHelp={handleShowHelp}
         />
       ) : (
         <DxfPage

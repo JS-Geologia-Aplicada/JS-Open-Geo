@@ -44,80 +44,80 @@
   color: #666666 !important;
 }
 
-.menu-btn {
-  background: transparent;
-  border: 1px solid #e0e0e0;
+.btn-menu {
+  background: var(--btn-menu-bg, transparent) !important;
+  border: 1px solid var(--btn-menu-border-color, #e0e0e0) !important;
   border-radius: 3px;
   padding: 8px;
   transition: all 0.2s ease;
-  color: #666;
+  color: var(--btn-menu-color, #666) !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.4s ease;
 }
 
-.menu-btn:hover:not(:disabled) {
-  background: #f1f3f4;
-  border-color: #495057;
-  color: #000;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.btn-menu:disabled {
+  background: var(--btn-menu-disabled-bg, #6c757d);
+  border-color: var(--btn-menu-disabled-border, #6c757d);
+  opacity: var(--btn-menu-disabled-opacity, 0.6);
 }
 
-.menu-btn.menu-btn-cta {
-  background: #007bff;
-  border-color: #007bff;
-  color: #fff;
+.btn-menu:hover:not(:disabled) {
+  background: var(--btn-menu-hover-bg, #f1f3f4) !important;
+  border-color: var(--btn-menu-hover-border, #495057);
+  color: var(--btn-menu-hover-color, #000) !important;
+  transform: var(--btn-menu-hover-transform, translateY(-1px));
+  box-shadow: var(--btn-menu-hover-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-.menu-btn.menu-btn-cta:hover {
-  background: #0056b3;
-  border-color: #004085;
-  color: white;
+.btn-menu-cta {
+  --btn-menu-bg: #007bff;
+  --btn-menu-border-color: #007bff;
+  --btn-menu-color: #fff;
 }
 
-.menu-btn.menu-btn-export {
-  background: transparent;
-  border-color: #00912e;
-  color: #00912e;
+.btn-menu-cta:hover {
+  --btn-menu-hover-bg: #0056b3;
+  --btn-menu-hover-border: #004085;
+  --btn-menu-hover-color: white;
 }
 
-.menu-btn.menu-btn-export:hover {
-  background: #00912e10;
-  border-color: #00912e;
-  color: #00912e;
+.btn-menu-export {
+  --btn-menu-bg: transparent;
+  --btn-menu-border-color: #00912e;
+  --btn-menu-color: #00912e;
 }
 
-.menu-btn.menu-btn-cta:disabled {
-  background: #6c757d;
-  border-color: #6c757d;
-  opacity: 0.6;
+.btn-menu-export:hover {
+  --btn-menu-hover-bg: #00912e10;
+  --btn-menu-hover-border: #00912e;
+  --btn-menu-hover-color: #00912e;
 }
 
-.menu-btn.menu-btn-warning {
-  color: #dc3545;
-  border-color: #dc3545;
+.btn-menu-warning {
+  --btn-menu-color: #dc3545;
+  --btn-menu-border-color: #dc3545;
 }
 
-.menu-btn.menu-btn-warning:hover {
-  background: #dc3545;
-  border-color: #dc3545;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+.btn-menu-warning:hover {
+  --btn-menu-hover-bg: #dc3545;
+  --btn-menu-hover-border: #dc3545;
+  --btn-menu-hover-color: white;
+  --btn-menu-hover-transform: translateY(-1px);
+  --btn-menu-hover-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
 }
 
-.menu-btn.menu-btn-alert {
-  color: #ffc107;
-  border-color: #ffc107;
-  background: transparent;
+.btn-menu-alert {
+  --btn-menu-color: #ffc107;
+  --btn-menu-border-color: #ffc107;
+  --btn-menu-bg: transparent;
 }
 
-.menu-btn.menu-btn-alert:hover {
-  background: #ffc107;
-  border-color: #ffc107;
-  color: #212529;
+.btn-menu-alert:hover {
+  --btn-menu-hover-bg: #ffc107;
+  --btn-menu-hover-border: #ffc107;
+  --btn-menu-hover-color: #212529;
 }
 
 .areas-container {

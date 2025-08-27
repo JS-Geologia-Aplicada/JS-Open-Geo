@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import {
   DATA_TYPE_LABELS,
   EASY_ADD_TYPES,
@@ -11,16 +11,25 @@ import UploadFile from "./UploadFile";
 import PresetManager from "./PresetManager";
 import { Folder, HelpCircle, Plus, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import HelpModal from "./HelpModal";
-import { Modal, Tooltip } from "bootstrap";
+import {
+  Button,
+  ButtonGroup,
+  Dropdown,
+  Form,
+  Overlay,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
 
 interface MenuProps {
   onFileSelect: (file: File) => void;
   onStartAreaSelection: (areaID: string) => void;
   onDeleteArea: (areaId: string) => void;
+  onDeleteAllAreas: () => void;
   onRenameArea: (areaId: string, newName: string) => void;
   onClearArea: (areaId: string) => void;
   onAddNewArea: (type?: DataType) => void;
+  onCreateMissingAreas: () => void;
   onLoadPreset: (areas: Area[]) => void;
   onDragEnd: (result: any) => void;
   onToggleMandatory: (areaId: string, mandatory: boolean) => void;
@@ -31,15 +40,18 @@ interface MenuProps {
   hasFile: boolean;
   extractionMode: ExtractionType;
   onChangeExtractionMode: (mode: ExtractionType) => void;
+  onShowHelp: () => void;
 }
 
 function Menu({
   onFileSelect,
   onStartAreaSelection,
   onDeleteArea,
+  onDeleteAllAreas,
   onRenameArea,
   onClearArea,
   onAddNewArea,
+  onCreateMissingAreas,
   onLoadPreset,
   onDragEnd,
   onToggleMandatory,
@@ -50,141 +62,96 @@ function Menu({
   hasFile,
   extractionMode,
   onChangeExtractionMode: setExtractionMode,
+  onShowHelp,
 }: MenuProps) {
-  // Inicializando os tooltips
-  useEffect(() => {
-    const tooltips = Array.from(
-      document.querySelectorAll('[data-bs-toggle="tooltip"]')
-    );
-    tooltips.forEach((el) => new Tooltip(el));
-
-    return () => {
-      tooltips.forEach((el) => {
-        const tooltip = Tooltip.getInstance(el);
-        if (tooltip) tooltip.dispose();
-      });
-    };
-  }, [areas.length]);
-
   const [isPresetManagerOpen, setIsPresetManagerOpen] =
     useState<boolean>(false);
   const openPresetManager = () => {
     setIsPresetManagerOpen(true);
   };
 
-  const [openHelpOnLoad, setOpenHelpOnLoad] = useState(() => {
-    const saved = localStorage.getItem("showHelpOnLoad");
-    return saved !== "false";
-  });
-  useEffect(() => {
-    const showModal = () => {
-      const modal = new Modal("#helpModal");
-      modal.show();
-    };
-    if (openHelpOnLoad) {
-      if (document.readyState === "complete") {
-        showModal();
-      } else {
-        window.addEventListener("load", showModal);
-        return () => window.removeEventListener("load", showModal);
-      }
-    }
-  }, []);
-  const toggleShowHelpOnLoad = (show: boolean) => {
-    setOpenHelpOnLoad(show);
-    localStorage.setItem("showHelpOnLoad", show.toString());
-  };
-
   const clearAllAreas = () => {
     if (confirm("Deseja remover todas as áreas?")) {
-      areas.forEach((area) => {
-        onDeleteArea(area.id);
-      });
+      onDeleteAllAreas();
     }
   };
 
-  const onAddAllAreas = () => {
-    EASY_ADD_TYPES.forEach((type) => {
-      if (!areas.find((area) => area.dataType === type)) {
-        onAddNewArea(type);
-      }
-    });
-  };
+  const helpRef = useRef(null);
+  const helpTarget = useRef(null);
+  const [showHelpTooltip, setShowHelpTooltip] = useState(false);
 
   return (
     <>
       <UploadFile onFileSelect={onFileSelect} />
-
-      <div className="modal fade" id="helpModal" tabIndex={-1}>
-        <HelpModal
-          showOnLoad={openHelpOnLoad}
-          onToggleShowOnLoad={toggleShowHelpOnLoad}
-        />
-      </div>
       <div className="d-flex justify-content-end gap-2 my-3">
-        <select
+        <Form.Select
           className="form-select form-select-sm"
           defaultValue={"text"}
           onChange={(e) => setExtractionMode(e.target.value as ExtractionType)}
         >
           <option value="text">Extração de texto</option>
-          <option value="ocr">Extração OCR (em implementação)</option>
+          <option value="ocr">Extração OCR</option>
           <option value="both">Escolha por área</option>
-        </select>
+        </Form.Select>
         {areas.length > 0 && (
-          <button
-            data-bs-toggle="tooltip"
-            data-bs-placement="top"
-            data-bs-title="Excluir todas as áreas"
-            className="menu-btn menu-btn-warning"
-            onClick={clearAllAreas}
+          <OverlayTrigger
+            overlay={
+              <Tooltip style={{ position: "fixed" }}>
+                {" "}
+                Excluir todas as áreas
+              </Tooltip>
+            }
           >
-            <X size={24} />
-          </button>
+            <Button
+              variant="menu"
+              className="btn-menu-warning"
+              onClick={clearAllAreas}
+            >
+              <X size={24} />
+            </Button>
+          </OverlayTrigger>
         )}
-        <span
-          data-bs-placement="top"
-          data-bs-toggle="tooltip"
-          data-bs-title="Ajuda"
+        <Button
+          variant="menu"
+          onClick={onShowHelp}
+          ref={helpTarget}
+          onMouseEnter={() => setShowHelpTooltip(true)}
+          onMouseLeave={() => setShowHelpTooltip(false)}
         >
-          <button
-            className="menu-btn"
-            data-bs-toggle="modal"
-            data-bs-target="#helpModal"
-          >
-            <HelpCircle size={24} />
-          </button>
-        </span>
-        <button
-          data-bs-title="Presets"
-          data-bs-toggle="tooltip"
-          data-bs-target="tooltip"
-          className="menu-btn"
-          onClick={openPresetManager}
+          <HelpCircle size={24} />
+        </Button>
+        <Overlay ref={helpRef} target={helpTarget} show={showHelpTooltip}>
+          <Tooltip placement="top" style={{ position: "fixed" }}>
+            Ajuda
+          </Tooltip>
+        </Overlay>
+        <OverlayTrigger
+          overlay={<Tooltip style={{ position: "fixed" }}>Presets</Tooltip>}
         >
-          <Folder size={24} />
-        </button>
-        <div className="btn-group">
-          <button
-            type="button"
-            data-bs-toggle="tooltip"
-            data-bs-target="tooltip"
-            data-bs-trigger="hover"
-            data-bs-title="Adicionar área"
-            className="menu-btn"
-            onClick={() => onAddNewArea()}
+          <Button variant="menu" onClick={openPresetManager}>
+            <Folder size={24} />
+          </Button>
+        </OverlayTrigger>
+        <Dropdown as={ButtonGroup}>
+          <OverlayTrigger
+            overlay={
+              <Tooltip style={{ position: "fixed" }}>Adicionar área</Tooltip>
+            }
           >
-            <Plus size={24} />
-          </button>
-          <button
-            className="menu-btn dropdown-toggle dropdown-toggle-split"
+            <Button type="button" variant="menu" onClick={() => onAddNewArea()}>
+              <Plus size={24} />
+            </Button>
+          </OverlayTrigger>
+          <Dropdown.Toggle
+            split
+            variant="menu"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
             <span className="visually-hidden">Toggle Dropdown</span>
-          </button>
-          <ul
+          </Dropdown.Toggle>
+          <Dropdown.Menu
             className="dropdown-menu"
             id="add-area-dropdown"
             style={{ zIndex: 1001 }}
@@ -193,33 +160,26 @@ function Menu({
               (type) => !areas.find((area) => area.dataType === type)
             ).map((type, index) => {
               return (
-                <li key={`list-item${index}`}>
-                  <button
-                    className="dropdown-item"
-                    type="button"
-                    data-bs-dismiss="dropdown"
-                    onClick={() => onAddNewArea(type)}
-                  >
-                    {DATA_TYPE_LABELS[type]}
-                  </button>
-                </li>
+                <Dropdown.Item
+                  key={`list-item${index}`}
+                  onClick={() => onAddNewArea(type)}
+                >
+                  {DATA_TYPE_LABELS[type]}
+                </Dropdown.Item>
               );
             })}
-            <div className="dropdown-divider"></div>
+            <Dropdown.Divider />
 
-            <li>
-              <button
-                className="dropdown-item"
-                onClick={onAddAllAreas}
-                disabled={EASY_ADD_TYPES.some((type) =>
-                  areas.find((area) => area.dataType === type)
-                )}
-              >
-                Criar todos ausentes
-              </button>
-            </li>
-          </ul>
-        </div>
+            <Dropdown.Item
+              onClick={onCreateMissingAreas}
+              disabled={EASY_ADD_TYPES.every((type) =>
+                areas.find((area) => area.dataType === type)
+              )}
+            >
+              Criar todos ausentes
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
       </div>
       {areas.length === 0 && (
         <p className="text-muted">Adicione uma área para começar!</p>
