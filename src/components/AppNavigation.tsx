@@ -9,7 +9,13 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
   return (
     <Navbar className="border-bottom mb-2">
       <Container fluid className="px-4">
-        <Navbar.Brand className="text-dark fw-bold">JS Open Geo</Navbar.Brand>
+        <Navbar.Brand className="text-dark fw-bold">
+          <img
+            src="js_open_geo_logo.png"
+            alt="JS OpenGeo"
+            style={{ height: "40px" }}
+          />
+        </Navbar.Brand>
         <Nav className="mx-auto">
           <Nav.Link
             active={currentPage === "extraction"}

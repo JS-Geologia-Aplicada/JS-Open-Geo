@@ -72,7 +72,7 @@ const AppHeader = () => {
                 href="https://js-geologia-aplicada.github.io/JS-Open-Geo/"
                 target="_blank"
               >
-                Open Geo
+                JS OpenGeo
               </Nav.Link>
               <Nav.Link href="https://www.jsgeo.com.br/cursos" target="_blank">
                 Cursos
