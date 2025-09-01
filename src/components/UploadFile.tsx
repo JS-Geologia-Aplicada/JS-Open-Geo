@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { PDFDocument } from "pdf-lib";
+import { useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { toast } from "react-toastify";
 
 interface UploadFileProps {
   onFileSelect: (file: File) => void;
@@ -7,54 +9,80 @@ interface UploadFileProps {
 // Limite de 100MB
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
-type FeedbackType = "success" | "error" | null;
+const mergeFiles = async (files: File[]): Promise<File> => {
+  const mergedPdf = await PDFDocument.create();
+  for (const file of files) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await PDFDocument.load(arrayBuffer);
+    const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+    pages.forEach((page) => mergedPdf.addPage(page));
+  }
 
-function UploadFile({ onFileSelect }: UploadFileProps) {
-  const [feedback, setFeedback] = useState<{
-    type: FeedbackType;
-    message: string;
-  } | null>(null);
+  const mergedPdfSave = await mergedPdf.save();
+  const mergedBlob = new Blob([mergedPdfSave], { type: "application/pdf" });
+
+  return new File([mergedBlob], "PDFs-Unidos.pdf", { type: "application/pdf" });
+};
+
+const UploadFile = ({ onFileSelect }: UploadFileProps) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isMerging, setIsMerging] = useState(false);
 
   const handleFileChange = async (files: any[]) => {
-    if (files) {
-      const file = files[0];
+    let file;
 
-      const magicBytesResult = await validatePDFMagicBytes(file);
-      if (!magicBytesResult.isValid) {
-        setFeedback({
-          type: "error",
-          message: `${magicBytesResult.error} - O arquivo pode estar corrompido ou não ser um PDF real.`,
-        });
-        return;
+    if (files) {
+      if (files.length > 1) {
+        setIsMerging(true);
+        const validFiles: File[] = [];
+        const invalidFileNames: string[] = [];
+        for (const file of files) {
+          const magicBytesResult = await validatePDFMagicBytes(file);
+          if (magicBytesResult.isValid) validFiles.push(file);
+          else invalidFileNames.push(file.name);
+        }
+        if (validFiles.length > 0) {
+          file =
+            validFiles.length === 1
+              ? validFiles[0]
+              : await mergeFiles(validFiles);
+          if (invalidFileNames.length === 0) {
+            toast.success(`${validFiles.length} PDFs carregados com sucesso`);
+          } else {
+            toast.warn(
+              `${validFiles.length} PDFs válidos carregados. ${
+                invalidFileNames.length
+              } PDF${
+                invalidFileNames.length > 1 && "s"
+              } inválidos: ${invalidFileNames.join(", ")}`
+            );
+          }
+        } else {
+          toast.error("Arquivos inválidos");
+        }
+        setIsMerging(false);
+      } else {
+        file = files[0];
+
+        const magicBytesResult = await validatePDFMagicBytes(file);
+        if (!magicBytesResult.isValid) {
+          toast.error(
+            `${magicBytesResult.error} - O arquivo pode estar corrompido ou não ser um PDF real.`
+          );
+          return;
+        }
+        toast.success(
+          `PDF "${file.name}" carregado com sucesso! (${(
+            file.size /
+            1024 /
+            1024
+          ).toFixed(2)} MB)`
+        );
       }
 
       setUploadedFile(file);
-      setFeedback({
-        type: "success",
-        message: `PDF "${file.name}" carregado com sucesso! (${(
-          file.size /
-          1024 /
-          1024
-        ).toFixed(2)} MB)`,
-      });
-
       onFileSelect(file);
     }
-  };
-
-  // Auto-hide success message after 5 seconds
-  useEffect(() => {
-    if (feedback?.type === "success") {
-      const timer = setTimeout(() => {
-        setFeedback(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [feedback]);
-
-  const closeFeedback = () => {
-    setFeedback(null);
   };
 
   const validatePDFMagicBytes = async (
@@ -107,33 +135,27 @@ function UploadFile({ onFileSelect }: UploadFileProps) {
 
       // Verificar tipo de erro
       if (errors.some((e: any) => e.code === "file-invalid-type")) {
-        setFeedback({
-          type: "error",
-          message: `Arquivo "${file.name}" não é um PDF válido. Apenas arquivos PDF são permitidos!`,
-        });
+        toast.error(
+          `Arquivo "${file.name}" não é um PDF válido. Apenas arquivos PDF são permitidos!`
+        );
       } else if (errors.some((e: any) => e.code === "file-too-large")) {
-        setFeedback({
-          type: "error",
-          message: `Arquivo "${
+        toast.error(
+          `Arquivo "${
             file.name
           }" muito grande! Limite máximo: 100MB. Seu arquivo: ${(
             file.size /
             1024 /
             1024
-          ).toFixed(1)}MB`,
-        });
+          ).toFixed(1)}MB`
+        );
       } else if (errors.some((e: any) => e.code === "too-many-files")) {
-        setFeedback({
-          type: "error",
-          message: "Apenas um arquivo por vez é permitido!",
-        });
+        toast.error("Limite de 20 arquivos ultrapassado");
       } else {
-        setFeedback({
-          type: "error",
-          message: `Erro ao carregar "${file.name}": ${
+        toast.error(
+          `Erro ao carregar "${file.name}": ${
             errors[0]?.message || "Arquivo inválido"
-          }`,
-        });
+          }`
+        );
       }
     }
   };
@@ -171,7 +193,6 @@ function UploadFile({ onFileSelect }: UploadFileProps) {
       accept: { "application/pdf": [".pdf"] },
       onDropAccepted: handleFileChange,
       onDropRejected: handleRejectedFiles,
-      maxFiles: 1,
       maxSize: MAX_FILE_SIZE,
     });
 
@@ -187,29 +208,16 @@ function UploadFile({ onFileSelect }: UploadFileProps) {
 
   return (
     <div>
-      {/* Bootstrap Alert para feedback */}
-      {feedback && (
-        <div
-          className={`alert alert-${
-            feedback.type === "success" ? "success" : "danger"
-          } alert-dismissible fade show`}
-          role="alert"
-        >
-          <strong>{feedback.type === "success" ? "Sucesso!" : "Erro!"}</strong>{" "}
-          {feedback.message}
-          <button
-            type="button"
-            className="btn-close"
-            onClick={closeFeedback}
-            aria-label="Close"
-          ></button>
-        </div>
-      )}
       {/* Caixa de drag n drop */}
       <div className="container">
         <div {...getRootProps({ style })}>
-          <input {...getInputProps()} />
-          {uploadedFile ? (
+          <input {...getInputProps()} disabled={isMerging} />
+          {isMerging ? (
+            <div>
+              <span className="spinner-border spinner-border-sm me-1" />
+              Unindo arquivos...
+            </div>
+          ) : uploadedFile ? (
             <div style={{ color: "#4caf50", textAlign: "center" }}>
               <p
                 style={{
@@ -236,6 +244,6 @@ function UploadFile({ onFileSelect }: UploadFileProps) {
       </div>
     </div>
   );
-}
+};
 
 export default UploadFile;

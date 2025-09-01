@@ -6,6 +6,8 @@ import AppNavigation from "./components/AppNavigation";
 import { Col, Container, Row } from "react-bootstrap";
 import type { Area, PageTextData, PalitoData } from "./types";
 import HelpModal from "./components/HelpModal";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<"extraction" | "dxf">(
@@ -32,6 +34,11 @@ function App() {
 
   return (
     <Container fluid className="text-center px-xl-5">
+      <ToastContainer
+        position="top-right"
+        autoClose={6000}
+        hideProgressBar={false}
+      />
       <HelpModal
         showOnLoad={openHelpOnLoad}
         onToggleShowOnLoad={toggleShowHelpOnLoad}
