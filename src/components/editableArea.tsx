@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Area, SelectionArea } from "../types";
 
 interface EditableAreaProps {
@@ -63,7 +63,7 @@ const EditableArea = ({
   const [tempCoords, setTempCoords] = useState<SelectionArea | null>(
     area.coordinates
   );
-  const [isDragging, setIsDragging] = useState(false);
+  //   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     setTempCoords(area.coordinates);
@@ -95,10 +95,10 @@ const EditableArea = ({
     const handleMouseUp = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      setIsDragging(false);
+      //   setIsDragging(false);
     };
 
-    setIsDragging(true);
+    // setIsDragging(true);
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
@@ -165,7 +165,7 @@ const EditableArea = ({
     return newCoords;
   };
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
+  const handleStartEdit = () => {
     console.log("double click: área " + area.id);
     if (!isEditing) {
       onStartEdit(area.id);
@@ -248,7 +248,7 @@ const EditableArea = ({
           zIndex: 10,
         }}
         title={area.name}
-        onClick={handleDoubleClick}
+        onClick={handleStartEdit}
       ></div>
       {renderResizeHandles()}
     </>
