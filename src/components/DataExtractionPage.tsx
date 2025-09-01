@@ -115,9 +115,17 @@ function DataExtractionPage({
     setActiveAreaId(areaId);
     setIsSelectionActive(true);
   };
-  const finishAreaSelection = (coords: SelectionArea) => {
-    if (activeAreaId) {
-      setAreas(updateAreaCoordinates(areas, activeAreaId, coords));
+  const finishAreaSelection = (
+    coords: SelectionArea,
+    resizedAreaId?: string
+  ) => {
+    const areaId = resizedAreaId
+      ? resizedAreaId
+      : activeAreaId
+      ? activeAreaId
+      : null;
+    if (areaId) {
+      setAreas(updateAreaCoordinates(areas, areaId, coords));
     }
     setIsSelectionActive(false);
     setActiveAreaId(null);
