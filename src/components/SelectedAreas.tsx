@@ -1,37 +1,59 @@
-import type { Area } from "../types";
+import { useState } from "react";
+import type { Area, SelectionArea } from "../types";
+import EditableArea from "./editableArea";
 
 interface SelectedAreasProps {
   areas: Area[];
   zoomScale: number;
   activeAreaId: string | null;
+  onChangeCoords: (newCoords: SelectionArea, areaId: string) => void;
 }
 
 const SelectedAreas: React.FC<SelectedAreasProps> = ({
   areas,
   zoomScale,
   activeAreaId,
+  onChangeCoords: onConfirmNewCoords,
 }) => {
+  const [editingAreaId, setEditingAreaId] = useState<string | null>(null);
+  const [latestTempCoords, setLatestTempCoords] =
+    useState<SelectionArea | null>(null);
+
+  const handleTempCoordsChange = (areaId: string, coords: SelectionArea) => {
+    if (areaId === editingAreaId) {
+      setLatestTempCoords(coords);
+    }
+  };
+
+  const handleStartEdit = (areaId: string) => {
+    if (editingAreaId && editingAreaId !== areaId && latestTempCoords) {
+      onConfirmNewCoords(latestTempCoords, editingAreaId);
+    }
+
+    setLatestTempCoords(null);
+    setEditingAreaId(areaId);
+  };
+
+  const handleFinishEdit = () => {
+    setEditingAreaId(null);
+  };
+
   return (
     <>
       {areas.map((area) => {
         if (!area.coordinates || area.id === activeAreaId) return null;
 
         return (
-          <div
-            className="position-absolute border"
+          <EditableArea
             key={`selected-${area.id}`}
-            style={{
-              left: area.coordinates.x * zoomScale,
-              top: area.coordinates.y * zoomScale,
-              width: area.coordinates.width * zoomScale,
-              height: area.coordinates.height * zoomScale,
-              backgroundColor: `${area.color}20`,
-              borderColor: area.color,
-              borderWidth: "2px",
-              zIndex: 10,
-            }}
-            title={area.name}
-          ></div>
+            area={area}
+            zoomScale={zoomScale}
+            isEditing={editingAreaId === area.id}
+            onStartEdit={handleStartEdit}
+            onFinishEdit={handleFinishEdit}
+            onConfirmNewCoords={onConfirmNewCoords}
+            onTempCoordsChange={handleTempCoordsChange}
+          />
         );
       })}
     </>

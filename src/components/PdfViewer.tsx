@@ -25,7 +25,7 @@ interface PdfViewerProps {
   file: File | null;
   isSelectingActive: boolean;
   activeAreaId: string | null;
-  onFinishSelection: (coords: SelectionArea) => void;
+  onFinishSelection: (coords: SelectionArea, resizedAreaId?: string) => void;
   areas: Area[];
 }
 
@@ -39,14 +39,7 @@ const MAX_ZOOM = 3;
 
 const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
   (
-    {
-      file,
-      //onTextsExtracted,
-      isSelectingActive,
-      activeAreaId,
-      onFinishSelection,
-      areas,
-    },
+    { file, isSelectingActive, activeAreaId, onFinishSelection, areas },
     ref
   ) => {
     const documentRef = useRef<any>(null);
@@ -178,6 +171,13 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
 
     const handlePointerDown = useCallback(
       (e: React.PointerEvent) => {
+        const target = e.target as HTMLElement;
+        if (
+          target.closest(".editable-area") ||
+          target.closest(".resize-handle")
+        ) {
+          return; // Não processar se clicou numa área
+        }
         if (!pdfRef.current) return;
         e.currentTarget.setPointerCapture(e.pointerId);
 
@@ -403,6 +403,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
               areas={areas}
               zoomScale={zoomScale}
               activeAreaId={activeAreaId}
+              onChangeCoords={onFinishSelection}
             />
             {/* Div para exibir área sendo selecionada */}
             {currentSelection && (

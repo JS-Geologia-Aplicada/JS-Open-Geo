@@ -8,11 +8,12 @@ import type { Area, PageTextData, PalitoData } from "./types";
 import HelpModal from "./components/HelpModal";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AboutPage from "./components/AboutPage";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<"extraction" | "dxf">(
-    "extraction"
-  );
+  const [currentPage, setCurrentPage] = useState<
+    "extraction" | "dxf" | "about"
+  >("extraction");
   const [areas, setAreas] = useState<Area[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
@@ -68,13 +69,15 @@ function App() {
           setExtractedTexts={setExtractedTexts}
           onShowHelp={handleShowHelp}
         />
-      ) : (
+      ) : currentPage === "dxf" ? (
         <DxfPage
           areas={areas}
           extractedTexts={extractedTexts}
           palitoData={palitoData}
           setPalitoData={setPalitoData}
         />
+      ) : (
+        <AboutPage />
       )}
     </Container>
   );

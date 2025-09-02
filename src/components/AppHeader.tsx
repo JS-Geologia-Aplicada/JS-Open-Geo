@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 
 const AppHeader = () => {
+  const [showDropdown, setShowDropdown] = useState(false);
+
   return (
     <>
       <Navbar bg="white" expand="lg" className="border-bottom">
@@ -28,20 +31,29 @@ const AppHeader = () => {
               >
                 Quem é a JS
               </Nav.Link>
+
               <NavDropdown
                 title={
-                  <a
-                    href="https://www.jsgeo.com.br/areas-de-atuacao"
-                    target="_blank"
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      window.open(
+                        "https://www.jsgeo.com.br/areas-de-atuacao",
+                        "_blank"
+                      );
+                    }}
                     className="text-decoration-none text-muted"
-                    onClick={(e) => e.stopPropagation()} // Previne que abra o dropdown
                   >
                     Áreas de atuação
-                  </a>
+                  </span>
                 }
                 id="areas-dropdown"
                 className="text-secondary mx-1"
                 style={{ fontSize: "0.95rem" }}
+                show={showDropdown}
+                onMouseEnter={() => setShowDropdown(true)}
+                onMouseLeave={() => setShowDropdown(false)}
               >
                 <NavDropdown.Item
                   href="https://www.jsgeo.com.br/clientes"

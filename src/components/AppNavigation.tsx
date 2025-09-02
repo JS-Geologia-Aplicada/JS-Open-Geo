@@ -1,8 +1,8 @@
 import { Container, Nav, Navbar } from "react-bootstrap";
 
 interface AppNavigationProps {
-  currentPage: "extraction" | "dxf";
-  onChangePage: (page: "extraction" | "dxf") => void;
+  currentPage: "extraction" | "dxf" | "about";
+  onChangePage: (page: "extraction" | "dxf" | "about") => void;
 }
 
 const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
@@ -40,6 +40,16 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             className={`px-4 ${currentPage === "dxf" && "fw-bold"}`}
           >
             Geração de Palitos
+          </Nav.Link>
+          <Nav.Link
+            active={currentPage === "about"}
+            onClick={
+              currentPage === "about" ? undefined : () => onChangePage("about")
+            }
+            style={{ cursor: currentPage === "about" ? "default" : "pointer" }}
+            className={`px-4 ${currentPage === "about" && "fw-bold"}`}
+          >
+            Sobre
           </Nav.Link>
         </Nav>
       </Container>
