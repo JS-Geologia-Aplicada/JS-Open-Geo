@@ -63,7 +63,6 @@ const EditableArea = ({
   const [tempCoords, setTempCoords] = useState<SelectionArea | null>(
     area.coordinates
   );
-  //   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     setTempCoords(area.coordinates);
@@ -95,10 +94,35 @@ const EditableArea = ({
     const handleMouseUp = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      //   setIsDragging(false);
     };
 
-    // setIsDragging(true);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const startDrag = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!tempCoords) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startCoords = { ...tempCoords };
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = (moveEvent.clientX - startX) / zoomScale;
+      const deltaY = (moveEvent.clientY - startY) / zoomScale;
+
+      const newCoords = calculateNewCoords(startCoords, deltaX, deltaY, "drag");
+      updateTempCoords(newCoords);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
@@ -121,12 +145,14 @@ const EditableArea = ({
     const eastDirections = ["ne", "e", "se"];
     const westDirections = ["nw", "w", "sw"];
 
-    const newX = westDirections.includes(direction)
-      ? startCoords.x + deltaX
-      : startCoords.x;
-    const newY = northDirections.includes(direction)
-      ? startCoords.y + deltaY
-      : startCoords.y;
+    const newX =
+      westDirections.includes(direction) || direction === "drag"
+        ? startCoords.x + deltaX
+        : startCoords.x;
+    const newY =
+      northDirections.includes(direction) || direction === "drag"
+        ? startCoords.y + deltaY
+        : startCoords.y;
     const newWidth = westDirections.includes(direction)
       ? startCoords.width - deltaX
       : eastDirections.includes(direction)
@@ -138,7 +164,6 @@ const EditableArea = ({
       ? startCoords.height + deltaY
       : startCoords.height;
 
-    // Normalizar coordenadas negativas
     let finalX = newX;
     let finalY = newY;
     let finalWidth = newWidth;
@@ -165,10 +190,11 @@ const EditableArea = ({
     return newCoords;
   };
 
-  const handleStartEdit = () => {
-    console.log("double click: área " + area.id);
+  const handleClickArea = (e: React.MouseEvent) => {
     if (!isEditing) {
       onStartEdit(area.id);
+    } else {
+      startDrag(e);
     }
   };
 
@@ -184,7 +210,6 @@ const EditableArea = ({
       }
 
       // Se clicou fora, finalizar edição
-      console.log("Clicou fora da área, finalizando edição");
       if (tempCoords) {
         onChangeCoords(tempCoords, area.id);
       }
@@ -246,9 +271,10 @@ const EditableArea = ({
           borderColor: area.color,
           borderWidth: "2px",
           zIndex: 10,
+          cursor: isEditing ? "move" : "pointer",
         }}
         title={area.name}
-        onClick={handleStartEdit}
+        onMouseDown={(e) => handleClickArea(e)}
       ></div>
       {renderResizeHandles()}
     </>

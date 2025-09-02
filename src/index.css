@@ -153,4 +153,19 @@ input[type="number"] {
 
 .navbar-nav .nav-item.dropdown:hover .dropdown-menu {
   display: block;
+  margin-top: 0;
+}
+
+.navbar-nav .nav-item.dropdown .dropdown-menu {
+  transition: opacity 0.15s ease-in-out;
+}
+
+.navbar-nav .nav-item.dropdown:not(:hover) .dropdown-menu {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.navbar-nav .nav-item.dropdown:hover .dropdown-menu {
+  opacity: 1;
+  pointer-events: auto;
 }

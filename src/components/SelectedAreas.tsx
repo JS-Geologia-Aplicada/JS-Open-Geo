@@ -29,6 +29,8 @@ const SelectedAreas: React.FC<SelectedAreasProps> = ({
     if (editingAreaId && editingAreaId !== areaId && latestTempCoords) {
       onConfirmNewCoords(latestTempCoords, editingAreaId);
     }
+
+    setLatestTempCoords(null);
     setEditingAreaId(areaId);
   };
 
