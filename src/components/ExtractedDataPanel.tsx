@@ -1,6 +1,7 @@
 import { Table } from "react-bootstrap";
 import { type Area, type PageTextData } from "../types";
 import { formatPageNumbers } from "../utils/helpers";
+import MapModal from "./MapModal";
 
 interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];
@@ -13,6 +14,7 @@ const ExtractedDataPanel = ({
   extractedTexts,
   isExtracting,
   fileName,
+  areas,
 }: ExtractedDataPanelProps) => {
   const areaNames =
     extractedTexts.length > 0
@@ -31,7 +33,10 @@ const ExtractedDataPanel = ({
         </div>
       ) : (
         <>
-          <h5 className="mb-3 pb-2 border-bottom">Dados Extraídos</h5>
+          <div className="d-flex justify-content-between">
+            <h5 className="mb-3 pb-2 border-bottom">Dados Extraídos</h5>
+            <MapModal extractedTexts={extractedTexts} areas={areas} />
+          </div>
           <div
             className="data-table mb-3"
             style={{ maxHeight: "65vh", overflowY: "auto" }}
