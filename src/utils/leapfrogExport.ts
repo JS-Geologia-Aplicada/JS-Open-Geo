@@ -210,11 +210,22 @@ export const generateInterpData = (
 };
 
 // Função que converte dados pra CSV string
-export const generateCSVString = (data: any[], headers: string[]): string => {
+export const generateCSVString = (
+  data: any[],
+  headers: string[],
+  commaAsSeparator: boolean = true
+): string => {
   const csvRows = [
     headers.join(";"),
     ...data.map((row) =>
-      headers.map((header) => `"${row[header] ?? ""}"`).join(";")
+      headers
+        .map((header) => {
+          const value = row[header] ?? "";
+          return commaAsSeparator && typeof value === "number"
+            ? `"${value.toString().replace(".", ",")}"`
+            : `"${value}"`;
+        })
+        .join(";")
     ),
   ];
   return csvRows.join("\n");

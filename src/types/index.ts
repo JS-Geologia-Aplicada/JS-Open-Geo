@@ -54,6 +54,28 @@ export const DATA_TYPES = [
 
 export type DataType = (typeof DATA_TYPES)[number];
 
+export interface DataTypeConfig {
+  valueType: "number" | "string" | "array_number" | "array_string";
+  excelFormat?: string;
+}
+
+export const DATA_TYPE_CONFIGS: Record<DataType, DataTypeConfig> = {
+  default: { valueType: "string" },
+  hole_id: { valueType: "string" },
+  x: { valueType: "number", excelFormat: "0.000" },
+  y: { valueType: "number", excelFormat: "0.000" },
+  z: { valueType: "number", excelFormat: "0.000" },
+  depth: { valueType: "number", excelFormat: "0.00" },
+  date: { valueType: "string" },
+  depth_from_to: { valueType: "array_number", excelFormat: "0.00" },
+  water_level: { valueType: "number", excelFormat: "0.00" },
+  geology: { valueType: "array_string" },
+  nspt: { valueType: "array_string" },
+  campaign: { valueType: "string" },
+  interp: { valueType: "array_string" },
+  generic_info: { valueType: "array_string" },
+};
+
 export const DATA_TYPE_LABELS: Record<DataType, string> = {
   default: "Padrão",
   hole_id: "ID da Sondagem",

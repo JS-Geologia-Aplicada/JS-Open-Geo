@@ -1,4 +1,5 @@
 import {
+  DATA_TYPE_CONFIGS,
   LEAPFROG_TYPES,
   type Area,
   type PageTextData,
@@ -132,25 +133,36 @@ export const convertToPalitoData = (
   return structuredData;
 };
 
-export const exportCSV = (areas: Area[], extractedTexts: PageTextData[]) => {
-  const areaNames = areas.map((area) => area.name);
-  const headers = ["Página", ...areaNames];
+export const exportCSV = (
+  areas: Area[],
+  extractedTexts: PageTextData[],
+  commaAsSeparator: boolean = true
+) => {
+  const headers = ["Página", ...areas.map((area) => area.name)];
 
   const rows = extractedTexts.map((pageData) => {
     const row: (string | number)[] = [pageData.pageNumber.join(", ")];
-    areaNames.forEach((name) => {
-      const areaData = pageData[name];
-      if (Array.isArray(areaData)) {
-        row.push(areaData.join("; "));
-      } else {
-        row.push(areaData || "");
+    areas.forEach((area) => {
+      const areaData = pageData[area.name];
+      const config = DATA_TYPE_CONFIGS[area.dataType || "default"];
+
+      if (!areaData) {
+        row.push("");
+        return;
       }
+
+      const formattedValue = getFormattedValue(areaData, config.valueType);
+      row.push(
+        commaAsSeparator && typeof formattedValue === "number"
+          ? formattedValue.toString().replace(".", ",")
+          : formattedValue
+      );
     });
     return row;
   });
 
   const csvContent = [headers, ...rows]
-    .map((row) => row.map((cell) => `"${cell}"`).join(",")) // aspas + vírgulas
+    .map((row) => row.map((cell) => `"${cell}"`).join(";")) // aspas + vírgulas
     .join("\n");
 
   // Download
@@ -168,22 +180,43 @@ export const exportCSV = (areas: Area[], extractedTexts: PageTextData[]) => {
 };
 
 export const exportExcel = (areas: Area[], extractedTexts: PageTextData[]) => {
-  const areaNames = areas.map((area) => area.name);
   const xlsData = extractedTexts.map((pageData) => {
-    const row: any = { Página: pageData.pageNumber }; // renomeia 'pageNumber' pra 'Página'
+    const row: any = { Página: pageData.pageNumber };
 
-    areaNames.forEach((name) => {
-      const areaData = pageData[name] as string[];
-      if (Array.isArray(areaData)) {
-        row[name] = areaData.join("; ");
-      } else {
-        row[name] = areaData || "";
+    areas.forEach((area) => {
+      const areaData = pageData[area.name];
+      const config = DATA_TYPE_CONFIGS[area.dataType || "default"];
+
+      if (!areaData) {
+        row[area.name] = "";
+        return;
+      }
+
+      // Insere o dado de acordo com o tipo
+      row[area.name] = getFormattedValue(areaData, config.valueType);
+
+      return row;
+    });
+  });
+
+  // Normaliza número de casas decimais
+  var ws = XLSX.utils.json_to_sheet(xlsData);
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
+  for (let row = range.s.r; row <= range.e.r; row++) {
+    areas.forEach((area, areaIndex) => {
+      const config = DATA_TYPE_CONFIGS[area.dataType || "default"];
+
+      if (config.excelFormat) {
+        const cellAdress = XLSX.utils.encode_cell({ r: row, c: areaIndex + 1 }); // +1 pois coluna 1 é a página
+        const cell = ws[cellAdress];
+
+        if (cell && typeof cell.v === "number") {
+          cell.z = config.excelFormat;
+        }
       }
     });
+  }
 
-    return row;
-  });
-  var ws = XLSX.utils.json_to_sheet(xlsData);
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Dados extraídos");
   XLSX.writeFile(wb, "dados-pdf.xlsx");
@@ -192,7 +225,8 @@ export const exportExcel = (areas: Area[], extractedTexts: PageTextData[]) => {
 export const downloadSingleCSV = (
   areas: Area[],
   extractedTexts: PageTextData[],
-  type: string
+  type: string,
+  commaAsSeparator: boolean = true
 ) => {
   const leapfrogData = getLeapfrogData(extractedTexts, areas, type);
   if (!leapfrogData) {
@@ -201,7 +235,12 @@ export const downloadSingleCSV = (
   }
   const BOM = "\uFEFF";
   const csvString =
-    BOM + generateCSVString(leapfrogData.data, leapfrogData.headers);
+    BOM +
+    generateCSVString(
+      leapfrogData.data,
+      leapfrogData.headers,
+      commaAsSeparator
+    );
 
   // Download
   const blob = new Blob([csvString], { type: "text/csv" });
@@ -216,7 +255,8 @@ export const downloadSingleCSV = (
 export const downloadZip = async (
   areas: Area[],
   extractedTexts: PageTextData[],
-  advancedDownload?: boolean
+  advancedDownload?: boolean,
+  commaAsSeparator: boolean = true
 ) => {
   const zip = new JSZip();
   const BOM = "\uFEFF";
@@ -229,7 +269,8 @@ export const downloadZip = async (
       const data = getLeapfrogData(extractedTexts, areas, type);
 
       if (data) {
-        const csvString = BOM + generateCSVString(data.data, data.headers);
+        const csvString =
+          BOM + generateCSVString(data.data, data.headers, commaAsSeparator);
         zip.file(data.filename, csvString);
       }
     }
@@ -268,4 +309,31 @@ export const downloadAllValidation = (areas: Area[]) => {
     someValid: validExports.length > 0,
     allValid: validExports.length === LEAPFROG_TYPES.length,
   };
+};
+
+const getFormattedValue = (areaData: any, valueType: string) => {
+  let value: string | number;
+  switch (valueType) {
+    case "number":
+      const numValue = Array.isArray(areaData) ? areaData[0] : areaData;
+      value = parseNumber(numValue as string);
+      break;
+    case "array_number":
+      if (Array.isArray(areaData)) {
+        const numbers = areaData.map((val) => parseNumber(val as string));
+        value = numbers.join("; ");
+      } else {
+        value = parseNumber(areaData as string);
+      }
+      break;
+    case "string":
+      value = Array.isArray(areaData) ? areaData[0] || "" : areaData || "";
+      break;
+    case "array_string":
+      value = Array.isArray(areaData) ? areaData.join("; ") : areaData || "";
+      break;
+    default:
+      value = Array.isArray(areaData) ? areaData.join("; ") : areaData || "";
+  }
+  return value;
 };
