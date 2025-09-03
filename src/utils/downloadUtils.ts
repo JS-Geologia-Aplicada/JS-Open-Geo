@@ -180,16 +180,12 @@ export const exportCSV = (
 };
 
 export const exportExcel = (areas: Area[], extractedTexts: PageTextData[]) => {
-  console.log("extractedTexts:", extractedTexts); // DEBUG
-  console.log("areas:", areas); // DEBUG
   const xlsData = extractedTexts.map((pageData) => {
-    console.log("processando pageData:", pageData); // DEBUG
     const row: any = { Página: pageData.pageNumber };
 
     areas.forEach((area) => {
       const areaData = pageData[area.name];
       const config = DATA_TYPE_CONFIGS[area.dataType || "default"];
-      console.log("area:", area.name, "config:", config); // DEBUG
 
       if (!areaData) {
         row[area.name] = "";
@@ -198,13 +194,10 @@ export const exportExcel = (areas: Area[], extractedTexts: PageTextData[]) => {
 
       // Insere o dado de acordo com o tipo
       row[area.name] = getFormattedValue(areaData, config.valueType);
-
-      console.log("row final:", row); // DEBUG
     });
     return row;
   });
 
-  console.log("xlsData antes do json_to_sheet:", xlsData); // DEBUG
   // Normaliza número de casas decimais
   var ws = XLSX.utils.json_to_sheet(xlsData);
   const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");

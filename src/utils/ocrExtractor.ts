@@ -7,14 +7,11 @@ export const extractTextOCR = async (
   areas: Area[],
   pdfDocument: any
 ): Promise<PageTextData[]> => {
-  console.log("chamou a função de extrair OCR");
   const extractedTexts: PageTextData[] = [];
   const numPages = pdfDocument.numPages;
   const worker = await createWorker("por");
-  const startTotalTime = performance.now();
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    const startTime = performance.now();
     try {
       const page = await pdfDocument.getPage(pageNum);
       const viewport = page.getViewport({ scale: 2 }); // Scale 2 para melhor qualidade OCR
@@ -68,27 +65,11 @@ export const extractTextOCR = async (
       }
 
       extractedTexts.push(pageData);
-
-      const endTime = performance.now();
-      console.log(
-        `  Página ${pageNum} processada em ${(
-          (endTime - startTime) /
-          1000
-        ).toFixed(1)}s`
-      );
     } catch (error) {
       console.error(`Erro ao processar página ${pageNum}:`, error);
     }
   }
   await worker.terminate();
-  const endTotalTime = performance.now();
-  const totalTime = (endTotalTime - startTotalTime) / 1000;
-  console.log(
-    `  ${numPages} páginas processadas em ${totalTime.toFixed(
-      1
-    )}s, em uma média de ${(totalTime / numPages).toFixed(2)}s por página `
-  );
-  console.log(extractedTexts);
   return extractedTexts;
 };
 
@@ -155,19 +136,11 @@ const joinMultilineTexts = (lines: Tesseract.Line[]) => {
       line.baseline.y0 + currentRowHeight * rowHeightMultiplier <=
         nextLine?.baseline.y0;
 
-    console.log(
-      `Linha ${index}: "${line.text.trim()}" | y0: ${
-        line.baseline.y0
-      } | altura: ${currentRowHeight} | quebra: ${shouldBreak}`
-    );
-
     if (shouldBreak) {
       textBlocks.push(currentBlock.join(" "));
-      console.log("📦 Bloco criado:", currentBlock.join(" "));
       currentBlock.length = 0;
     }
   });
-  console.log("📋 Resultado final:", textBlocks);
   return textBlocks;
 };
 

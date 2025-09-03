@@ -82,7 +82,6 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
     link.download = "sondagens.kmz";
     link.click();
     URL.revokeObjectURL(url);
-    console.log(kmlString);
   };
 
   return (

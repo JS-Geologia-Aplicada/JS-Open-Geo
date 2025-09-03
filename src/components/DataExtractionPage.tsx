@@ -148,7 +148,6 @@ function DataExtractionPage({
 
   // funções de extrair texto
   const handleExtraxtTexts = async (): Promise<PageTextData[]> => {
-    console.log(needsReExtraction());
     if (!needsReExtraction()) {
       return cachedExtractedTexts;
     }

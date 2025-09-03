@@ -66,7 +66,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         error instanceof Error &&
         error.message === "Extração cancelada pelo usuário"
       ) {
-        console.log("Download cancelado pelo usuário");
         return;
       }
       console.error("Download cancelado:", error);
@@ -82,7 +81,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         error instanceof Error &&
         error.message === "Extração cancelada pelo usuário"
       ) {
-        console.log("Download cancelado pelo usuário");
         return;
       }
       console.error("Download cancelado:", error);
@@ -97,7 +95,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         error instanceof Error &&
         error.message === "Extração cancelada pelo usuário"
       ) {
-        console.log("Download cancelado pelo usuário");
         return;
       }
       console.error("Download cancelado:", error);
@@ -117,7 +114,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         error instanceof Error &&
         error.message === "Extração cancelada pelo usuário"
       ) {
-        console.log("Download cancelado pelo usuário");
         return;
       }
       console.error("Download cancelado:", error);
@@ -137,7 +133,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         error instanceof Error &&
         error.message === "Extração cancelada pelo usuário"
       ) {
-        console.log("Download cancelado pelo usuário");
         return;
       }
       console.error("Download cancelado:", error);
