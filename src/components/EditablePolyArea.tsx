@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Area, SelectionArea } from "../types";
 
-interface EditableAreaProps {
+interface EditablePolyAreaProps {
   area: Area;
   isEditing: boolean;
   onStartEdit: (areaId: string) => void;
@@ -59,7 +59,7 @@ const EditablePolyArea = ({
   onConfirmNewCoords: onChangeCoords,
   onTempCoordsChange,
   zoomScale,
-}: EditableAreaProps) => {
+}: EditablePolyAreaProps) => {
   const [tempCoords, setTempCoords] = useState<SelectionArea | null>(
     area.coordinates
   );
