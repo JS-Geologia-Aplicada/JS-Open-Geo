@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Area, SelectionArea } from "../types";
-import EditableArea from "./EditableArea";
+import EditablePolyArea from "./EditableArea";
 
 interface SelectedAreasProps {
   areas: Area[];
@@ -44,7 +44,7 @@ const SelectedAreas: React.FC<SelectedAreasProps> = ({
         if (!area.coordinates || area.id === activeAreaId) return null;
 
         return (
-          <EditableArea
+          <EditablePolyArea
             key={`selected-${area.id}`}
             area={area}
             zoomScale={zoomScale}

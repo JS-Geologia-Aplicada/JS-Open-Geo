@@ -51,7 +51,7 @@ const getResizeHandles = (coords: SelectionArea, zoomScale: number) => {
   };
 };
 
-const EditableArea = ({
+const EditablePolyArea = ({
   area,
   isEditing,
   onStartEdit,
@@ -281,4 +281,4 @@ const EditableArea = ({
   );
 };
 
-export default EditableArea;
+export default EditablePolyArea;
