@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Area, SelectionArea } from "../types";
-import EditableArea from "./editableArea";
+import EditableArea from "./EditableArea";
 
 interface SelectedAreasProps {
   areas: Area[];
