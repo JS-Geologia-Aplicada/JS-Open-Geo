@@ -13,6 +13,8 @@ import {
   type ZoneType,
 } from "../utils/mapUtils";
 import JSZip from "jszip";
+import LeafletMap from "./LeafletMap";
+import { toast } from "react-toastify";
 
 interface MapModalProps {
   extractedTexts: PageTextData[];
@@ -20,9 +22,14 @@ interface MapModalProps {
 }
 
 const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
-  const [selectedDatum, setSelectedDatum] = useState<DatumType>("SAD69");
-  const [selectedZone, setSelectedZone] = useState<ZoneType>("23S");
+  const [selectedDatum, setSelectedDatum] = useState<DatumType | undefined>(
+    undefined
+  );
+  const [selectedZone, setSelectedZone] = useState<ZoneType | undefined>(
+    undefined
+  );
   const [show, setShow] = useState(false);
+  const [points, setPoints] = useState<PointCoords[]>([]);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -43,8 +50,23 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
   const pointCount = extractedTexts.length;
 
   const handleDownloadKMZ = async () => {
-    // TODO: Implementar função de conversão e geração KMZ
+    if (points.length === 0) return;
+    const kmlString = generateKMLString(points);
 
+    const zip = new JSZip();
+    zip.file("doc.kml", kmlString);
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(zipBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "sondagens.kmz";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePlotPoints = async () => {
+    if (!selectedDatum || (selectedDatum !== "WGS84" && !selectedZone)) return;
     const points: PointCoords[] = extractedTexts.map((data) => {
       const holeIdArea = areas.find((area) => area.dataType === "hole_id");
       const xArea = areas.find((area) => area.dataType === "x");
@@ -61,7 +83,7 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
 
     const coordinateSystem: CoordinateSystem = {
       datum: selectedDatum,
-      zone: selectedZone,
+      zone: selectedZone || "23S",
     };
     const convertedPoints = points.map((point) => {
       return {
@@ -70,18 +92,34 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
       };
     });
 
-    const kmlString = generateKMLString(convertedPoints);
+    const invalidPoints: string[] = [];
+    const finalValidPoints = convertedPoints.filter((point) => {
+      const [lon, lat] = point.coords;
+      const isValid =
+        Number.isFinite(lat) &&
+        Number.isFinite(lon) &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lon >= -180 &&
+        lon <= 180;
 
-    const zip = new JSZip();
-    zip.file("doc.kml", kmlString);
+      if (!isValid) {
+        invalidPoints.push(point.id);
+      }
 
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(zipBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "sondagens.kmz";
-    link.click();
-    URL.revokeObjectURL(url);
+      return isValid;
+    });
+
+    setPoints(finalValidPoints);
+    if (invalidPoints.length > 0) {
+      toast.warn(
+        finalValidPoints.length === 0
+          ? "Coordenadas inválidas para todos os pontos"
+          : `Coordenadas inválidas para ${invalidPoints.length} ponto${
+              invalidPoints.length > 1 ? "s" : ""
+            }: ${invalidPoints.join(", ")}`
+      );
+    }
   };
 
   return (
@@ -90,7 +128,7 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
         <MapPin />
       </Button>
       {/* Modal */}
-      <Modal show={show} onHide={handleClose}>
+      <Modal show={show} onHide={handleClose} size="xl">
         {/* Header */}
         <Modal.Header closeButton>
           <Modal.Title>Coordenadas das Sondagens</Modal.Title>
@@ -116,10 +154,9 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
               {/* Seleção de Datum */}
               <Form.Select
                 aria-label="Datum"
-                value={selectedDatum}
                 onChange={(e) => setSelectedDatum(e.target.value as DatumType)}
               >
-                <option>Datum</option>
+                <option value={undefined}>Datum</option>
                 {DATUMS.map((datum) => (
                   <option key={datum.value} value={datum.value}>
                     {datum.label}
@@ -130,10 +167,10 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
               {/* Seleção de Zona UTM */}
               <Form.Select
                 aria-label="Zona UTM"
-                value={selectedZone}
                 onChange={(e) => setSelectedZone(e.target.value as ZoneType)}
+                disabled={selectedDatum === "WGS84"}
               >
-                <option>Zona UTM</option>
+                <option value={undefined}>Zona UTM</option>
                 {UTM_ZONES.map((zone) => (
                   <option key={zone.value} value={zone.value}>
                     {zone.label}
@@ -149,13 +186,31 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
                 </div>
                 <Button
                   className="btn btn-primary"
-                  onClick={handleDownloadKMZ}
-                  disabled={pointCount === 0}
+                  onClick={handlePlotPoints}
+                  disabled={
+                    pointCount === 0 ||
+                    !selectedDatum ||
+                    (selectedDatum !== "WGS84" && !selectedZone)
+                  }
                 >
                   <Download className="me-1" size={16} />
-                  Baixar KMZ
+                  Converter coordenadas
                 </Button>
               </div>
+
+              {points.length > 0 && (
+                <>
+                  {/* Mapa */}
+                  <div>
+                    <LeafletMap points={points} />
+                  </div>
+
+                  {/* Botão Download KMZ */}
+                  <div>
+                    <Button onClick={handleDownloadKMZ}>Download KMZ</Button>
+                  </div>
+                </>
+              )}
             </>
           )}
         </Modal.Body>
