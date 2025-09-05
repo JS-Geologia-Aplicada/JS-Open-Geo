@@ -151,51 +151,67 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
             </div>
           ) : (
             <>
-              {/* Seleção de Datum */}
-              <Form.Select
-                aria-label="Datum"
-                onChange={(e) => setSelectedDatum(e.target.value as DatumType)}
-              >
-                <option value={undefined}>Datum</option>
-                {DATUMS.map((datum) => (
-                  <option key={datum.value} value={datum.value}>
-                    {datum.label}
-                  </option>
-                ))}
-              </Form.Select>
-
-              {/* Seleção de Zona UTM */}
-              <Form.Select
-                aria-label="Zona UTM"
-                onChange={(e) => setSelectedZone(e.target.value as ZoneType)}
-                disabled={selectedDatum === "WGS84"}
-              >
-                <option value={undefined}>Zona UTM</option>
-                {UTM_ZONES.map((zone) => (
-                  <option key={zone.value} value={zone.value}>
-                    {zone.label}
-                  </option>
-                ))}
-              </Form.Select>
-
-              {/* Botões de ação */}
-              <div className="d-flex justify-content-between align-items-center pt-3 border-top">
-                <div className="text-muted small">
-                  Arquivo KMZ será gerado com {pointCount} ponto
-                  {pointCount !== 1 ? "s" : ""}
+              <div className="d-flex align-items-start gap-3">
+                {/* Seleção de Datum */}
+                <div style={{ width: "200px" }}>
+                  <Form.Select
+                    aria-label="Datum"
+                    value={selectedDatum}
+                    onChange={(e) =>
+                      setSelectedDatum(e.target.value as DatumType)
+                    }
+                  >
+                    <option value={undefined}>Datum</option>
+                    {DATUMS.map((datum) => (
+                      <option key={datum.value} value={datum.value}>
+                        {datum.label}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </div>
-                <Button
-                  className="btn btn-primary"
-                  onClick={handlePlotPoints}
-                  disabled={
-                    pointCount === 0 ||
-                    !selectedDatum ||
-                    (selectedDatum !== "WGS84" && !selectedZone)
-                  }
-                >
-                  <Download className="me-1" size={16} />
-                  Converter coordenadas
-                </Button>
+                {/* Seleção de Zona UTM */}
+                <div style={{ width: "200px" }}>
+                  <Form.Select
+                    aria-label="Zona UTM"
+                    value={selectedZone}
+                    onChange={(e) =>
+                      setSelectedZone(e.target.value as ZoneType)
+                    }
+                    disabled={selectedDatum === "WGS84"}
+                  >
+                    <option value={undefined}>Zona UTM</option>
+                    {UTM_ZONES.map((zone) => (
+                      <option key={zone.value} value={zone.value}>
+                        {zone.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </div>
+                {/* Botões de ação */}
+                <div>
+                  <Button
+                    className="btn btn-primary"
+                    onClick={handlePlotPoints}
+                    disabled={
+                      pointCount === 0 ||
+                      !selectedDatum ||
+                      (selectedDatum !== "WGS84" && !selectedZone)
+                    }
+                  >
+                    Converter coordenadas
+                  </Button>
+                </div>
+                {points.length > 0 && (
+                  <>
+                    {/* Botão Download KMZ */}
+                    <div>
+                      <Button onClick={handleDownloadKMZ}>
+                        <Download className="me-1" size={16} />
+                        KMZ
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
 
               {points.length > 0 && (
@@ -203,11 +219,6 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
                   {/* Mapa */}
                   <div>
                     <LeafletMap points={points} />
-                  </div>
-
-                  {/* Botão Download KMZ */}
-                  <div>
-                    <Button onClick={handleDownloadKMZ}>Download KMZ</Button>
                   </div>
                 </>
               )}

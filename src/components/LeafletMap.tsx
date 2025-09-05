@@ -106,11 +106,10 @@ const LeafletMap = ({ points }: LeafletMapProps) => {
 
   return (
     <>
-      <div>
-        LeafletMap
+      <div className="mt-3">
         <div
           ref={mapContainerRef}
-          style={{ height: "50vh", width: "100%", border: "1px solid #ccc" }}
+          style={{ height: "70vh", width: "100%", border: "1px solid #ccc" }}
         />
       </div>
     </>
