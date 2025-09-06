@@ -17,12 +17,14 @@ import {
   getDropdownItemClass,
 } from "../utils/downloadUtils";
 import { validateExportRequirements } from "../utils/leapfrogExport";
-import { ChevronDown, ChevronUp, Download, Eye, Settings } from "lucide-react";
+import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { millisecondsToTimerFormat } from "../utils/helpers";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import MapModal from "./MapModal";
 
 interface ExtractButtonProps {
   areas: Area[];
+  extractedTexts: PageTextData[];
   hasFile: boolean;
   isExtracting: boolean;
   extractionProgress: ExtractionProgress | null;
@@ -35,6 +37,7 @@ interface ExtractButtonProps {
 
 const ExtractButtons: React.FC<ExtractButtonProps> = ({
   areas,
+  extractedTexts,
   hasFile,
   isExtracting,
   extractionProgress,
@@ -180,170 +183,224 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
     </>
   ) : (
     <>
-      <div className="d-flex align-items-start gap-3">
-        {/* Botão de pré-visualizar */}
-        <div>
-          <button
-            className="btn btn-outline-primary"
-            onClick={onPreview}
-            disabled={
-              !(
-                areas.length > 0 &&
-                hasFile &&
-                areas.some((area) => area.coordinates)
-              )
-            }
-          >
-            <Eye className="me-1" size={16} />
-            Visualizar
-          </button>
-        </div>
-
-        {/* Dropdown de Download completo */}
-        <div className="btn-group dropup">
-          <OverlayTrigger
-            overlay={<Tooltip id="xls-tooltip">Download XLS</Tooltip>}
-          >
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={handleDownloadExcel}
-            >
-              <Download className="me-1" size={16} />
-              Excel
-            </Button>
-          </OverlayTrigger>
-          <button
-            className="btn btn-secondary dropdown-toggle dropdown-toggle-split"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            <span className="visually-hidden">Mais opções</span>
-          </button>
-          <ul className="dropdown-menu">
-            <li>
-              <button
-                className="dropdown-item"
-                type="button"
-                onClick={handleDownloadJSON}
-              >
-                JSON
-              </button>
-            </li>
-            <li>
-              <button
-                className="dropdown-item"
-                type="button"
-                onClick={handleDownloadCSV}
-              >
-                CSV
-              </button>
-            </li>
-          </ul>
-        </div>
-
-        {/* Dropdown de export Leapfrog */}
-        <div className="d-flex flex-column align-items-start">
-          <div>
-            <div className="btn-group dropup">
-              <button
-                className="btn btn-secondary"
-                type="button"
-                onClick={handleDownloadAllLeapfrog}
-                disabled={!validationData.someValid}
-                data-bs-toggle="tooltip"
-                data-bs-target="tooltip"
-                data-bs-placement="top"
-                data-bs-title={
-                  validationData.allValid
-                    ? `Exportar todos os arquivos`
-                    : advancedDownload && validationData.someValid
-                    ? `Exportar ${validationData.validExports.join(
-                        ", "
-                      )} completo(s) e ${validationData.nonValidExports.join(
-                        ", "
-                      )} incompleto(s)`
-                    : advancedDownload
-                    ? "Exportar todos incompletos"
-                    : validationData.someValid
-                    ? `Exportar ${validationData.validExports.join(", ")}`
-                    : "Dados insuficientes para gerar arquivos"
+      <div>
+        <h6
+          className="text-muted text-start mb-0"
+          style={{ fontSize: "0.875rem" }}
+        >
+          Ações
+        </h6>
+        <div className="d-flex justify-content-center">
+          {/* Botão de pré-visualizar */}
+          <div className="d-flex gap-1">
+            <div>
+              <OverlayTrigger
+                overlay={
+                  <Tooltip id="json-tooltip">
+                    Extrair e pré-visualizar dados
+                  </Tooltip>
                 }
               >
-                <Download className="me-1" size={16} />
-                Leapfrog
-              </button>
+                <Button
+                  variant={"secondary"}
+                  onClick={onPreview}
+                  disabled={
+                    !(
+                      areas.length > 0 &&
+                      hasFile &&
+                      areas.some((area) => area.coordinates)
+                    )
+                  }
+                >
+                  Visualizar
+                </Button>
+              </OverlayTrigger>
+            </div>
+            <div>
+              <MapModal extractedTexts={extractedTexts} areas={areas} />
+            </div>
+          </div>
+        </div>
+
+        <hr className="my-2" />
+
+        {/* Dropdown de Download completo */}
+        <h6
+          className="text-muted text-start mb-1"
+          style={{ fontSize: "0.875rem" }}
+        >
+          Downloads
+        </h6>
+        <div className="d-flex align-items-start justify-content-between">
+          <div style={{ width: "30px" }}></div>
+          <div className="d-flex gap-1">
+            <OverlayTrigger
+              overlay={
+                <Tooltip id="json-tooltip">
+                  Download JSON - Utilizado para geração de palitos
+                </Tooltip>
+              }
+            >
+              <Button variant="secondary" onClick={handleDownloadJSON}>
+                JSON
+              </Button>
+            </OverlayTrigger>
+            <div className="btn-group dropup">
+              <OverlayTrigger
+                overlay={
+                  <Tooltip id="xls-tooltip">
+                    Download dos dados em formato de planilha
+                  </Tooltip>
+                }
+              >
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={handleDownloadExcel}
+                >
+                  Planilha
+                </Button>
+              </OverlayTrigger>
               <button
-                type="button"
                 className="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+                type="button"
                 data-bs-toggle="dropdown"
                 aria-haspopup="true"
                 aria-expanded="false"
               >
                 <span className="visually-hidden">Mais opções</span>
               </button>
-
               <ul className="dropdown-menu" style={{ zIndex: "1001" }}>
-                {LEAPFROG_TYPES.map((type) => {
-                  const validation = validateExportRequirements(areas, type);
-                  return (
-                    <li
-                      key={`export-leapfrog-${type}`}
-                      data-bs-toggle="tooltip"
-                      data-bs-target="tooltip"
-                      data-bs-placement="left"
-                      data-bs-title={
-                        validation.isValid
-                          ? `Exportar ${type}.csv`
-                          : advancedDownload
-                          ? `Exportar ${type}.csv incompleto (dados ausentes: ${validation.missingFields
-                              .map((t) => {
-                                return t === "depth"
-                                  ? "Profundidades ou Profundidade Total"
-                                  : DATA_TYPE_LABELS[t];
-                              })
-                              .join(", ")})`
-                          : `Campos faltantes: ${validation.missingFields
-                              .map((t) => {
-                                return t === "depth"
-                                  ? "Profundidades ou Profundidade Total"
-                                  : DATA_TYPE_LABELS[t];
-                              })
-                              .join(", ")}`
-                      }
-                    >
-                      <button
-                        className={getDropdownItemClass(
-                          areas,
-                          type,
-                          advancedDownload
-                        )}
-                        onClick={() => handleDownloadSingleCSV(type)}
-                      >
-                        {LEAPFROG_LABELS[type]}
-                      </button>
-                    </li>
-                  );
-                })}
+                <li>
+                  <button
+                    className="dropdown-item"
+                    type="button"
+                    onClick={handleDownloadCSV}
+                  >
+                    XLS (Excel)
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    type="button"
+                    onClick={handleDownloadCSV}
+                  >
+                    CSV
+                  </button>
+                </li>
               </ul>
-              {/* Botão de Configurações */}
-              <div className="d-flex align-items-center">
-                <Button
-                  className="btn p-0 ms-2 border-0 bg-transparent d-flex align-items-center"
-                  style={{ color: "#222" }}
-                  onClick={() => setShowSettings(!showSettings)}
-                  title="Configurações"
-                >
-                  <Settings size={18} className="me-1" />
-                  {showSettings ? (
-                    <ChevronUp size={18} />
-                  ) : (
-                    <ChevronDown size={18} />
-                  )}
-                </Button>
+            </div>
+
+            {/* Dropdown de export Leapfrog */}
+            <div className="d-flex flex-column align-items-start">
+              <div>
+                <div className="btn-group dropup">
+                  <OverlayTrigger
+                    overlay={
+                      <Tooltip id="leapfrog-tooltip">
+                        {validationData.allValid
+                          ? `Exportar todos os arquivos`
+                          : advancedDownload && validationData.someValid
+                          ? `Exportar ${validationData.validExports.join(
+                              ", "
+                            )} completo(s) e ${validationData.nonValidExports.join(
+                              ", "
+                            )} incompleto(s)`
+                          : advancedDownload
+                          ? "Exportar todos incompletos"
+                          : validationData.someValid
+                          ? `Exportar ${validationData.validExports.join(", ")}`
+                          : "Dados insuficientes para gerar arquivos"}
+                      </Tooltip>
+                    }
+                  >
+                    <span className="d-inline-block">
+                      <button
+                        className="btn btn-secondary"
+                        type="button"
+                        onClick={handleDownloadAllLeapfrog}
+                        disabled={!validationData.someValid}
+                      >
+                        Leapfrog
+                      </button>
+                    </span>
+                  </OverlayTrigger>
+                  <button
+                    type="button"
+                    className="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    <span className="visually-hidden">Mais opções</span>
+                  </button>
+
+                  <ul className="dropdown-menu" style={{ zIndex: "1001" }}>
+                    {LEAPFROG_TYPES.map((type) => {
+                      const validation = validateExportRequirements(
+                        areas,
+                        type
+                      );
+                      return (
+                        <OverlayTrigger
+                          placement="left"
+                          overlay={
+                            <Tooltip id="leapfrog-tooltip">
+                              {validation.isValid
+                                ? `Exportar ${type}.csv`
+                                : advancedDownload
+                                ? `Exportar ${type}.csv incompleto (dados ausentes: ${validation.missingFields
+                                    .map((t) => {
+                                      return t === "depth"
+                                        ? "Profundidades ou Profundidade Total"
+                                        : DATA_TYPE_LABELS[t];
+                                    })
+                                    .join(", ")})`
+                                : `Campos faltantes: ${validation.missingFields
+                                    .map((t) => {
+                                      return t === "depth"
+                                        ? "Profundidades ou Profundidade Total"
+                                        : DATA_TYPE_LABELS[t];
+                                    })
+                                    .join(", ")}`}
+                            </Tooltip>
+                          }
+                        >
+                          <li key={`export-leapfrog-${type}`}>
+                            <button
+                              className={getDropdownItemClass(
+                                areas,
+                                type,
+                                advancedDownload
+                              )}
+                              onClick={() => handleDownloadSingleCSV(type)}
+                            >
+                              {LEAPFROG_LABELS[type]}
+                            </button>
+                          </li>
+                        </OverlayTrigger>
+                      );
+                    })}
+                  </ul>
+                </div>
               </div>
+            </div>
+            {/* Botão de Configurações */}
+            <div className="d-flex align-items-center">
+              <Button
+                className="btn p-0 ms-2 border-0 bg-transparent d-flex align-items-center"
+                style={{ color: "#222" }}
+                onClick={() => setShowSettings(!showSettings)}
+                title="Configurações"
+              >
+                <Settings size={18} className="me-1" />
+                {showSettings ? (
+                  <ChevronUp size={18} />
+                ) : (
+                  <ChevronDown size={18} />
+                )}
+              </Button>
             </div>
           </div>
         </div>

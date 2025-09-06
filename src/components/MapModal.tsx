@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Download, MapPin } from "lucide-react";
+import { Download } from "lucide-react";
 import type { Area, PageTextData } from "../types";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Button, Form, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import {
   convertGeographicCoordinates,
   DATUMS,
@@ -124,9 +124,25 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
 
   return (
     <>
-      <Button onClick={handleShow}>
-        <MapPin />
-      </Button>
+      <OverlayTrigger
+        overlay={
+          <Tooltip id="json-tooltip">
+            {!extractedTexts || extractedTexts.length === 0
+              ? "Extraia os dados para ver as sondagens no mapa e exportar o KMZ"
+              : "Ver coordenadas das sondagens em mapa e exportar KMZ"}
+          </Tooltip>
+        }
+      >
+        <span className="d-inline-block">
+          <Button
+            variant="secondary"
+            onClick={handleShow}
+            disabled={!extractedTexts || extractedTexts.length === 0}
+          >
+            Mapa
+          </Button>
+        </span>
+      </OverlayTrigger>
       {/* Modal */}
       <Modal show={show} onHide={handleClose} size="xl">
         {/* Header */}

@@ -385,6 +385,7 @@ function DataExtractionPage({
                 extractionProgress={extractionProgress}
                 extractionStartTime={extractionStartTime}
                 fileName={selectedFile?.name}
+                extractedTexts={extractedTexts}
               />
             }
           ></MenuCard>
