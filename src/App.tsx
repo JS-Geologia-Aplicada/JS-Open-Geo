@@ -10,6 +10,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AboutPage from "./components/AboutPage";
 import ChangelogPage from "./components/ChangelogPage";
+import AppFooter from "./components/AppFooter";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>("extraction");
@@ -33,56 +34,61 @@ function App() {
   };
 
   return (
-    <Container fluid className="text-center px-xl-5">
-      <ToastContainer
-        position="top-right"
-        autoClose={6000}
-        hideProgressBar={false}
-      />
-      <HelpModal
-        showOnLoad={openHelpOnLoad}
-        onToggleShowOnLoad={toggleShowHelpOnLoad}
-        show={showHelp}
-        setShow={setShowHelp}
-      />
-      <Row className="justify-content-center">
-        <Col>
-          <AppHeader />
-        </Col>
-      </Row>
-      <Row className="justify-content-center">
-        <Col>
-          <AppNavigation
-            currentPage={currentPage}
-            onChangePage={setCurrentPage}
+    <div className="app-container">
+      <div className="main-content">
+        <Container fluid className="text-center px-xl-5">
+          <ToastContainer
+            position="top-right"
+            autoClose={6000}
+            hideProgressBar={false}
           />
-        </Col>
-      </Row>
-      {currentPage === "extraction" ? (
-        <DataExtractionPage
-          areas={areas}
-          setAreas={setAreas}
-          selectedFile={selectedFile}
-          setSelectedFile={setSelectedFile}
-          extractedTexts={extractedTexts}
-          setExtractedTexts={setExtractedTexts}
-          onShowHelp={handleShowHelp}
-        />
-      ) : currentPage === "dxf" ? (
-        <DxfPage
-          areas={areas}
-          extractedTexts={extractedTexts}
-          palitoData={palitoData}
-          setPalitoData={setPalitoData}
-        />
-      ) : currentPage === "about" ? (
-        <AboutPage />
-      ) : currentPage === "changelog" ? (
-        <ChangelogPage />
-      ) : (
-        <div>Erro: página não encontrada</div>
-      )}
-    </Container>
+          <HelpModal
+            showOnLoad={openHelpOnLoad}
+            onToggleShowOnLoad={toggleShowHelpOnLoad}
+            show={showHelp}
+            setShow={setShowHelp}
+          />
+          <Row className="justify-content-center">
+            <Col>
+              <AppHeader />
+            </Col>
+          </Row>
+          <Row className="justify-content-center">
+            <Col>
+              <AppNavigation
+                currentPage={currentPage}
+                onChangePage={setCurrentPage}
+              />
+            </Col>
+          </Row>
+          {currentPage === "extraction" ? (
+            <DataExtractionPage
+              areas={areas}
+              setAreas={setAreas}
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+              extractedTexts={extractedTexts}
+              setExtractedTexts={setExtractedTexts}
+              onShowHelp={handleShowHelp}
+            />
+          ) : currentPage === "dxf" ? (
+            <DxfPage
+              areas={areas}
+              extractedTexts={extractedTexts}
+              palitoData={palitoData}
+              setPalitoData={setPalitoData}
+            />
+          ) : currentPage === "about" ? (
+            <AboutPage />
+          ) : currentPage === "changelog" ? (
+            <ChangelogPage />
+          ) : (
+            <div>Erro: página não encontrada</div>
+          )}
+        </Container>
+      </div>
+      <AppFooter />
+    </div>
   );
 }
 
