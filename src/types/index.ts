@@ -1,3 +1,5 @@
+export type PageType = "extraction" | "dxf" | "about" | "changelog"
+
 // Objeto de seleção de área retangular
 export interface SelectionArea {
   x: number;
@@ -245,4 +247,20 @@ export interface LayerSize {
   finalHeight: number;
   from: number;
   to: number;
+}
+
+
+export interface Version {
+  version: string;
+  date: string;
+  title: string;
+  summary: string;
+  features: string[];
+  improvements: string[];
+  bugfixes: string[];
+  known_issues: string[];
+}
+
+export interface VersionsData {
+  versions: Version[];
 }

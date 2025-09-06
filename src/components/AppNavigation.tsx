@@ -1,8 +1,9 @@
 import { Container, Nav, Navbar } from "react-bootstrap";
+import type { PageType } from "../types";
 
 interface AppNavigationProps {
-  currentPage: "extraction" | "dxf" | "about";
-  onChangePage: (page: "extraction" | "dxf" | "about") => void;
+  currentPage: PageType;
+  onChangePage: (page: PageType) => void;
 }
 
 const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
@@ -10,11 +11,14 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
     <Navbar className="border-bottom mb-2">
       <Container fluid className="px-4">
         <Navbar.Brand className="text-dark fw-bold">
-          <img
-            src="js_open_geo_logo.png"
-            alt="JS OpenGeo"
-            style={{ height: "40px" }}
-          />
+          <div className="d-flex align-items-end">
+            <img
+              src="js_open_geo_logo.png"
+              alt="JS OpenGeo"
+              style={{ height: "40px" }}
+            />
+            <span className="text-muted small mx-1">v1.0.0-beta</span>
+          </div>
         </Navbar.Brand>
         <Nav className="mx-auto">
           <Nav.Link
@@ -50,6 +54,20 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             className={`px-4 ${currentPage === "about" && "fw-bold"}`}
           >
             Sobre
+          </Nav.Link>
+          <Nav.Link
+            active={currentPage === "changelog"}
+            onClick={
+              currentPage === "changelog"
+                ? undefined
+                : () => onChangePage("changelog")
+            }
+            style={{
+              cursor: currentPage === "changelog" ? "default" : "pointer",
+            }}
+            className={`px-4 ${currentPage === "changelog" && "fw-bold"}`}
+          >
+            Detalhes da Versão
           </Nav.Link>
         </Nav>
       </Container>

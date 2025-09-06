@@ -4,16 +4,15 @@ import AppHeader from "./components/AppHeader";
 import DxfPage from "./components/DxfPage";
 import AppNavigation from "./components/AppNavigation";
 import { Col, Container, Row } from "react-bootstrap";
-import type { Area, PageTextData, PalitoData } from "./types";
+import type { Area, PageTextData, PageType, PalitoData } from "./types";
 import HelpModal from "./components/HelpModal";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AboutPage from "./components/AboutPage";
+import ChangelogPage from "./components/ChangelogPage";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<
-    "extraction" | "dxf" | "about"
-  >("extraction");
+  const [currentPage, setCurrentPage] = useState<PageType>("extraction");
   const [areas, setAreas] = useState<Area[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [extractedTexts, setExtractedTexts] = useState<PageTextData[]>([]);
@@ -76,8 +75,12 @@ function App() {
           palitoData={palitoData}
           setPalitoData={setPalitoData}
         />
-      ) : (
+      ) : currentPage === "about" ? (
         <AboutPage />
+      ) : currentPage === "changelog" ? (
+        <ChangelogPage />
+      ) : (
+        <div>Erro: página não encontrada</div>
       )}
     </Container>
   );
