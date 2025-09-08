@@ -214,7 +214,7 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
                       (selectedDatum !== "WGS84" && !selectedZone)
                     }
                   >
-                    Converter coordenadas
+                    Visualizar mapa
                   </Button>
                 </div>
                 {points.length > 0 && (
