@@ -67,53 +67,71 @@ const MapModal: React.FC<MapModalProps> = ({ extractedTexts, areas }) => {
 
   const handlePlotPoints = async () => {
     if (!selectedDatum || (selectedDatum !== "WGS84" && !selectedZone)) return;
-    const points: PointCoords[] = extractedTexts.map((data) => {
-      const holeIdArea = areas.find((area) => area.dataType === "hole_id");
-      const xArea = areas.find((area) => area.dataType === "x");
-      const yArea = areas.find((area) => area.dataType === "y");
-
-      return {
-        id: holeIdArea ? (data[holeIdArea.name][0] as string) : "",
-        coords: [
-          xArea ? parseFloat(data[xArea.name][0] as string) : 0,
-          yArea ? parseFloat(data[yArea.name][0] as string) : 0,
-        ],
-      };
-    });
-
     const coordinateSystem: CoordinateSystem = {
       datum: selectedDatum,
       zone: selectedZone || "23S",
     };
-    const convertedPoints = points.map((point) => {
-      return {
-        ...point,
-        coords: convertGeographicCoordinates(point.coords, coordinateSystem),
-      };
-    });
-
+    const validPoints: PointCoords[] = [];
     const invalidPoints: string[] = [];
-    const finalValidPoints = convertedPoints.filter((point) => {
-      const [lon, lat] = point.coords;
-      const isValid =
-        Number.isFinite(lat) &&
-        Number.isFinite(lon) &&
-        lat >= -90 &&
-        lat <= 90 &&
-        lon >= -180 &&
-        lon <= 180;
+    extractedTexts.forEach((data, index) => {
+      const holeIdArea = areas.find((area) => area.dataType === "hole_id");
+      const xArea = areas.find((area) => area.dataType === "x");
+      const yArea = areas.find((area) => area.dataType === "y");
+      const idValue = holeIdArea ? (data[holeIdArea.name][0] as string) : "";
+      const xValue = xArea ? (data[xArea.name][0] as string) : "";
+      const yValue = yArea ? (data[yArea.name][0] as string) : "";
 
-      if (!isValid) {
-        invalidPoints.push(point.id);
+      if (!idValue || idValue.trim() === "") {
+        invalidPoints.push(`Ponto ${index + 1}`);
+        return;
+      }
+      if (!xValue || xValue.trim() === "" || !yValue || yValue.trim() === "") {
+        invalidPoints.push(idValue);
+        return;
+      }
+      const x = parseFloat(xValue);
+      const y = parseFloat(yValue);
+
+      if (isNaN(x) || isNaN(y)) {
+        invalidPoints.push(idValue);
+        return;
       }
 
-      return isValid;
+      let convertedCoords: [number, number];
+      try {
+        convertedCoords = convertGeographicCoordinates(
+          [x, y],
+          coordinateSystem
+        );
+      } catch (error) {
+        invalidPoints.push(idValue);
+        return;
+      }
+
+      const [lon, lat] = convertedCoords;
+
+      if (
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lon) ||
+        lat < -90 ||
+        lat > 90 ||
+        lon < -180 ||
+        lon > 180
+      ) {
+        invalidPoints.push(idValue);
+        return;
+      }
+
+      validPoints.push({
+        id: idValue,
+        coords: convertedCoords,
+      });
     });
 
-    setPoints(finalValidPoints);
+    setPoints(validPoints);
     if (invalidPoints.length > 0) {
       toast.warn(
-        finalValidPoints.length === 0
+        validPoints.length === 0
           ? "Coordenadas inválidas para todos os pontos"
           : `Coordenadas inválidas para ${invalidPoints.length} ponto${
               invalidPoints.length > 1 ? "s" : ""
