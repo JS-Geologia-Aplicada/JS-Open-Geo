@@ -23,6 +23,11 @@ const ChangelogPage = () => {
     },
   ];
 
+  const formatDateToBR = (dateString: string) => {
+    const date = new Date(dateString + "T00:00:00");
+    return date.toLocaleDateString("pt-BR");
+  };
+
   return (
     <Container className="mt-4">
       <div className="text-center mb-3">
@@ -34,7 +39,7 @@ const ChangelogPage = () => {
           <Col xs={10} lg={8} xl={6} className="mb-4 text-start">
             <div className="d-flex gap-3 mb-3 align-items-end">
               <h4 className="mb-0">v{version.version}</h4>
-              <span className="text-muted">{version.date}</span>
+              <span className="text-muted">{formatDateToBR(version.date)}</span>
             </div>
             <h5>Visão geral</h5>
             <p>{version.summary}</p>

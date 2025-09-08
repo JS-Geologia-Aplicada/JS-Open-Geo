@@ -1,0 +1,23 @@
+# Changelog
+
+## [1.0.0-beta] - 08/09/2025
+
+### JS OpenGeo beta
+
+Esta primeira versão marca o lançamento do beta do JS OpenGeo, trazendo as funções de extrair dados de PDFs, processar dados de sondagens e gerar palitos dessas sondagens.
+
+### Funcionalidades
+
+- Upload simultâneo de múltiplos PDFs
+- Extração de texto a partir de elementos de texto do PDF ou de OCR (Optical Character Recognition)
+- Criação de áreas para extração de texto
+- Processamento condicional de dados de sondagens
+- Exportação dos dados em múltiplos formatos
+- Visualização das sondagens em mapa e download de KMZ
+- Geração de palitos de sondagem a partir dos dados extraídos ou de JSON com o padrão do JS OpenGeo
+- Edição de dados permitindo correções antes da geração dos palitos
+
+### Problemas Conhecidos
+
+- OCR apresenta dados pouco confiáveis para NSPT e profundidades
+- Edições de dados para geração do palitos podem criar resultados inesperados
