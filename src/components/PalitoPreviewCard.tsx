@@ -242,7 +242,7 @@ const PalitoPreviewCard = ({
 
         <Row>
           {/* Descrição Geológica */}
-          <Col xs={10}>
+          <Col xs={9}>
             <strong>Descrição Geológica:</strong>
             <div
               className="mt-2"
@@ -344,7 +344,7 @@ const PalitoPreviewCard = ({
             </div>
           </Col>
           {/* NSPTs */}
-          <Col xs={2}>
+          <Col xs={3}>
             <strong>NSPT:</strong>
             {/* No topo colocar a profundidade do primeiro, editável. Fazer parecido com as descrições geológicas, colocar profundidade e NSPT. Aqui só o NSPT é editável. NSPTs em uma profundidade superior à última profundidade da sondagem aparecem em uma cor diferente, indicando que não vão aparecer no palito */}
             {/* Configuração do primeiro NSPT - editável */}
@@ -355,33 +355,33 @@ const PalitoPreviewCard = ({
                 ) : (
                   <>
                     <span className="small">Inicia em:</span>
-                    isEditing ? (
-                    <Form.Control
-                      type="number"
-                      size="sm"
-                      style={{ width: "60px" }}
-                      value={
-                        editedPalito?.nspt.start_depth ||
-                        currentPalito.nspt.start_depth
-                      }
-                      onChange={(e) => {
-                        setEditedPalito((prev) => {
-                          if (!prev) return null;
-                          return {
-                            ...prev,
-                            nspt: {
-                              ...prev.nspt,
-                              start_depth: parseFloat(e.target.value) || 0,
-                            },
-                          };
-                        });
-                      }}
-                    />
+                    {isEditing ? (
+                      <Form.Control
+                        type="number"
+                        size="sm"
+                        style={{ width: "60px" }}
+                        value={
+                          editedPalito?.nspt.start_depth ||
+                          currentPalito.nspt.start_depth
+                        }
+                        onChange={(e) => {
+                          setEditedPalito((prev) => {
+                            if (!prev) return null;
+                            return {
+                              ...prev,
+                              nspt: {
+                                ...prev.nspt,
+                                start_depth: parseFloat(e.target.value) || 0,
+                              },
+                            };
+                          });
+                        }}
+                      />
                     ) : (
-                    <span className="fw-bold">
-                      {currentPalito.nspt.start_depth}m
-                    </span>
-                    )
+                      <span className="fw-bold">
+                        {currentPalito.nspt.start_depth}m
+                      </span>
+                    )}
                   </>
                 )}
               </div>

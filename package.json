@@ -1,8 +1,8 @@
 {
-  "name": "extrator-dados-pdf",
+  "name": "js-open-geo",
   "homepage": "https://js-geologia-aplicada.github.io/JS-Open-Geo",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0-beta",
   "type": "module",
   "scripts": {
     "dev": "vite --host",

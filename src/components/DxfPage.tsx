@@ -12,6 +12,7 @@ import { useState } from "react";
 import type { Area, PageTextData, PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";
 import PalitoPreviewCard from "./PalitoPreviewCard";
+import { toast } from "react-toastify";
 
 interface DxfPageProps {
   areas: Area[];
@@ -33,34 +34,16 @@ const DxfPage = ({
   } | null>(null);
 
   // Carregar JSON de teste do public
-  const loadTestData = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("./test.json");
-      const data = await response.json();
-      setPalitoData(data);
-      setMessage({
-        type: "success",
-        text: "Dados de teste carregados com sucesso!",
-      });
-    } catch (error) {
-      setMessage({ type: "error", text: "Erro ao carregar dados de teste" });
-      console.error("Erro:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Carregar JSON de teste do public
   const loadExtractedData = async () => {
     try {
       setIsLoading(true);
       const data = convertToPalitoData(areas, extractedTexts);
-      setPalitoData(data);
-      setMessage({
-        type: "success",
-        text: "Dados extraídos carregados com sucesso!",
-      });
+      if (data.length === 0) {
+        toast.error("Não foram encontrados dados extraídos");
+      } else {
+        setPalitoData(data);
+        toast.success("Dados extraídos carregados com sucesso!");
+      }
     } catch (error) {
       setMessage({ type: "error", text: "Erro ao carregar dados de teste" });
       console.error("Erro:", error);
@@ -79,12 +62,9 @@ const DxfPage = ({
       try {
         const jsonData = JSON.parse(e.target?.result as string);
         setPalitoData(jsonData);
-        setMessage({
-          type: "success",
-          text: "Arquivo JSON carregado com sucesso!",
-        });
+        toast.success("Arquivo JSON carregado com sucesso!");
       } catch (error) {
-        setMessage({ type: "error", text: "Erro ao processar arquivo JSON" });
+        toast.error("Erro ao processar arquivo JSON");
         console.error("Erro:", error);
       }
     };
@@ -94,6 +74,7 @@ const DxfPage = ({
   // Gerar DXF
   const handleGenerateDXF = async () => {
     if (palitoData.length === 0) {
+      toast.error("Nenhum dado carregado para gerar DXF");
       setMessage({
         type: "error",
         text: "Nenhum dado carregado para gerar DXF",
@@ -105,19 +86,16 @@ const DxfPage = ({
       setIsLoading(true);
       const result = await generateDXF(palitoData);
       if (result.processErrorNames.length > 0) {
-        setMessage({
-          type: "warning",
-          text: `DXF gerado! ${result.successCount}/${
+        toast.warn(
+          `DXF gerado! ${result.successCount}/${
             result.totalProcessed
-          } palitos processados. Falhas: ${result.processErrorNames.join(
-            ", "
-          )}`,
-        });
+          } palitos processados. Falhas: ${result.processErrorNames.join(", ")}`
+        );
       } else {
-        setMessage({ type: "success", text: "DXF gerado com sucesso!" });
+        toast.success("DXF gerado com sucesso!");
       }
     } catch (error) {
-      setMessage({ type: "error", text: "Erro ao gerar DXF!" });
+      toast.error("Erro ao gerar DXF");
       console.error("Erro:", error);
     } finally {
       setIsLoading(false);
@@ -160,17 +138,7 @@ const DxfPage = ({
               {/* Seção de carregamento de dados */}
               <div className="mb-4">
                 <Row>
-                  <Col md={4}>
-                    <Button
-                      variant="outline-primary"
-                      onClick={loadTestData}
-                      disabled={isLoading}
-                      className="w-100 mb-2"
-                    >
-                      {isLoading ? "Carregando..." : "Usar Dados de Teste"}
-                    </Button>
-                  </Col>
-                  <Col md={4}>
+                  <Col md={6}>
                     <Button
                       variant="outline-primary"
                       onClick={loadExtractedData}
@@ -180,7 +148,7 @@ const DxfPage = ({
                       {isLoading ? "Carregando..." : "Usar Dados Extraídos"}
                     </Button>
                   </Col>
-                  <Col md={4}>
+                  <Col md={6}>
                     <Form.Group>
                       <Form.Label>Upload de JSON:</Form.Label>
                       <Form.Control

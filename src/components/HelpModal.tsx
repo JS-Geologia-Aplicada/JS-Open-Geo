@@ -32,7 +32,7 @@ const HelpModal = ({
       <Modal.Body className="text-start">
         <Alert variant={"warning"}>
           <div>
-            Este programa se encontra em fase ALFA de desenvolvimento: isso
+            Este programa se encontra em fase BETA de desenvolvimento: isso
             significa que o programa não está completo e as atualizações são
             constantes. Bugs, erros e falhas são esperados.
           </div>

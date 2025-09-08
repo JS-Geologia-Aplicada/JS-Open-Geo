@@ -4,8 +4,8 @@ Uma aplicação web para extrair texto de áreas específicas em documentos PDF,
 
 ## Links
 
-- **[Demo ao vivo](https://js-geologia-aplicada.github.io/extrator-dados-PDF/)**
-- **[Repositório](https://github.com/js-geologia-aplicada/extrator-dados-PDF)**
+- **[Demo ao vivo](https://js-geologia-aplicada.github.io/js-open-geo/)**
+- **[Repositório](https://github.com/js-geologia-aplicada/js-open-geo)**
 
 ## Como usar
 
@@ -27,7 +27,7 @@ Uma aplicação web para extrair texto de áreas específicas em documentos PDF,
 
 ```bash
 # Clone o repositório
-git clone https://github.com/js-geologia-aplicada/extrator-dados-PDF
+git clone https://github.com/js-geologia-aplicada/js-open-geo
 
 # Entre na pasta
 cd extrator-dados-dpf
@@ -41,15 +41,39 @@ npm run dev
 
 ## Tecnologias
 
+### Core
+
 - **React + TypeScript** - Framework principal
-- **Vite** - Build tool
-- **Bootstrap 5** - Interface e responsividade
-- **React PDF** - Renderização e manipulação de PDFs
-- **PDF.js** - Engine de processamento PDF
-- **SheetJS** - Exportação Excel
-- **@hello-pangea/dnd** - Drag and drop das áreas
+- **Vite** - Build tool e dev server
+
+### Interface & UX
+
+- **React Bootstrap** - Componentes React para Bootstrap
 - **Lucide React** - Ícones
-- **React-dropzone** - Drag and drop de arquivos para upload
+- **@hello-pangea/dnd** - Drag and drop
+- **Toastify** - Notificações
+- **React Dropzone** - Upload de arquivos por drag and drop
+
+### Processamento PDF
+
+- **React PDF** - Renderização de PDFs
+- **PDF.js** - Engine de processamento PDF
+- **PDF-lib** - Manipulação avançada de PDFs
+- **Tesseract.js** - OCR (Optical Character Recognition)
+
+### Mapas & Coordenadas
+
+- **Leaflet** - Mapas interativos
+- **OpenStreetMap** - Camada de mapa base
+- **Esri World Imagery** - Camada de satélite
+- **Proj4** - Transformações de coordenadas
+
+### Export & Dados
+
+- **@tarikjabiri/dxf** - Geração de DXF
+- **SheetJS (XLSX)** - Exportação Excel
+- **JSZip** - Compactação de arquivos
+- **React CSV** - Exportação CSV
 
 ## Desenvolvimento
 

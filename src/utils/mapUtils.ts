@@ -75,7 +75,7 @@ export const generateKMLString = (points: PointCoords[]): string => {
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>Sondagens - JS Geologia Aplicada</name>
-    <description>Pontos de sondagem exportados pelo Extrator PDF</description>
+    <description>Pontos de sondagem exportados pelo JS OpenGeo</description>
     
     <!-- Estilo para ícones de sondagem -->
     <Style id="sondagem-style">
