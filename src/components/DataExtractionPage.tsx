@@ -403,7 +403,6 @@ function DataExtractionPage({
         <Col xs={12} lg={6} xxl={3} xxxl={4}>
           <ExtractedDataPanel
             extractedTexts={extractedTexts}
-            areas={areas}
             isExtracting={isExtracting}
             fileName={selectedFile?.name || undefined}
           />
