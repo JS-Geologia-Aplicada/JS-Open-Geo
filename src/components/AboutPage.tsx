@@ -14,6 +14,15 @@ const AboutPage = () => {
             geológicos.
           </p>
           <p>
+            A digitalização de dados geológico-geotécnicos é uma necessidade
+            cada vez maior em projetos por conta do desenvolvimento em formato
+            BIM (<i>Building Information Modeling</i>). Sem dados digitalizados,
+            as disciplinas de geologia e geotecnia tem muita dificuldade em
+            serem incorporadas no fluxo de desenvolvimento de um projeto em BIM,
+            gerando perda de informação e nos piores casos, problemas de
+            projeto.
+          </p>
+          <p>
             Os dados aqui tratados estão seguros, pois eles não são salvos após
             o processamento (leitura do PDF e exportação). Com relação a isso
             você pode confiar na JS Geologia Aplicada, uma empresa de 8 anos de
