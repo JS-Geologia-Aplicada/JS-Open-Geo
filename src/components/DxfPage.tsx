@@ -13,6 +13,7 @@ import type { Area, PageTextData, PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";
 import PalitoPreviewCard from "./PalitoPreviewCard";
 import { toast } from "react-toastify";
+import LeapfrogToJsonModal from "./LeapfrogToJsonModal";
 
 interface DxfPageProps {
   areas: Area[];
@@ -102,6 +103,11 @@ const DxfPage = ({
     }
   };
 
+  const handleImportLeapfrog = (data: PalitoData[]) => {
+    // Implementar atualizar dados
+    console.log(data);
+  };
+
   // Atualizar palito específico
   const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
     setPalitoData(
@@ -138,7 +144,7 @@ const DxfPage = ({
               {/* Seção de carregamento de dados */}
               <div className="mb-4">
                 <Row>
-                  <Col md={6}>
+                  <Col md={4}>
                     <Button
                       variant="outline-primary"
                       onClick={loadExtractedData}
@@ -148,7 +154,7 @@ const DxfPage = ({
                       {isLoading ? "Carregando..." : "Usar Dados Extraídos"}
                     </Button>
                   </Col>
-                  <Col md={6}>
+                  <Col md={4}>
                     <Form.Group>
                       <Form.Label>Upload de JSON:</Form.Label>
                       <Form.Control
@@ -157,6 +163,11 @@ const DxfPage = ({
                         onChange={handleFileUpload}
                       />
                     </Form.Group>
+                  </Col>
+                  <Col md={4}>
+                    <LeapfrogToJsonModal
+                      onDataProcessed={handleImportLeapfrog}
+                    />
                   </Col>
                 </Row>
               </div>
