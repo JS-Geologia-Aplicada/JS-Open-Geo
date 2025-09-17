@@ -104,8 +104,17 @@ const DxfPage = ({
   };
 
   const handleImportLeapfrog = (data: PalitoData[]) => {
-    // Implementar atualizar dados
-    console.log(data);
+    if (data.length === 0) {
+      toast.error("Nenhum dado foi processado");
+      return;
+    }
+
+    setPalitoData(data);
+    toast.success(
+      `${data.length} palito${data.length !== 1 ? "s" : ""} importado${
+        data.length !== 1 ? "s" : ""
+      } com sucesso!`
+    );
   };
 
   // Atualizar palito específico

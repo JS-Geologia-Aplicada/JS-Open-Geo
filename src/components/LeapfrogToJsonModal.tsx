@@ -19,7 +19,6 @@ interface LeapfrogToJsonModalProps {
 const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
   const [show, setShow] = useState(false);
   const [uploadSuccessful, setUploadSuccessful] = useState(false);
-  const [palitoDataArr, setPalitoDataArr] = useState<PalitoData[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [columnMappings, setColumnMappings] = useState<{
@@ -78,7 +77,9 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
   const handleShow = () => setShow(true);
 
   const handleImport = () => {
-    onDataProcessed(palitoDataArr);
+    const convertedData = convertToPalitoData();
+    onDataProcessed(convertedData);
+    handleClose();
   };
 
   const handleProcessFiles = async () => {
@@ -100,6 +101,34 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
       }
 
       setData(newData);
+      console.log("Dados parseados:", newData);
+
+      // Inicializar columnMappings automaticamente
+      const initialMappings: {
+        [fileType: string]: { [propertyKey: string]: string };
+      } = {};
+
+      Object.keys(newData).forEach((fileType) => {
+        const fileTypeConfig = leapfrogTypes.find((t) => t.key === fileType);
+        const availableColumns = Object.keys(newData[fileType][0] || {});
+
+        if (fileTypeConfig && availableColumns.length > 0) {
+          initialMappings[fileType] = {};
+
+          fileTypeConfig.expectedColumns.forEach((expectedCol) => {
+            const defaultColumn =
+              expectedCol.defaultIndex < availableColumns.length
+                ? availableColumns[expectedCol.defaultIndex]
+                : availableColumns[availableColumns.length - 1];
+
+            initialMappings[fileType][expectedCol.key] = defaultColumn;
+          });
+        }
+      });
+
+      setColumnMappings(initialMappings);
+      console.log("Initial mappings:", initialMappings);
+
       setUploadSuccessful(true);
     } catch (error) {
       console.error(error);
@@ -138,19 +167,24 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
   };
 
   const convertToPalitoData = (): PalitoData[] => {
+    console.log("Data:", data);
+    console.log("Column Mappings:", columnMappings);
     const allHoleIds = new Set<string>();
 
     Object.keys(data).forEach((fileType) => {
       const mapping = columnMappings[fileType];
+      console.log(`Processing ${fileType}, mapping:`, mapping);
       if (mapping?.hole_id) {
         data[fileType].forEach((row) => {
           const holeId = String(row[mapping.hole_id]).trim();
+          console.log(`Found hole_id: "${holeId}"`);
           if (holeId) allHoleIds.add(holeId);
         });
       }
     });
 
-    // 2. Para cada hole_id, gerar PalitoData
+    console.log("All hole IDs found:", Array.from(allHoleIds));
+
     return Array.from(allHoleIds).map((holeId) => {
       const palitoEntry: PalitoData = {
         hole_id: holeId,
@@ -163,9 +197,86 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
         },
       };
 
+      if (data.collar && columnMappings.collar) {
+        const collarRow = data.collar.find(
+          (row) => String(row[columnMappings.collar.hole_id]).trim() === holeId
+        );
+        if (collarRow && columnMappings.collar.z) {
+          palitoEntry.z = parseFloat(collarRow[columnMappings.collar.z]) || 0;
+        }
+      }
+
+      if (data.geology && columnMappings.geology) {
+        const geologyRows = data.geology
+          .filter(
+            (row) =>
+              String(row[columnMappings.geology.hole_id]).trim() === holeId
+          )
+          .sort(
+            (a, b) =>
+              parseFloat(a[columnMappings.geology.from]) -
+              parseFloat(b[columnMappings.geology.from])
+          );
+        const depths = [0]; // sempre começar com 0
+        const geology: string[] = [];
+        geologyRows.forEach((row) => {
+          const to = parseFloat(row[columnMappings.geology.to]);
+          const description = String(
+            row[columnMappings.geology.geology]
+          ).trim();
+
+          if (!isNaN(to)) depths.push(to);
+          if (description) geology.push(description);
+        });
+        palitoEntry.depths = [...new Set(depths)].sort((a, b) => a - b); // remover duplicatas e ordenar
+        palitoEntry.geology = geology;
+      }
+
+      if (data.nspt && columnMappings.nspt) {
+        const nsptRows = data.nspt
+          .filter(
+            (row) => String(row[columnMappings.nspt.hole_id]).trim() === holeId
+          )
+          .sort(
+            (a, b) =>
+              parseFloat(a[columnMappings.nspt.from]) -
+              parseFloat(b[columnMappings.nspt.from])
+          );
+        const nsptValues: string[] = [];
+        let startDepth = 1;
+        nsptRows.forEach((row, index) => {
+          const nsptValue = String(row[columnMappings.nspt.nspt]).trim();
+          const to = parseFloat(row[columnMappings.nspt.to]);
+          if (nsptValue) nsptValues.push(nsptValue);
+          if (index === 0 && !isNaN(to)) {
+            startDepth = to;
+          }
+        });
+        palitoEntry.nspt = {
+          start_depth: startDepth, // primeiro NSPT está na profundidade "to" da primeira linha
+          interval: 1,
+          values: nsptValues,
+        };
+      }
+
+      if (data.na && columnMappings.na) {
+        const naRows = data.na.filter(
+          (row) => String(row[columnMappings.na.hole_id]).trim() === holeId
+        );
+        const waterRow = naRows.find((row) =>
+          String(row[columnMappings.na.condition])
+            .toUpperCase()
+            .includes("ÁGUA")
+        );
+        if (waterRow && columnMappings.na.from) {
+          const waterLevel = parseFloat(waterRow[columnMappings.na.from]);
+          if (!isNaN(waterLevel)) {
+            palitoEntry.water_level = waterLevel;
+          }
+        }
+      }
+
       return palitoEntry;
-      // Extrair dados de cada arquivo para este hole_id
-      // Montar objeto PalitoData
     });
   };
 
