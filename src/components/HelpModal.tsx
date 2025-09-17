@@ -41,6 +41,15 @@ const HelpModal = ({
             erros na leitura automática dos dados.
           </div>
         </Alert>
+        <div className="ratio ratio-16x9 mb-3">
+          <iframe
+            src="https://player.vimeo.com/video/1117535192?badge=0&autopause=0&player_id=0&app_id=58479&dnt=1"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            title="Tutorial JS OpenGeo"
+            loading="lazy"
+          ></iframe>
+        </div>
         <p className="lead text-muted mb-3">
           O JS OpenGeo é um programa totalmente on-line, gratuito e de código
           aberto da JS Geologia Aplicada, desenvolvido para automatizar a

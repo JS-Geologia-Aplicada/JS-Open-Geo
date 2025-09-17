@@ -101,7 +101,6 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
       }
 
       setData(newData);
-      console.log("Dados parseados:", newData);
 
       // Inicializar columnMappings automaticamente
       const initialMappings: {
@@ -127,7 +126,6 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
       });
 
       setColumnMappings(initialMappings);
-      console.log("Initial mappings:", initialMappings);
 
       setUploadSuccessful(true);
     } catch (error) {
@@ -148,9 +146,7 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
           return typeof value === "string" ? value.trim() : value;
         },
         complete: (results) => {
-          // Filtrar ANTES de resolver a Promise
           const filteredData = results.data.filter((entry: any) => {
-            // Verificar se pelo menos uma propriedade tem valor válido
             return Object.values(entry).some(
               (value) =>
                 value !== null &&
@@ -167,23 +163,17 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
   };
 
   const convertToPalitoData = (): PalitoData[] => {
-    console.log("Data:", data);
-    console.log("Column Mappings:", columnMappings);
     const allHoleIds = new Set<string>();
 
     Object.keys(data).forEach((fileType) => {
       const mapping = columnMappings[fileType];
-      console.log(`Processing ${fileType}, mapping:`, mapping);
       if (mapping?.hole_id) {
         data[fileType].forEach((row) => {
           const holeId = String(row[mapping.hole_id]).trim();
-          console.log(`Found hole_id: "${holeId}"`);
           if (holeId) allHoleIds.add(holeId);
         });
       }
     });
-
-    console.log("All hole IDs found:", Array.from(allHoleIds));
 
     return Array.from(allHoleIds).map((holeId) => {
       const palitoEntry: PalitoData = {
