@@ -1,20 +1,25 @@
 import { Card, Form, Button, Row, Col, ButtonGroup } from "react-bootstrap";
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { PalitoData } from "../types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface PalitoPreviewCardProps {
   palitoData: PalitoData[];
   onUpdatePalito: (index: number, updatedPalito: PalitoData) => void;
+  onUpdateAllNspt: (newValue: number) => void;
 }
 
 const PalitoPreviewCard = ({
   palitoData,
   onUpdatePalito,
+  onUpdateAllNspt,
 }: PalitoPreviewCardProps) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedPalito, setEditedPalito] = useState<PalitoData | null>(null);
+
+  const [isMassEditingNSPT, setIsMassEditingNSPT] = useState(false);
+  const [massEditValue, setMassEditValue] = useState<string>("");
 
   const handleStartEdit = () => {
     setEditedPalito(JSON.parse(JSON.stringify(currentPalito)));
@@ -58,6 +63,20 @@ const PalitoPreviewCard = ({
       prev < palitoData.length - 1 ? prev + 1 : 0
     );
   };
+
+  const handleConfirmMassEdit = () => {
+    const newStartDepth = parseFloat(massEditValue) || 1;
+    console.log("newStartDepth: ", newStartDepth);
+
+    onUpdateAllNspt(newStartDepth);
+
+    setIsMassEditingNSPT(false);
+    setMassEditValue("");
+  };
+
+  useEffect(() => {
+    console.log("palitoData mudou:", palitoData);
+  }, [palitoData]);
 
   return (
     <Card className="mt-2">
@@ -222,18 +241,56 @@ const PalitoPreviewCard = ({
           </Col>
           <Col xs={3}>
             {isEditing ? (
-              <>
-                <ButtonGroup>
-                  <Button variant="success" onClick={handleConfirmEdit}>
-                    <Check size={16} />
+              <ButtonGroup>
+                <Button variant="success" onClick={handleConfirmEdit}>
+                  <Check size={16} />
+                </Button>
+                <Button variant="danger" onClick={handleCancelEdit}>
+                  <X size={16} />
+                </Button>
+              </ButtonGroup>
+            ) : isMassEditingNSPT ? (
+              <div className="d-flex flex-column gap-1">
+                <Form.Control
+                  type="number"
+                  size="sm"
+                  placeholder="Início NSPT"
+                  value={massEditValue}
+                  onChange={(e) => setMassEditValue(e.target.value)}
+                  step="0.1"
+                  autoFocus
+                />
+                <div className="d-flex gap-1">
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={handleConfirmMassEdit}
+                  >
+                    <Check size={14} />
                   </Button>
-                  <Button variant="danger" onClick={handleCancelEdit}>
-                    <X size={16} />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setIsMassEditingNSPT(false);
+                      setMassEditValue("");
+                    }}
+                  >
+                    <X size={14} />
                   </Button>
-                </ButtonGroup>
-              </>
+                </div>
+              </div>
             ) : (
-              <Button onClick={handleStartEdit}>Editar</Button>
+              <div className="d-flex flex-column gap-1">
+                <Button onClick={handleStartEdit}>Editar</Button>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => setIsMassEditingNSPT(true)}
+                >
+                  Editar NSPT em massa
+                </Button>
+              </div>
             )}
           </Col>
         </Row>

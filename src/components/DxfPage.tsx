@@ -119,8 +119,23 @@ const DxfPage = ({
 
   // Atualizar palito específico
   const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
+    console.log(`Atualizando palito ${index}:`, updatedPalito);
     setPalitoData(
       palitoData.map((palito, i) => (index === i ? updatedPalito : palito))
+    );
+  };
+
+  const handleUpdateAllNspt = (newValue: number) => {
+    setPalitoData(
+      palitoData.map((palito) => {
+        return {
+          ...palito,
+          nspt: {
+            ...palito.nspt,
+            start_depth: newValue,
+          },
+        };
+      })
     );
   };
 
@@ -204,6 +219,7 @@ const DxfPage = ({
           <PalitoPreviewCard
             palitoData={palitoData}
             onUpdatePalito={handleUpdatePalito}
+            onUpdateAllNspt={handleUpdateAllNspt}
           />
         </Col>
       </Row>
