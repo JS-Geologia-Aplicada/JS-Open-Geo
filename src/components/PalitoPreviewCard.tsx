@@ -1,7 +1,7 @@
 import { Card, Form, Button, Row, Col, ButtonGroup } from "react-bootstrap";
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { PalitoData } from "../types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface PalitoPreviewCardProps {
   palitoData: PalitoData[];
@@ -73,10 +73,6 @@ const PalitoPreviewCard = ({
     setIsMassEditingNSPT(false);
     setMassEditValue("");
   };
-
-  useEffect(() => {
-    console.log("palitoData mudou:", palitoData);
-  }, [palitoData]);
 
   return (
     <Card className="mt-2">
