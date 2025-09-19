@@ -7,7 +7,7 @@ import {
   Form,
   Row,
 } from "react-bootstrap";
-import { generateDXF } from "../utils/dxfGenerator";
+import { generateDXF, generateDXFMetro } from "../utils/dxfGenerator";
 import { useState } from "react";
 import type { Area, PageTextData, PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";
@@ -73,7 +73,7 @@ const DxfPage = ({
   };
 
   // Gerar DXF
-  const handleGenerateDXF = async () => {
+  const handleGenerateDXF = async (variant: string = "padrao-JS") => {
     if (palitoData.length === 0) {
       toast.error("Nenhum dado carregado para gerar DXF");
       setMessage({
@@ -85,7 +85,10 @@ const DxfPage = ({
 
     try {
       setIsLoading(true);
-      const result = await generateDXF(palitoData);
+      const result =
+        variant === "metro"
+          ? await generateDXFMetro(palitoData)
+          : await generateDXF(palitoData);
       if (result.processErrorNames.length > 0) {
         toast.warn(
           `DXF gerado! ${result.successCount}/${
@@ -197,17 +200,32 @@ const DxfPage = ({
               </div>
 
               {/* Botão de gerar DXF */}
-              <div className="mb-4">
+              <div className="mb-4 d-flex gap-2">
                 <Button
                   variant="success"
                   size="lg"
-                  onClick={handleGenerateDXF}
+                  onClick={() => {
+                    handleGenerateDXF("padrao-js");
+                  }}
                   disabled={isLoading || palitoData.length === 0}
                   className="w-100"
                 >
                   {isLoading
                     ? "Gerando..."
                     : `Gerar DXF (${palitoData.length} palito${
+                        palitoData.length !== 1 ? "s" : ""
+                      })`}
+                </Button>
+                <Button
+                  variant="success"
+                  size="lg"
+                  onClick={() => handleGenerateDXF("metro")}
+                  disabled={isLoading || palitoData.length === 0}
+                  className="w-100"
+                >
+                  {isLoading
+                    ? "Gerando..."
+                    : `Gerar DXF Metrô (${palitoData.length} palito${
                         palitoData.length !== 1 ? "s" : ""
                       })`}
                 </Button>

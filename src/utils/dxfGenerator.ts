@@ -357,6 +357,326 @@ export const generateDXF = async (data: PalitoData[]) => {
   };
 };
 
+export const generateDXFMetro = async (data: PalitoData[]) => {
+  // Parâmetros globais
+  const firstOrigin = point3d(0, 100);
+  const gap = 15;
+
+  // Instanciando a lib
+  const dxf = new DxfWriter();
+  dxf.setUnits(Units.Meters);
+
+  // Layers
+  const textLayer = dxf.addLayer("msp-ge_textos", Colors.Yellow, "Continuous");
+  // const nsptLayer = dxf.addLayer("msp-ge_log_spt", Colors.Yellow, "Continuous");
+  const perfilLayer = dxf.addLayer("msp-ge_perfil", Colors.Green, "Continuous");
+  const simbologiaLayer = dxf.addLayer(
+    "msp-ge_simbologia_geral",
+    Colors.Green,
+    "Continuous"
+  );
+  const camadasLayer = dxf.addLayer("G-CAMADAS_PIS", Colors.Cyan, "Continuous");
+
+  // Estilo de texto: texto normal para a maioria, MText para NA e NSPT
+  const arialTextStyle = dxf.tables.addStyle("arialText");
+  arialTextStyle.fontFileName = "arial.ttf";
+  arialTextStyle.widthFactor = 1.0;
+  arialTextStyle.fixedTextHeight = 0;
+
+  // const nsptMTextOptions: MTextOptions = {
+  //   attachmentPoint: 3,
+  //   width: 8,
+  //   layerName: nsptLayer.name,
+  // };
+
+  // Definindo blocos de retângulos que se repetem na escala vertical: dois retângulos verdes, um preenchido outro só o contorno em polyline
+  const scaleBlockHatch = dxf.addBlock("scaleBlockHatch");
+  scaleBlockHatch.layerName = perfilLayer.name;
+  const scalePolyline = new HatchPolylineBoundary();
+  scalePolyline.add(vertex(0, 0));
+  scalePolyline.add(vertex(0.7539, 0));
+  scalePolyline.add(vertex(0.7539, -2.5));
+  scalePolyline.add(vertex(0, -2.5));
+  scalePolyline.add(vertex(0, 0));
+  const scaleBoundary = new HatchBoundaryPaths();
+  scaleBoundary.addPolylineBoundary(scalePolyline);
+  const solidPattern = pattern({
+    name: HatchPredefinedPatterns.SOLID,
+  });
+  scaleBlockHatch.addHatch(scaleBoundary, solidPattern, {
+    colorNumber: Colors.Green,
+  });
+
+  const scaleBlockOutline = dxf.addBlock("scaleBlockOutline");
+  scaleBlockOutline.layerName = perfilLayer.name;
+  const outlineVertices = [
+    { point: point2d(0, 0) },
+    { point: point2d(0.7539, 0) },
+    { point: point2d(0.7539, -2.5) },
+    { point: point2d(0, -2.5) },
+    { point: point2d(0, 0) },
+  ];
+  scaleBlockOutline.addLWPolyline(outlineVertices, {
+    colorNumber: Colors.Green,
+  });
+
+  // Bloco de linhas de profundidade
+  const depthLineBlock = dxf.addBlock("depthLineBlock");
+  depthLineBlock.layerName = camadasLayer.name;
+  const depthVertices = [
+    {
+      point: point2d(-4.9973, 0),
+    },
+    {
+      point: point2d(12.3938, 0),
+    },
+  ];
+  depthLineBlock.addLWPolyline(depthVertices);
+
+  // Bloco de nível da água: Somente o texto N.A. em verde e um triângulo preenchido em vermelho, com a ponta inferior indicando o NA
+  const waterLevelBlock = dxf.addBlock("waterLevelBlock");
+  waterLevelBlock.layerName = simbologiaLayer.name;
+  const waterLevelPolyline = new HatchPolylineBoundary();
+  waterLevelPolyline.add(vertex(0, 0));
+  waterLevelPolyline.add(vertex(-1.0471, 1.6754));
+  waterLevelPolyline.add(vertex(1.0471, 1.6754));
+  waterLevelPolyline.add(vertex(0, 0));
+  const waterLevelBoundary = new HatchBoundaryPaths();
+  waterLevelBoundary.addPolylineBoundary(waterLevelPolyline);
+  waterLevelBlock.addHatch(waterLevelBoundary, solidPattern, {
+    colorNumber: Colors.Red,
+  });
+
+  const naText = waterLevelBlock.addText(point3d(0, 3.05), 1.0471, "N.A.", {
+    layerName: simbologiaLayer.name,
+    horizontalAlignment: TextHorizontalAlignment.Center,
+    verticalAlignment: TextVerticalAlignment.Top,
+    secondAlignmentPoint: point3d(0, 3.05),
+    colorNumber: Colors.Green,
+  });
+  naText.textStyle = arialTextStyle.name;
+
+  // Falta colocar o texto
+
+  const processErrorNames: string[] = [];
+  // Construindo cada palito
+  data.forEach((sondagem, index) => {
+    try {
+      // Parâmetros individuais do palito
+      const currentOrigin = point3d(firstOrigin.x + gap * index, firstOrigin.y);
+      const maxDepth = sondagem.depths[sondagem.depths.length - 1];
+
+      // Fazendo o cabeçalho: retângulo dividido por duas linhas horizontais
+      // Linha vertical
+      dxf.addLine(
+        point3d(currentOrigin.x, currentOrigin.y),
+        point3d(currentOrigin.x, currentOrigin.y + 6.4916),
+        { layerName: perfilLayer.name }
+      );
+
+      // Retângulo principal
+      const headerVertices = [
+        { point: point2d(currentOrigin.x - 6.75, currentOrigin.y + 6.4916) },
+        { point: point2d(currentOrigin.x + 6.75, currentOrigin.y + 6.4916) },
+        { point: point2d(currentOrigin.x + 6.75, currentOrigin.y + 11.4916) },
+        { point: point2d(currentOrigin.x - 6.75, currentOrigin.y + 11.4916) },
+        { point: point2d(currentOrigin.x - 6.75, currentOrigin.y + 6.4916) },
+      ];
+      dxf.addLWPolyline(headerVertices, { layerName: perfilLayer.name });
+
+      // Linha horizontal superior
+      dxf.addLine(
+        point3d(currentOrigin.x - 6.75, currentOrigin.y + 9.4916),
+        point3d(currentOrigin.x + 6.75, currentOrigin.y + 9.4916),
+        { layerName: perfilLayer.name }
+      );
+
+      // Linha horizontal inferior
+      dxf.addLine(
+        point3d(currentOrigin.x - 6.75, currentOrigin.y + 7.9916),
+        point3d(currentOrigin.x + 6.75, currentOrigin.y + 7.9916),
+        { layerName: perfilLayer.name }
+      );
+
+      // Textos do cabeçalho
+      // "Proj." - alinhado à esquerda
+      const projText = dxf.addText(
+        point3d(currentOrigin.x - 5.7568, currentOrigin.y + 6.8666),
+        1,
+        "Proj.",
+        {
+          layerName: textLayer.name,
+          horizontalAlignment: TextHorizontalAlignment.Left,
+          secondAlignmentPoint: point3d(
+            currentOrigin.x - 5.7568,
+            currentOrigin.y + 6.8666
+          ),
+        }
+      );
+      projText.textStyle = arialTextStyle.name;
+
+      // "X,XX" - centro
+      const coordText = dxf.addText(
+        point3d(currentOrigin.x, currentOrigin.y + 7.2416),
+        1,
+        "X,XX",
+        {
+          layerName: textLayer.name,
+          horizontalAlignment: TextHorizontalAlignment.Center,
+          verticalAlignment: TextVerticalAlignment.Middle,
+          secondAlignmentPoint: point3d(
+            currentOrigin.x,
+            currentOrigin.y + 7.2416
+          ),
+        }
+      );
+      coordText.textStyle = arialTextStyle.name;
+
+      // "m" - alinhado à esquerda
+      const mText = dxf.addText(
+        point3d(currentOrigin.x + 4.1276, currentOrigin.y + 6.8666),
+        1,
+        "m",
+        {
+          layerName: textLayer.name,
+          horizontalAlignment: TextHorizontalAlignment.Left,
+          secondAlignmentPoint: point3d(
+            currentOrigin.x + 4.1276,
+            currentOrigin.y + 6.8666
+          ),
+        }
+      );
+      mText.textStyle = arialTextStyle.name;
+
+      // "Cota: " + valor da cota - centro
+      const cotaText = dxf.addText(
+        point3d(currentOrigin.x, currentOrigin.y + 8.7416),
+        1,
+        sondagem.z ? `Cota: ${sondagem.z.toFixed(2)}` : "Cota",
+        {
+          layerName: textLayer.name,
+          horizontalAlignment: TextHorizontalAlignment.Center,
+          verticalAlignment: TextVerticalAlignment.Middle,
+          secondAlignmentPoint: point3d(
+            currentOrigin.x,
+            currentOrigin.y + 8.7416
+          ),
+        }
+      );
+      cotaText.textStyle = arialTextStyle.name;
+
+      // Hole ID - centro, altura 1.5
+      const holeIdText = dxf.addText(
+        point3d(currentOrigin.x, currentOrigin.y + 10.4916),
+        1.5,
+        sondagem.hole_id.toUpperCase(),
+        {
+          layerName: textLayer.name,
+          horizontalAlignment: TextHorizontalAlignment.Center,
+          verticalAlignment: TextVerticalAlignment.Middle,
+          secondAlignmentPoint: point3d(
+            currentOrigin.x,
+            currentOrigin.y + 10.4916
+          ),
+        }
+      );
+      holeIdText.textStyle = arialTextStyle.name;
+
+      // Fazendo a escala vertical: alternar blocos
+      // Escala 2.5:1
+      const blockHeight = 2.5;
+
+      // Desenhar blocos completos primeiro
+      const completeBlocks = Math.floor(maxDepth);
+      for (let i = 0; i < completeBlocks; i++) {
+        const blockY = currentOrigin.y - i * blockHeight;
+        const isOddMeter = (i + 1) % 2 === 1; // metro 1, 3, 5... são ímpares
+        const blockName = isOddMeter ? "scaleBlockHatch" : "scaleBlockOutline";
+
+        dxf.addInsert(
+          blockName,
+          point3d(currentOrigin.x - 0.7539 / 2, blockY), // centraliza horizontalmente
+          {
+            layerName: perfilLayer.name,
+            colorNumber: Colors.Green,
+          }
+        );
+      }
+
+      // Desenhar bloco parcial se necessário
+      const remainingDepth = maxDepth - completeBlocks;
+      if (remainingDepth > 0) {
+        const partialBlockY = currentOrigin.y - completeBlocks * blockHeight;
+        const adjustedHeight = remainingDepth * blockHeight;
+        const isOddMeter = (completeBlocks + 1) % 2 === 1;
+
+        const vertices = [
+          { point: point2d(currentOrigin.x - 0.7539 / 2, partialBlockY) },
+          { point: point2d(currentOrigin.x + 0.7539 / 2, partialBlockY) },
+          {
+            point: point2d(
+              currentOrigin.x + 0.7539 / 2,
+              partialBlockY - adjustedHeight
+            ),
+          },
+          {
+            point: point2d(
+              currentOrigin.x - 0.7539 / 2,
+              partialBlockY - adjustedHeight
+            ),
+          },
+          { point: point2d(currentOrigin.x - 0.7539 / 2, partialBlockY) },
+        ];
+
+        if (isOddMeter) {
+          // Bloco hatch
+          const customPolyline = new HatchPolylineBoundary();
+          vertices.forEach((v) =>
+            customPolyline.add(vertex(v.point.x, v.point.y))
+          );
+          const customBoundary = new HatchBoundaryPaths();
+          customBoundary.addPolylineBoundary(customPolyline);
+          dxf.addHatch(customBoundary, solidPattern, {
+            colorNumber: Colors.Green,
+            layerName: perfilLayer.name,
+          });
+        } else {
+          // Bloco contorno
+          dxf.addLWPolyline(vertices, {
+            colorNumber: Colors.Green,
+            layerName: perfilLayer.name,
+          });
+        }
+      }
+
+      // Organizar textos maiores que as camadas => pode ser ignorado neste padrão
+
+      // NSPTs
+
+      // Nível d'água
+
+      // Profundidade final
+    } catch (error) {
+      console.error(
+        `Erro no palito ${sondagem.hole_id} (índice ${index}):`,
+        error
+      );
+      processErrorNames.push(sondagem.hole_id);
+      return;
+    }
+  });
+
+  // Baixando o arquivo
+  const dxfString = dxf.stringify();
+  downloadDXF(dxfString, "palitos.dxf");
+  return {
+    success: true,
+    processErrorNames,
+    totalProcessed: data.length,
+    successCount: data.length - processErrorNames.length,
+  };
+};
+
 const downloadDXF = (content: string, filename: string) => {
   const blob = new Blob([content], { type: "application/dxf" });
   const url = URL.createObjectURL(blob);
