@@ -41,21 +41,30 @@ const HelpModal = ({
             erros na leitura automática dos dados.
           </div>
         </Alert>
-        <div className="ratio ratio-16x9 mb-3">
-          <iframe
-            src="https://player.vimeo.com/video/1117535192?badge=0&autopause=0&player_id=0&app_id=58479&dnt=1"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-            title="Tutorial JS OpenGeo"
-            loading="lazy"
-          ></iframe>
+        <div>
+          <p className="text-muted mb-3">
+            O JS OpenGeo é um programa totalmente on-line, gratuito e de código
+            aberto da JS Geologia Aplicada, desenvolvido para automatizar a
+            extração de informações de relatórios de sondagem e outros
+            documentos técnicos, facilitando a organização e análise de dados
+            geológicos.
+          </p>
+          <div className="ratio ratio-16x9 mb-3">
+            <iframe
+              src="https://player.vimeo.com/video/1117535192?h=1dacaf4e4f&badge=0&autopause=0&player_id=0&app_id=58479&autoplay=0&loop=1"
+              allow="fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+              }}
+              title="JS OpenGeo beta 1.0.0"
+            ></iframe>
+          </div>
         </div>
-        <p className="lead text-muted mb-3">
-          O JS OpenGeo é um programa totalmente on-line, gratuito e de código
-          aberto da JS Geologia Aplicada, desenvolvido para automatizar a
-          extração de informações de relatórios de sondagem e outros documentos
-          técnicos, facilitando a organização e análise de dados geológicos.
-        </p>
 
         <div className="mt-3 px-3 text-start">
           <h6 className="text-dark fw-bold mb-2 text-start">
