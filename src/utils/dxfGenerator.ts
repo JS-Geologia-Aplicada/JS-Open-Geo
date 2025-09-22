@@ -368,7 +368,7 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
 
   // Layers
   const textLayer = dxf.addLayer("msp-ge_textos", Colors.Yellow, "Continuous");
-  // const nsptLayer = dxf.addLayer("msp-ge_log_spt", Colors.Yellow, "Continuous");
+  const nsptLayer = dxf.addLayer("msp-ge_log_spt", Colors.Yellow, "Continuous");
   const perfilLayer = dxf.addLayer("msp-ge_perfil", Colors.Green, "Continuous");
   const simbologiaLayer = dxf.addLayer(
     "msp-ge_simbologia_geral",
@@ -652,10 +652,117 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       // Organizar textos maiores que as camadas => pode ser ignorado neste padrão
 
       // NSPTs
+      const nsptStartY = currentOrigin.y - 1.9143; // primeira posição Y
+      const nsptX = currentOrigin.x + 0.7958; // posição X fixa
+      const nsptSpacing = 2.5; // espaçamento vertical
+
+      for (let d = 1; d < sondagem.nspt.start_depth; d++) {
+        const currentY = nsptStartY - (d - 1) * nsptSpacing;
+        const emptyNsptText = dxf.addText(point3d(nsptX, currentY), 1.0, "-", {
+          layerName: nsptLayer.name,
+          horizontalAlignment: TextHorizontalAlignment.Left,
+          verticalAlignment: TextVerticalAlignment.Middle,
+          secondAlignmentPoint: point3d(nsptX, currentY),
+        });
+        emptyNsptText.textStyle = arialTextStyle.name;
+      }
+
+      sondagem.nspt.values.forEach((value, index) => {
+        const currentY =
+          nsptStartY - (index + sondagem.nspt.start_depth) * nsptSpacing;
+        const nsptText = dxf.addText(
+          point3d(nsptX, currentY),
+          1.0,
+          value as string,
+          {
+            layerName: nsptLayer.name,
+            horizontalAlignment: TextHorizontalAlignment.Left,
+            verticalAlignment: TextVerticalAlignment.Middle,
+            secondAlignmentPoint: point3d(nsptX, currentY),
+          }
+        );
+        nsptText.textStyle = arialTextStyle.name;
+      });
 
       // Nível d'água
+      const waterLevelY =
+        sondagem.water_level !== null && sondagem.water_level !== undefined
+          ? currentOrigin.y - sondagem.water_level * 2.5
+          : currentOrigin.y - maxDepth * 2.5;
+      const waterLevelX = currentOrigin.x - 2.6291;
+
+      dxf.addInsert(waterLevelBlock.name, point3d(waterLevelX, waterLevelY), {
+        layerName: simbologiaLayer.name,
+      });
 
       // Profundidade final
+      const maxDepthText = dxf.addText(
+        point3d(
+          currentOrigin.x - 0.0442,
+          currentOrigin.y - 2.5 * maxDepth - 0.9933
+        ),
+        0.9,
+        `${maxDepth.toString().replace(".", ",")}m`,
+        {
+          layerName: textLayer.name,
+          horizontalAlignment: TextHorizontalAlignment.Center,
+          verticalAlignment: TextVerticalAlignment.Middle,
+          secondAlignmentPoint: point3d(
+            currentOrigin.x - 0.0442,
+            currentOrigin.y - 2.5 * maxDepth - 0.9933
+          ),
+        }
+      );
+      maxDepthText.textStyle = arialTextStyle.name;
+
+      // Linhas de Profundidade e descrições
+      if (!sondagem.depths.includes(0)) {
+        sondagem.depths.unshift(0);
+      }
+      sondagem.depths.forEach((depth, index) => {
+        // Linha
+        dxf.addLWPolyline(
+          [
+            {
+              point: point3d(
+                currentOrigin.x - 4.9973,
+                currentOrigin.y - depth * 2.5
+              ),
+            },
+            {
+              point: point3d(
+                currentOrigin.x + 12.3938,
+                currentOrigin.y - depth * 2.5
+              ),
+            },
+          ],
+          {
+            layerName: camadasLayer.name,
+            colorNumber: Colors.Cyan,
+          }
+        );
+        // Descrições
+        if (
+          index < sondagem.depths.length - 1 &&
+          index < sondagem.geology.length
+        ) {
+          const geologyTextPoint = point3d(
+            currentOrigin.x + 2.6675,
+            currentOrigin.y - (depth + sondagem.depths[index + 1]) * 1.25 // 2.5 (escala) / 2 (média)
+          );
+          const geologyText = dxf.addText(
+            geologyTextPoint,
+            1.2046,
+            sondagem.geology[index],
+            {
+              layerName: camadasLayer.name,
+              horizontalAlignment: TextHorizontalAlignment.Left,
+              secondAlignmentPoint: geologyTextPoint,
+            }
+          );
+          geologyText.textStyle = arialTextStyle.name;
+        }
+      });
     } catch (error) {
       console.error(
         `Erro no palito ${sondagem.hole_id} (índice ${index}):`,
