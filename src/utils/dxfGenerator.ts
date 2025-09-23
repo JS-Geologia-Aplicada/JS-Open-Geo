@@ -1,4 +1,4 @@
-import type { Cluster, LayerSize, PalitoData } from "../types";
+import type { Cluster, PalitoData } from "../types";
 import {
   Colors,
   DxfLayer,
@@ -14,11 +14,309 @@ import {
   TextVerticalAlignment,
   Units,
   vertex,
+  type HatchPatternOptions_t,
   type MTextOptions,
   type vec3_t,
 } from "@tarikjabiri/dxf";
 
-export const generateDXF = async (data: PalitoData[]) => {
+export const generateDxfJs = async (
+  data: PalitoData[],
+  variant: "padrao-1" | "padrao-2"
+) => {
+  const variantConfig = {
+    "padrao-1": {
+      waterLevel: {
+        x: 2.9136,
+        textStandardX: 4.1102,
+        textDryX: 4.2102,
+        textY: 0.7019,
+        textHeight: 0.25,
+        textHorizontalAlignment: TextHorizontalAlignment.Right,
+        textVerticalAlignment: TextVerticalAlignment.Middle,
+        createWaterLevelBlock: (
+          dxf: DxfWriter,
+          waterLevelShapeLayerName: string,
+          hatchPattern: HatchPatternOptions_t
+        ) => {
+          const waterLevelBlock = dxf.addBlock("waterLevelBlock");
+          waterLevelBlock.layerName = waterLevelShapeLayerName;
+          const waterLevelPolyline = new HatchPolylineBoundary();
+          waterLevelPolyline.add(vertex(0, 0));
+          waterLevelPolyline.add(vertex(-0.2754, 0.4406));
+          waterLevelPolyline.add(vertex(0.2754, 0.4406));
+          waterLevelPolyline.add(vertex(0, 0));
+          const waterLevelBoundary = new HatchBoundaryPaths();
+          waterLevelBoundary.addPolylineBoundary(waterLevelPolyline);
+          waterLevelBlock.addHatch(waterLevelBoundary, hatchPattern);
+          waterLevelBlock.addLine(
+            point3d(-0.2754, 0.4406),
+            point3d(1.574, 0.4406)
+          );
+          return waterLevelBlock;
+        },
+      },
+      heading: {
+        y: 2.453,
+        x: -4.7657,
+        titleHeight: 0.65,
+        titleX: -0.18,
+        titleY: 2.67,
+        titleVerticalAlignment: undefined,
+        titleHorizontalAlignment: TextHorizontalAlignment.Left,
+        cotaX: -3.4329,
+        cotaY: 2.2512,
+        cotaVerticalAlignment: TextVerticalAlignment.Top,
+        cotaHorizontalAlignment: TextHorizontalAlignment.Left,
+        cotaHeight: 0.45,
+      },
+      description: {
+        x: -1.4769,
+        height: 0.25,
+      },
+      nspt: {
+        x: 0.5744,
+        y: -1.1253,
+        height: 0.35,
+        verticalAlignment: TextVerticalAlignment.Top,
+        horizontalAlignment: TextHorizontalAlignment.Left,
+      },
+      finalDepth: {
+        x: -5.72,
+        y: -0.87,
+        height: 0.35,
+        getString: (maxDepth: number) => {
+          return (
+            "PROFUNDIDADE FINAL = " +
+            maxDepth.toFixed(2).replace(".", ",") +
+            " m."
+          );
+        },
+      },
+      depths: {
+        drawDepthLine: (
+          dxf: DxfWriter,
+          currentOrigin: vec3_t,
+          originalDepth: number,
+          correctedDepth: number | undefined,
+          depthLinesLayer: DxfLayer
+        ) => {
+          const maxX = 2.72;
+          const breakX = 1.35;
+          const straightenX = 1.45;
+          // Desenhando a linha de profundidade
+          const depthVertices = correctedDepth
+            ? [
+                {
+                  point: point2d(
+                    currentOrigin.x,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - breakX,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - straightenX,
+                    currentOrigin.y - correctedDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - maxX,
+                    currentOrigin.y - correctedDepth
+                  ),
+                },
+              ]
+            : [
+                {
+                  point: point2d(
+                    currentOrigin.x,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - maxX,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+              ];
+          dxf.addLWPolyline(depthVertices, { layerName: depthLinesLayer.name });
+        },
+        drawDepthText: (
+          dxf: DxfWriter,
+          currentOrigin: vec3_t,
+          originalDepth: number,
+          depthLinesLayer: DxfLayer,
+          arialTextStyle: DxfStyle
+        ) => {
+          const depthText = dxf.addText(
+            point3d(
+              currentOrigin.x - 0.15,
+              currentOrigin.y - originalDepth - 0.07
+            ),
+            0.35,
+            originalDepth.toFixed(2).replace(".", ","),
+            {
+              layerName: depthLinesLayer.name,
+              horizontalAlignment: TextHorizontalAlignment.Right,
+              verticalAlignment: TextVerticalAlignment.Bottom,
+              secondAlignmentPoint: point3d(
+                currentOrigin.x - 0.15,
+                currentOrigin.y - originalDepth - 0.07
+              ),
+            }
+          );
+          depthText.textStyle = arialTextStyle.name;
+        },
+      },
+    },
+    "padrao-2": {
+      waterLevel: {
+        x: 1.7582,
+        textStandardX: 3.4854,
+        textDryX: 3.4854,
+        textY: 0.2651,
+        textHeight: 0.2,
+        textHorizontalAlignment: TextHorizontalAlignment.Right,
+        textVerticalAlignment: TextVerticalAlignment.Middle,
+        createWaterLevelBlock: (
+          dxf: DxfWriter,
+          waterLevelShapeLayerName: string,
+          _hatchPattern: HatchPatternOptions_t
+        ) => {
+          const waterLevelBlock = dxf.addBlock("waterLevelBlock");
+          waterLevelBlock.layerName = waterLevelShapeLayerName;
+          waterLevelBlock.addLine(point3d(0, 0), point3d(1.6204, 0), {
+            colorNumber: Colors.Blue,
+          });
+          waterLevelBlock.addLine(
+            point3d(0.25, -0.1169),
+            point3d(1.3704, -0.1169),
+            {
+              colorNumber: Colors.Blue,
+            }
+          );
+          waterLevelBlock.addLine(
+            point3d(0.4999, -0.2269),
+            point3d(1.1205, -0.2269),
+            {
+              colorNumber: Colors.Blue,
+            }
+          );
+          waterLevelBlock.addLine(
+            point3d(0.7362, -0.2777),
+            point3d(0.8568, -0.2777),
+            {
+              colorNumber: Colors.Blue,
+            }
+          );
+          waterLevelBlock.addLine(
+            point3d(0.7375, -0.3369),
+            point3d(0.8581, -0.3369),
+            {
+              colorNumber: Colors.Blue,
+            }
+          );
+          return waterLevelBlock;
+        },
+      },
+      heading: {
+        y: 3.7057,
+        x: -2.9752,
+        titleHeight: 0.3,
+        titleX: -1.8782,
+        titleY: 4.2779,
+        titleVerticalAlignment: TextVerticalAlignment.Top,
+        titleHorizontalAlignment: TextHorizontalAlignment.Left,
+        cotaX: -1.575,
+        cotaY: 3.5039,
+        cotaVerticalAlignment: TextVerticalAlignment.Top,
+        cotaHorizontalAlignment: TextHorizontalAlignment.Left,
+        cotaHeight: 0.2,
+      },
+      description: {
+        x: -1.4769,
+        height: 0.2,
+      },
+      nspt: {
+        x: 0.5745,
+        y: -1.1253,
+        height: 0.2,
+        verticalAlignment: TextVerticalAlignment.Top,
+        horizontalAlignment: TextHorizontalAlignment.Left,
+      },
+      finalDepth: {
+        x: -1.1188,
+        y: -0.1687,
+        height: 0.2,
+        getString: (maxDepth: number) => {
+          return "PROF: " + maxDepth.toFixed(2).replace(".", ",") + " m";
+        },
+      },
+      depths: {
+        drawDepthLine: (
+          dxf: DxfWriter,
+          currentOrigin: vec3_t,
+          originalDepth: number,
+          correctedDepth: number | undefined,
+          depthLinesLayer: DxfLayer
+        ) => {
+          const maxX = 5.261;
+          const breakX = 1.3598;
+          // Desenhando a linha de profundidade (4 vértices)
+          const depthVertices = correctedDepth
+            ? [
+                {
+                  point: point2d(
+                    currentOrigin.x,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - breakX,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - breakX,
+                    currentOrigin.y - correctedDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - maxX,
+                    currentOrigin.y - correctedDepth
+                  ),
+                },
+              ]
+            : [
+                {
+                  point: point2d(
+                    currentOrigin.x,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+                {
+                  point: point2d(
+                    currentOrigin.x - maxX,
+                    currentOrigin.y - originalDepth
+                  ),
+                },
+              ];
+          dxf.addLWPolyline(depthVertices, { layerName: depthLinesLayer.name });
+        },
+      },
+    },
+  };
+  const config = variantConfig[variant];
+
   // Parâmetros globais
   const firstOrigin = point3d(0, 100);
   const gap = 15;
@@ -90,31 +388,12 @@ export const generateDXF = async (data: PalitoData[]) => {
   });
   scaleBlock.addLine(point3d(0, -1), point3d(0.2, -1));
 
-  // Bloco de linhas de profundidade
-  const depthLineBlock = dxf.addBlock("depthLineBlock");
-  depthLineBlock.layerName = depthLinesLayer.name;
-  const depthVertices = [
-    {
-      point: point2d(0, 0),
-    },
-    {
-      point: point2d(-2.72, 0),
-    },
-  ];
-  depthLineBlock.addLWPolyline(depthVertices);
-
   // Bloco de nível da água
-  const waterLevelBlock = dxf.addBlock("waterLevelBlock");
-  waterLevelBlock.layerName = waterLevelShapeLayer.name;
-  const waterLevelPolyline = new HatchPolylineBoundary();
-  waterLevelPolyline.add(vertex(0, 0));
-  waterLevelPolyline.add(vertex(-0.2754, 0.4406));
-  waterLevelPolyline.add(vertex(0.2754, 0.4406));
-  waterLevelPolyline.add(vertex(0, 0));
-  const waterLevelBoundary = new HatchBoundaryPaths();
-  waterLevelBoundary.addPolylineBoundary(waterLevelPolyline);
-  waterLevelBlock.addHatch(waterLevelBoundary, solidPattern);
-  waterLevelBlock.addLine(point3d(-0.2754, 0.4406), point3d(1.574, 0.4406));
+  const waterLevelBlock = config.waterLevel.createWaterLevelBlock(
+    dxf,
+    waterLevelShapeLayer.name,
+    solidPattern
+  );
 
   const processErrorNames: string[] = [];
   // Construindo cada palito
@@ -127,45 +406,54 @@ export const generateDXF = async (data: PalitoData[]) => {
       // Fazendo o cabeçalho
       dxf.addLine(
         point3d(currentOrigin.x + 0.1, currentOrigin.y),
-        point3d(currentOrigin.x + 0.1, currentOrigin.y + 2.45),
+        point3d(currentOrigin.x + 0.1, currentOrigin.y + config.heading.y),
         { layerName: titlesLayer.name }
       );
       dxf.addLine(
-        point3d(currentOrigin.x + 0.1, currentOrigin.y + 2.45),
-        point3d(currentOrigin.x - 4.95, currentOrigin.y + 2.45),
+        point3d(currentOrigin.x + 0.1, currentOrigin.y + config.heading.y),
+        point3d(
+          currentOrigin.x + config.heading.x,
+          currentOrigin.y + config.heading.y
+        ),
 
         { layerName: titlesLayer.name }
       );
 
       const title = dxf.addText(
-        point3d(currentOrigin.x - 0.18, currentOrigin.y + 2.67),
-        0.65,
+        point3d(
+          currentOrigin.x + config.heading.titleX,
+          currentOrigin.y + config.heading.titleY
+        ),
+        config.heading.titleHeight,
         sondagem.hole_id.toUpperCase(),
         {
           layerName: titlesLayer.name,
-          horizontalAlignment: TextHorizontalAlignment.Right,
-          verticalAlignment: TextVerticalAlignment.Bottom,
+          horizontalAlignment: config.heading.titleHorizontalAlignment,
+          verticalAlignment: config.heading.titleVerticalAlignment,
           secondAlignmentPoint: point3d(
-            currentOrigin.x - 0.18,
-            currentOrigin.y + 2.67
+            currentOrigin.x + config.heading.titleX,
+            currentOrigin.y + config.heading.titleY
           ),
         }
       );
       title.textStyle = "arialText";
 
       const cota = dxf.addText(
-        point3d(currentOrigin.x - 0.18, currentOrigin.y + 1.6),
-        0.45,
+        point3d(
+          currentOrigin.x + config.heading.cotaX,
+          currentOrigin.y + config.heading.cotaY
+        ),
+        config.heading.cotaHeight,
         sondagem.z
           ? "COTA=" + sondagem.z.toFixed(2).replace(".", ",")
           : "COTA=0",
         {
           layerName: titlesLayer.name,
-          horizontalAlignment: TextHorizontalAlignment.Right,
-          verticalAlignment: TextVerticalAlignment.Bottom,
+          horizontalAlignment: config.heading.cotaHorizontalAlignment,
+          verticalAlignment: config.heading.cotaVerticalAlignment,
           secondAlignmentPoint: point3d(
-            currentOrigin.x - 0.18,
-            currentOrigin.y + 1.6
+            currentOrigin.x + config.heading.cotaX,
+            currentOrigin.y + config.heading.cotaY
           ),
         }
       );
@@ -230,7 +518,7 @@ export const generateDXF = async (data: PalitoData[]) => {
         currentY = cluster.layerSizes[0].from;
 
         // Gerar texto da descrição
-        cluster.layers.forEach((layerIndex, index) => {
+        cluster.layers.forEach((layerIndex) => {
           const layerSize = cluster.layerSizes.find(
             (ls) => ls.layerIndex === layerIndex
           );
@@ -250,22 +538,48 @@ export const generateDXF = async (data: PalitoData[]) => {
 
           // Checar se precisa de degrau na linha de profundidade
           const originalDepth = layerSize.to;
-          const correctedDepth = cluster.unchanged
-            ? undefined
-            : (cumulativeDepth += layerSize.finalHeight);
-          // Chama função de desenhar dados da camada
-          drawLayerData(
+          let correctedDepth;
+          if (cluster.unchanged) {
+            correctedDepth = undefined;
+          } else {
+            cumulativeDepth += layerSize.finalHeight;
+            correctedDepth = cumulativeDepth;
+          }
+
+          // Desenhando linhas de profundidade
+          if (!correctedDepth) correctedDepth = 0;
+          config.depths.drawDepthLine(
             dxf,
-            cluster.layerSizes[index],
             currentOrigin,
             originalDepth,
-            descriptionStr,
-            descriptionMTextOptions,
-            depthLinesLayer,
-            arialTextStyle,
-            layerCenterY,
-            correctedDepth
+            correctedDepth,
+            depthLinesLayer
           );
+
+          // Desenhando textos das profundidades
+          if ("drawDepthText" in config.depths) {
+            config.depths.drawDepthText(
+              dxf,
+              currentOrigin,
+              originalDepth,
+              depthLinesLayer,
+              arialTextStyle
+            );
+          }
+
+          // Descrições das camadas
+          const descriptionInsertionPoint = point3d(
+            currentOrigin.x + config.description.x,
+            currentOrigin.y - layerCenterY + layerSize.textHeight / 2
+          );
+          const descriptionText = dxf.addMText(
+            descriptionInsertionPoint,
+            config.description.height,
+            descriptionStr,
+            descriptionMTextOptions
+          );
+          descriptionText.textStyle = arialTextStyle.name;
+
           currentY += layerSize.finalHeight;
         });
       });
@@ -276,18 +590,18 @@ export const generateDXF = async (data: PalitoData[]) => {
       sondagem.nspt.values.forEach((value) => {
         const nsptText = dxf.addText(
           point3d(
-            currentOrigin.x + 0.57,
-            currentOrigin.y - currentNsptDepth - 0.12
+            currentOrigin.x + config.nspt.x,
+            currentOrigin.y - currentNsptDepth + config.nspt.y
           ),
-          0.35,
+          config.nspt.height,
           value,
           {
             layerName: depthLinesLayer.name,
-            horizontalAlignment: TextHorizontalAlignment.Left,
-            verticalAlignment: TextVerticalAlignment.Top,
+            horizontalAlignment: config.nspt.horizontalAlignment,
+            verticalAlignment: config.nspt.verticalAlignment,
             secondAlignmentPoint: point3d(
-              currentOrigin.x + 0.57,
-              currentOrigin.y - currentNsptDepth - 0.12
+              currentOrigin.x + config.nspt.x,
+              currentOrigin.y - currentNsptDepth + config.nspt.y
             ),
           }
         );
@@ -303,30 +617,39 @@ export const generateDXF = async (data: PalitoData[]) => {
           : "NA SECO";
       dxf.addInsert(
         waterLevelBlock.name,
-        point3d(currentOrigin.x + 2.9136, currentOrigin.y - waterLevel)
+        point3d(
+          currentOrigin.x + config.waterLevel.x,
+          currentOrigin.y - waterLevel
+        )
       );
       const textPoint = point3d(
-        sondagem.water_level ? currentOrigin.x + 2.86 : currentOrigin.x + 2.76,
-        currentOrigin.y - waterLevel + 0.48
+        sondagem.water_level
+          ? currentOrigin.x + config.waterLevel.textStandardX
+          : currentOrigin.x + config.waterLevel.textDryX,
+        currentOrigin.y - waterLevel + config.waterLevel.textY
       );
-      const waterLevelText = dxf.addText(textPoint, 0.25, waterLevelStr, {
-        layerName: waterLevelTextLayer.name,
-        horizontalAlignment: TextHorizontalAlignment.Left,
-        verticalAlignment: TextVerticalAlignment.Bottom,
-        secondAlignmentPoint: textPoint,
-      });
+      const waterLevelText = dxf.addText(
+        textPoint,
+        config.waterLevel.textHeight,
+        waterLevelStr,
+        {
+          layerName: waterLevelTextLayer.name,
+          horizontalAlignment: config.waterLevel.textHorizontalAlignment,
+          verticalAlignment: config.waterLevel.textVerticalAlignment,
+          secondAlignmentPoint: textPoint,
+        }
+      );
       waterLevelText.textStyle = arialTextStyle.name;
 
       // Profundidade final
-      const finalDepthStr =
-        "PROFUNDIDADE FINAL = " + maxDepth.toFixed(2).replace(".", ",") + " m.";
+      const finalDepthStr = config.finalDepth.getString(maxDepth);
       const finalDepthPosition = point3d(
-        currentOrigin.x - 5.72,
-        currentOrigin.y - 0.87 - currentY
+        currentOrigin.x + config.finalDepth.x,
+        currentOrigin.y + config.finalDepth.y - currentY
       );
       const finalDepthText = dxf.addText(
         finalDepthPosition,
-        0.35,
+        config.finalDepth.height,
         finalDepthStr,
         {
           horizontalAlignment: TextHorizontalAlignment.Left,
@@ -383,20 +706,14 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
   arialTextStyle.widthFactor = 1.0;
   arialTextStyle.fixedTextHeight = 0;
 
-  // const nsptMTextOptions: MTextOptions = {
-  //   attachmentPoint: 3,
-  //   width: 8,
-  //   layerName: nsptLayer.name,
-  // };
-
   // Definindo blocos de retângulos que se repetem na escala vertical: dois retângulos verdes, um preenchido outro só o contorno em polyline
   const scaleBlockHatch = dxf.addBlock("scaleBlockHatch");
   scaleBlockHatch.layerName = perfilLayer.name;
   const scalePolyline = new HatchPolylineBoundary();
   scalePolyline.add(vertex(0, 0));
-  scalePolyline.add(vertex(0.7539, 0));
-  scalePolyline.add(vertex(0.7539, -2.5));
-  scalePolyline.add(vertex(0, -2.5));
+  scalePolyline.add(vertex(0.3016, 0));
+  scalePolyline.add(vertex(0.3016, -1));
+  scalePolyline.add(vertex(0, -1));
   scalePolyline.add(vertex(0, 0));
   const scaleBoundary = new HatchBoundaryPaths();
   scaleBoundary.addPolylineBoundary(scalePolyline);
@@ -411,9 +728,9 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
   scaleBlockOutline.layerName = perfilLayer.name;
   const outlineVertices = [
     { point: point2d(0, 0) },
-    { point: point2d(0.7539, 0) },
-    { point: point2d(0.7539, -2.5) },
-    { point: point2d(0, -2.5) },
+    { point: point2d(0.3016, 0) },
+    { point: point2d(0.3016, -1) },
+    { point: point2d(0, -1) },
     { point: point2d(0, 0) },
   ];
   scaleBlockOutline.addLWPolyline(outlineVertices, {
@@ -425,10 +742,10 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
   depthLineBlock.layerName = camadasLayer.name;
   const depthVertices = [
     {
-      point: point2d(-4.9973, 0),
+      point: point2d(-1.9989, 0),
     },
     {
-      point: point2d(12.3938, 0),
+      point: point2d(4.9575, 0),
     },
   ];
   depthLineBlock.addLWPolyline(depthVertices);
@@ -438,8 +755,8 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
   waterLevelBlock.layerName = simbologiaLayer.name;
   const waterLevelPolyline = new HatchPolylineBoundary();
   waterLevelPolyline.add(vertex(0, 0));
-  waterLevelPolyline.add(vertex(-1.0471, 1.6754));
-  waterLevelPolyline.add(vertex(1.0471, 1.6754));
+  waterLevelPolyline.add(vertex(-0.4188, 0.6702));
+  waterLevelPolyline.add(vertex(0.4188, 0.6702));
   waterLevelPolyline.add(vertex(0, 0));
   const waterLevelBoundary = new HatchBoundaryPaths();
   waterLevelBoundary.addPolylineBoundary(waterLevelPolyline);
@@ -447,11 +764,11 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
     colorNumber: Colors.Red,
   });
 
-  const naText = waterLevelBlock.addText(point3d(0, 3.05), 1.0471, "N.A.", {
+  const naText = waterLevelBlock.addText(point3d(0, 1.22), 0.4188, "N.A.", {
     layerName: simbologiaLayer.name,
     horizontalAlignment: TextHorizontalAlignment.Center,
     verticalAlignment: TextVerticalAlignment.Top,
-    secondAlignmentPoint: point3d(0, 3.05),
+    secondAlignmentPoint: point3d(0, 1.22),
     colorNumber: Colors.Green,
   });
   naText.textStyle = arialTextStyle.name;
@@ -470,46 +787,46 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       // Linha vertical
       dxf.addLine(
         point3d(currentOrigin.x, currentOrigin.y),
-        point3d(currentOrigin.x, currentOrigin.y + 6.4916),
+        point3d(currentOrigin.x, currentOrigin.y + 2.5966),
         { layerName: perfilLayer.name }
       );
 
       // Retângulo principal
       const headerVertices = [
-        { point: point2d(currentOrigin.x - 6.75, currentOrigin.y + 6.4916) },
-        { point: point2d(currentOrigin.x + 6.75, currentOrigin.y + 6.4916) },
-        { point: point2d(currentOrigin.x + 6.75, currentOrigin.y + 11.4916) },
-        { point: point2d(currentOrigin.x - 6.75, currentOrigin.y + 11.4916) },
-        { point: point2d(currentOrigin.x - 6.75, currentOrigin.y + 6.4916) },
+        { point: point2d(currentOrigin.x - 2.7, currentOrigin.y + 2.5966) },
+        { point: point2d(currentOrigin.x + 2.7, currentOrigin.y + 2.5966) },
+        { point: point2d(currentOrigin.x + 2.7, currentOrigin.y + 4.5966) },
+        { point: point2d(currentOrigin.x - 2.7, currentOrigin.y + 4.5966) },
+        { point: point2d(currentOrigin.x - 2.7, currentOrigin.y + 2.5966) },
       ];
       dxf.addLWPolyline(headerVertices, { layerName: perfilLayer.name });
 
       // Linha horizontal superior
       dxf.addLine(
-        point3d(currentOrigin.x - 6.75, currentOrigin.y + 9.4916),
-        point3d(currentOrigin.x + 6.75, currentOrigin.y + 9.4916),
+        point3d(currentOrigin.x - 2.7, currentOrigin.y + 3.7966),
+        point3d(currentOrigin.x + 2.7, currentOrigin.y + 3.7966),
         { layerName: perfilLayer.name }
       );
 
       // Linha horizontal inferior
       dxf.addLine(
-        point3d(currentOrigin.x - 6.75, currentOrigin.y + 7.9916),
-        point3d(currentOrigin.x + 6.75, currentOrigin.y + 7.9916),
+        point3d(currentOrigin.x - 2.7, currentOrigin.y + 3.1966),
+        point3d(currentOrigin.x + 2.7, currentOrigin.y + 3.1966),
         { layerName: perfilLayer.name }
       );
 
       // Textos do cabeçalho
       // "Proj." - alinhado à esquerda
       const projText = dxf.addText(
-        point3d(currentOrigin.x - 5.7568, currentOrigin.y + 6.8666),
-        1,
+        point3d(currentOrigin.x - 2.3027, currentOrigin.y + 2.7466),
+        0.4,
         "Proj.",
         {
           layerName: textLayer.name,
           horizontalAlignment: TextHorizontalAlignment.Left,
           secondAlignmentPoint: point3d(
-            currentOrigin.x - 5.7568,
-            currentOrigin.y + 6.8666
+            currentOrigin.x - 2.3027,
+            currentOrigin.y + 2.7466
           ),
         }
       );
@@ -517,8 +834,8 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
 
       // "X,XX" - centro
       const coordText = dxf.addText(
-        point3d(currentOrigin.x, currentOrigin.y + 7.2416),
-        1,
+        point3d(currentOrigin.x, currentOrigin.y + 2.8966),
+        0.4,
         "X,XX",
         {
           layerName: textLayer.name,
@@ -526,7 +843,7 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
           verticalAlignment: TextVerticalAlignment.Middle,
           secondAlignmentPoint: point3d(
             currentOrigin.x,
-            currentOrigin.y + 7.2416
+            currentOrigin.y + 2.8966
           ),
         }
       );
@@ -534,15 +851,15 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
 
       // "m" - alinhado à esquerda
       const mText = dxf.addText(
-        point3d(currentOrigin.x + 4.1276, currentOrigin.y + 6.8666),
-        1,
+        point3d(currentOrigin.x + 1.651, currentOrigin.y + 2.7466),
+        0.4,
         "m",
         {
           layerName: textLayer.name,
           horizontalAlignment: TextHorizontalAlignment.Left,
           secondAlignmentPoint: point3d(
-            currentOrigin.x + 4.1276,
-            currentOrigin.y + 6.8666
+            currentOrigin.x + 1.651,
+            currentOrigin.y + 2.7466
           ),
         }
       );
@@ -550,8 +867,8 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
 
       // "Cota: " + valor da cota - centro
       const cotaText = dxf.addText(
-        point3d(currentOrigin.x, currentOrigin.y + 8.7416),
-        1,
+        point3d(currentOrigin.x, currentOrigin.y + 3.4967),
+        0.4,
         sondagem.z ? `Cota: ${sondagem.z.toFixed(2)}` : "Cota",
         {
           layerName: textLayer.name,
@@ -559,16 +876,16 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
           verticalAlignment: TextVerticalAlignment.Middle,
           secondAlignmentPoint: point3d(
             currentOrigin.x,
-            currentOrigin.y + 8.7416
+            currentOrigin.y + 3.4966
           ),
         }
       );
       cotaText.textStyle = arialTextStyle.name;
 
-      // Hole ID - centro, altura 1.5
+      // Hole ID
       const holeIdText = dxf.addText(
-        point3d(currentOrigin.x, currentOrigin.y + 10.4916),
-        1.5,
+        point3d(currentOrigin.x, currentOrigin.y + 4.1966),
+        0.6,
         sondagem.hole_id.toUpperCase(),
         {
           layerName: textLayer.name,
@@ -576,26 +893,23 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
           verticalAlignment: TextVerticalAlignment.Middle,
           secondAlignmentPoint: point3d(
             currentOrigin.x,
-            currentOrigin.y + 10.4916
+            currentOrigin.y + 4.1966
           ),
         }
       );
       holeIdText.textStyle = arialTextStyle.name;
 
       // Fazendo a escala vertical: alternar blocos
-      // Escala 2.5:1
-      const blockHeight = 2.5;
-
       // Desenhar blocos completos primeiro
       const completeBlocks = Math.floor(maxDepth);
       for (let i = 0; i < completeBlocks; i++) {
-        const blockY = currentOrigin.y - i * blockHeight;
-        const isOddMeter = (i + 1) % 2 === 1; // metro 1, 3, 5... são ímpares
+        const blockY = currentOrigin.y - i;
+        const isOddMeter = (i + 1) % 2 === 1;
         const blockName = isOddMeter ? "scaleBlockHatch" : "scaleBlockOutline";
 
         dxf.addInsert(
           blockName,
-          point3d(currentOrigin.x - 0.7539 / 2, blockY), // centraliza horizontalmente
+          point3d(currentOrigin.x - 0.3016 / 2, blockY), // centraliza horizontalmente
           {
             layerName: perfilLayer.name,
             colorNumber: Colors.Green,
@@ -606,26 +920,26 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       // Desenhar bloco parcial se necessário
       const remainingDepth = maxDepth - completeBlocks;
       if (remainingDepth > 0) {
-        const partialBlockY = currentOrigin.y - completeBlocks * blockHeight;
-        const adjustedHeight = remainingDepth * blockHeight;
+        const partialBlockY = currentOrigin.y - completeBlocks;
+        const adjustedHeight = remainingDepth;
         const isOddMeter = (completeBlocks + 1) % 2 === 1;
 
         const vertices = [
-          { point: point2d(currentOrigin.x - 0.7539 / 2, partialBlockY) },
-          { point: point2d(currentOrigin.x + 0.7539 / 2, partialBlockY) },
+          { point: point2d(currentOrigin.x - 0.3016 / 2, partialBlockY) },
+          { point: point2d(currentOrigin.x + 0.3016 / 2, partialBlockY) },
           {
             point: point2d(
-              currentOrigin.x + 0.7539 / 2,
+              currentOrigin.x + 0.3016 / 2,
               partialBlockY - adjustedHeight
             ),
           },
           {
             point: point2d(
-              currentOrigin.x - 0.7539 / 2,
+              currentOrigin.x - 0.3016 / 2,
               partialBlockY - adjustedHeight
             ),
           },
-          { point: point2d(currentOrigin.x - 0.7539 / 2, partialBlockY) },
+          { point: point2d(currentOrigin.x - 0.3016 / 2, partialBlockY) },
         ];
 
         if (isOddMeter) {
@@ -652,13 +966,12 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       // Organizar textos maiores que as camadas => pode ser ignorado neste padrão
 
       // NSPTs
-      const nsptStartY = currentOrigin.y - 1.9143; // primeira posição Y
-      const nsptX = currentOrigin.x + 0.7958; // posição X fixa
-      const nsptSpacing = 2.5; // espaçamento vertical
+      const nsptStartY = currentOrigin.y - 0.7657; // primeira posição Y
+      const nsptX = currentOrigin.x + 0.3183; // posição X fixa
 
       for (let d = 1; d < sondagem.nspt.start_depth; d++) {
-        const currentY = nsptStartY - (d - 1) * nsptSpacing;
-        const emptyNsptText = dxf.addText(point3d(nsptX, currentY), 1.0, "-", {
+        const currentY = nsptStartY - (d - 1);
+        const emptyNsptText = dxf.addText(point3d(nsptX, currentY), 0.4, "-", {
           layerName: nsptLayer.name,
           horizontalAlignment: TextHorizontalAlignment.Left,
           verticalAlignment: TextVerticalAlignment.Middle,
@@ -668,11 +981,10 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       }
 
       sondagem.nspt.values.forEach((value, index) => {
-        const currentY =
-          nsptStartY - (index + sondagem.nspt.start_depth) * nsptSpacing;
+        const currentY = nsptStartY - (index + sondagem.nspt.start_depth);
         const nsptText = dxf.addText(
           point3d(nsptX, currentY),
-          1.0,
+          0.4,
           value as string,
           {
             layerName: nsptLayer.name,
@@ -687,9 +999,9 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       // Nível d'água
       const waterLevelY =
         sondagem.water_level !== null && sondagem.water_level !== undefined
-          ? currentOrigin.y - sondagem.water_level * 2.5
-          : currentOrigin.y - maxDepth * 2.5;
-      const waterLevelX = currentOrigin.x - 2.6291;
+          ? currentOrigin.y - sondagem.water_level
+          : currentOrigin.y - maxDepth;
+      const waterLevelX = currentOrigin.x - 1.0516;
 
       dxf.addInsert(waterLevelBlock.name, point3d(waterLevelX, waterLevelY), {
         layerName: simbologiaLayer.name,
@@ -698,18 +1010,18 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       // Profundidade final
       const maxDepthText = dxf.addText(
         point3d(
-          currentOrigin.x - 0.0442,
-          currentOrigin.y - 2.5 * maxDepth - 0.9933
+          currentOrigin.x - 0.0169,
+          currentOrigin.y - 1 * maxDepth - 0.3973
         ),
-        0.9,
+        0.36,
         `${maxDepth.toString().replace(".", ",")}m`,
         {
           layerName: textLayer.name,
           horizontalAlignment: TextHorizontalAlignment.Center,
           verticalAlignment: TextVerticalAlignment.Middle,
           secondAlignmentPoint: point3d(
-            currentOrigin.x - 0.0442,
-            currentOrigin.y - 2.5 * maxDepth - 0.9933
+            currentOrigin.x - 0.0169,
+            currentOrigin.y - 1 * maxDepth - 0.3973
           ),
         }
       );
@@ -724,16 +1036,10 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
         dxf.addLWPolyline(
           [
             {
-              point: point3d(
-                currentOrigin.x - 4.9973,
-                currentOrigin.y - depth * 2.5
-              ),
+              point: point3d(currentOrigin.x - 1.9989, currentOrigin.y - depth),
             },
             {
-              point: point3d(
-                currentOrigin.x + 12.3938,
-                currentOrigin.y - depth * 2.5
-              ),
+              point: point3d(currentOrigin.x + 4.9575, currentOrigin.y - depth),
             },
           ],
           {
@@ -747,12 +1053,12 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
           index < sondagem.geology.length
         ) {
           const geologyTextPoint = point3d(
-            currentOrigin.x + 2.6675,
-            currentOrigin.y - (depth + sondagem.depths[index + 1]) * 1.25 // 2.5 (escala) / 2 (média)
+            currentOrigin.x + 1.067,
+            currentOrigin.y - (depth + sondagem.depths[index + 1]) / 2
           );
           const geologyText = dxf.addText(
             geologyTextPoint,
-            1.2046,
+            0.4818,
             sondagem.geology[index],
             {
               layerName: camadasLayer.name,
@@ -983,80 +1289,80 @@ export const getDescriptionClusters = (sondagem: PalitoData): Cluster[] => {
   return clusters;
 };
 
-const drawLayerData = (
-  dxf: DxfWriter,
-  layerSize: LayerSize,
-  currentOrigin: vec3_t,
-  depth: number,
-  text: string,
-  textOptions: MTextOptions,
-  lineLayer: DxfLayer,
-  textStyle: DxfStyle,
-  layerCenterY: number,
-  correctedDepth?: number
-) => {
-  // Parâmetros
-  const maxX = 2.72;
-  const breakX = 1.35;
-  const straightenX = 1.45;
-  if (!correctedDepth) correctedDepth = 0;
+// const drawLayerData = (
+//   dxf: DxfWriter,
+//   layerSize: LayerSize,
+//   currentOrigin: vec3_t,
+//   depth: number,
+//   text: string,
+//   textOptions: MTextOptions,
+//   lineLayer: DxfLayer,
+//   textStyle: DxfStyle,
+//   layerCenterY: number,
+//   correctedDepth?: number
+// ) => {
+//   // Parâmetros
+//   const maxX = 2.72;
+//   const breakX = 1.35;
+//   const straightenX = 1.45;
+//   if (!correctedDepth) correctedDepth = 0;
 
-  // Desenhando a linha de profundidade
-  const depthVertices = correctedDepth
-    ? [
-        { point: point2d(currentOrigin.x, currentOrigin.y - depth) },
-        { point: point2d(currentOrigin.x - breakX, currentOrigin.y - depth) },
-        {
-          point: point2d(
-            currentOrigin.x - straightenX,
-            currentOrigin.y - correctedDepth
-          ),
-        },
-        {
-          point: point2d(
-            currentOrigin.x - maxX,
-            currentOrigin.y - correctedDepth
-          ),
-        },
-      ]
-    : [
-        {
-          point: point2d(currentOrigin.x, currentOrigin.y - depth),
-        },
-        {
-          point: point2d(currentOrigin.x - maxX, currentOrigin.y - depth),
-        },
-      ];
+//   // Desenhando a linha de profundidade
+//   const depthVertices = correctedDepth
+//     ? [
+//         { point: point2d(currentOrigin.x, currentOrigin.y - depth) },
+//         { point: point2d(currentOrigin.x - breakX, currentOrigin.y - depth) },
+//         {
+//           point: point2d(
+//             currentOrigin.x - straightenX,
+//             currentOrigin.y - correctedDepth
+//           ),
+//         },
+//         {
+//           point: point2d(
+//             currentOrigin.x - maxX,
+//             currentOrigin.y - correctedDepth
+//           ),
+//         },
+//       ]
+//     : [
+//         {
+//           point: point2d(currentOrigin.x, currentOrigin.y - depth),
+//         },
+//         {
+//           point: point2d(currentOrigin.x - maxX, currentOrigin.y - depth),
+//         },
+//       ];
 
-  dxf.addLWPolyline(depthVertices, { layerName: lineLayer.name });
+//   dxf.addLWPolyline(depthVertices, { layerName: lineLayer.name });
 
-  // Inserindo texto de profundidade
-  const depthText = dxf.addText(
-    point3d(currentOrigin.x - 0.15, currentOrigin.y - depth - 0.07),
-    0.35,
-    depth.toFixed(2).replace(".", ","),
-    {
-      layerName: lineLayer.name,
-      horizontalAlignment: TextHorizontalAlignment.Right,
-      verticalAlignment: TextVerticalAlignment.Bottom,
-      secondAlignmentPoint: point3d(
-        currentOrigin.x - 0.15,
-        currentOrigin.y - depth - 0.07
-      ),
-    }
-  );
-  depthText.textStyle = textStyle.name;
+//   // Inserindo texto de profundidade
+//   const depthText = dxf.addText(
+//     point3d(currentOrigin.x - 0.15, currentOrigin.y - depth - 0.07),
+//     0.35,
+//     depth.toFixed(2).replace(".", ","),
+//     {
+//       layerName: lineLayer.name,
+//       horizontalAlignment: TextHorizontalAlignment.Right,
+//       verticalAlignment: TextVerticalAlignment.Bottom,
+//       secondAlignmentPoint: point3d(
+//         currentOrigin.x - 0.15,
+//         currentOrigin.y - depth - 0.07
+//       ),
+//     }
+//   );
+//   depthText.textStyle = textStyle.name;
 
-  // Descrições das camadas
-  const descriptionInsertionPoint = point3d(
-    currentOrigin.x - 1.55,
-    currentOrigin.y - layerCenterY + layerSize.textHeight / 2
-  );
-  const descriptionText = dxf.addMText(
-    descriptionInsertionPoint,
-    0.25,
-    text,
-    textOptions
-  );
-  descriptionText.textStyle = textStyle.name;
-};
+//   // Descrições das camadas
+//   const descriptionInsertionPoint = point3d(
+//     currentOrigin.x - 1.55,
+//     currentOrigin.y - layerCenterY + layerSize.textHeight / 2
+//   );
+//   const descriptionText = dxf.addMText(
+//     descriptionInsertionPoint,
+//     0.25,
+//     text,
+//     textOptions
+//   );
+//   descriptionText.textStyle = textStyle.name;
+// };

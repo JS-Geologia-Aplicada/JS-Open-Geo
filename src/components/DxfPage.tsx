@@ -7,7 +7,7 @@ import {
   Form,
   Row,
 } from "react-bootstrap";
-import { generateDXF, generateDXFMetro } from "../utils/dxfGenerator";
+import { generateDxfJs, generateDXFMetro } from "../utils/dxfGenerator";
 import { useState } from "react";
 import type { Area, PageTextData, PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";
@@ -73,7 +73,7 @@ const DxfPage = ({
   };
 
   // Gerar DXF
-  const handleGenerateDXF = async (variant: string = "padrao-JS") => {
+  const handleGenerateDXF = async (variant: string = "padrao-1") => {
     if (palitoData.length === 0) {
       toast.error("Nenhum dado carregado para gerar DXF");
       setMessage({
@@ -85,10 +85,18 @@ const DxfPage = ({
 
     try {
       setIsLoading(true);
-      const result =
-        variant === "metro"
-          ? await generateDXFMetro(palitoData)
-          : await generateDXF(palitoData);
+      let result;
+      switch (variant) {
+        case "metro":
+          result = await generateDXFMetro(palitoData);
+          break;
+        case "padrao-2":
+          result = await generateDxfJs(palitoData, "padrao-2");
+          break;
+        default: // padrão 1
+          result = await generateDxfJs(palitoData, "padrao-1");
+          break;
+      }
       if (result.processErrorNames.length > 0) {
         toast.warn(
           `DXF gerado! ${result.successCount}/${
@@ -205,14 +213,29 @@ const DxfPage = ({
                   variant="success"
                   size="lg"
                   onClick={() => {
-                    handleGenerateDXF("padrao-js");
+                    handleGenerateDXF("padrao-1");
                   }}
                   disabled={isLoading || palitoData.length === 0}
                   className="w-100"
                 >
                   {isLoading
                     ? "Gerando..."
-                    : `Gerar DXF (${palitoData.length} palito${
+                    : `Gerar DXF padrão 1 (${palitoData.length} palito${
+                        palitoData.length !== 1 ? "s" : ""
+                      })`}
+                </Button>
+                <Button
+                  variant="success"
+                  size="lg"
+                  onClick={() => {
+                    handleGenerateDXF("padrao-2");
+                  }}
+                  disabled={isLoading || palitoData.length === 0}
+                  className="w-100"
+                >
+                  {isLoading
+                    ? "Gerando..."
+                    : `Gerar DXF padrão 2 (${palitoData.length} palito${
                         palitoData.length !== 1 ? "s" : ""
                       })`}
                 </Button>
