@@ -969,7 +969,7 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
       const nsptStartY = currentOrigin.y - 0.7657; // primeira posição Y
       const nsptX = currentOrigin.x + 0.3183; // posição X fixa
 
-      for (let d = 1; d < sondagem.nspt.start_depth; d++) {
+      for (let d = 1; d <= sondagem.nspt.start_depth; d++) {
         const currentY = nsptStartY - (d - 1);
         const emptyNsptText = dxf.addText(point3d(nsptX, currentY), 0.4, "-", {
           layerName: nsptLayer.name,
