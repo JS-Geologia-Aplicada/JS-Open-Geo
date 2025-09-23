@@ -11,6 +11,7 @@ import {
 } from "react-bootstrap";
 import type { PalitoData } from "../types";
 import { toast } from "react-toastify";
+import { parseNumber } from "../utils/helpers";
 
 interface LeapfrogToJsonModalProps {
   onDataProcessed: (data: PalitoData[]) => void;
@@ -210,7 +211,7 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
         const depths = [0]; // sempre começar com 0
         const geology: string[] = [];
         geologyRows.forEach((row) => {
-          const to = parseFloat(row[columnMappings.geology.to]);
+          const to = parseNumber(row[columnMappings.geology.to]);
           const description = String(
             row[columnMappings.geology.geology]
           ).trim();
