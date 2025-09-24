@@ -34,36 +34,40 @@ const ChangelogPage = () => {
         <h2>Histórico de Versões</h2>
       </div>
 
-      {versions.map((version) => (
-        <Row key={version.version} className="justify-content-center">
-          <Col xs={10} lg={8} xl={6} className="mb-4 text-start">
-            <div className="d-flex gap-3 mb-3 align-items-end">
-              <h4 className="mb-0">v{version.version}</h4>
-              <span className="text-muted">{formatDateToBR(version.date)}</span>
-            </div>
-            <h5>Visão geral</h5>
-            <p>{version.summary}</p>
-            {sections.map((section) => {
-              const items = version[
-                section.key as keyof typeof version
-              ] as string[];
+      {versions
+        .filter((version) => !version.title.includes("alpha"))
+        .map((version) => (
+          <Row key={version.version} className="justify-content-center">
+            <Col xs={10} lg={8} xl={6} className="mb-4 text-start">
+              <div className="d-flex gap-3 mb-3 align-items-end">
+                <h4 className="mb-0">v{version.version}</h4>
+                <span className="text-muted">
+                  {formatDateToBR(version.date)}
+                </span>
+              </div>
+              <h5>Visão geral</h5>
+              <p>{version.summary}</p>
+              {sections.map((section) => {
+                const items = version[
+                  section.key as keyof typeof version
+                ] as string[];
 
-              if (!items || items.length === 0) return null;
+                if (!items || items.length === 0) return null;
 
-              return (
-                <div key={section.key} className="mb-3">
-                  <h5>{section.title}</h5>
-                  <ul>
-                    {items.map((item, itemIndex) => (
-                      <li key={itemIndex}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </Col>
-        </Row>
-      ))}
+                return (
+                  <div key={section.key} className="mb-3">
+                    <h5>{section.title}</h5>
+                    <ul>
+                      {items.map((item, itemIndex) => (
+                        <li key={itemIndex}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </Col>
+          </Row>
+        ))}
     </Container>
   );
 };
