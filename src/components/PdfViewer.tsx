@@ -23,7 +23,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 
 interface PdfViewerProps {
   file: File | null;
-  isSelectingActive: boolean;
+  isSelectionActive: boolean;
   activeAreaId: string | null;
   onFinishSelection: (coords: SelectionArea, resizedAreaId?: string) => void;
   areas: Area[];
@@ -39,7 +39,7 @@ const MAX_ZOOM = 3;
 
 const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
   (
-    { file, isSelectingActive, activeAreaId, onFinishSelection, areas },
+    { file, isSelectionActive, activeAreaId, onFinishSelection, areas },
     ref
   ) => {
     const documentRef = useRef<any>(null);
@@ -173,21 +173,21 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       (e: React.PointerEvent) => {
         const target = e.target as HTMLElement;
         if (
-          target.closest(".editable-area") ||
-          target.closest(".resize-handle")
+          !isSelectionActive &&
+          (target.closest(".editable-area") || target.closest(".resize-handle"))
         ) {
-          return; // Não processar se clicou numa área
+          return; // Não processar se clicou numa área e não está concluindo a seleção
         }
         if (!pdfRef.current) return;
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        if (isSelectingActive) {
+        if (isSelectionActive) {
           toggleSelecting(e);
         } else {
           startPanning(e);
         }
       },
-      [startedSelection, currentSelection, zoomScale, isSelectingActive]
+      [startedSelection, currentSelection, zoomScale, isSelectionActive]
     );
     const handlePointerMove = useCallback(
       (e: React.PointerEvent) => {
@@ -231,10 +231,10 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     );
 
     useEffect(() => {
-      if (!isSelectingActive) {
+      if (!isSelectionActive) {
         clearCurrentSelection();
       }
-    }, [isSelectingActive]);
+    }, [isSelectionActive]);
 
     const clearCurrentSelection = () => {
       setStartedSelection(false);
@@ -367,7 +367,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
           <div
             ref={pdfRef}
             className={`position-relative d-inline-block ${
-              isSelectingActive
+              isSelectionActive
                 ? "pdf-cursor-crosshair"
                 : isPanning
                 ? "pdf-cursor-grabbing"
@@ -403,6 +403,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
               areas={areas}
               zoomScale={zoomScale}
               activeAreaId={activeAreaId}
+              isSelectionActive={isSelectionActive}
               onChangeCoords={onFinishSelection}
             />
             {/* Div para exibir área sendo selecionada */}

@@ -127,8 +127,11 @@ function DataExtractionPage({
     if (areaId) {
       setAreas(updateAreaCoordinates(areas, areaId, coords));
     }
-    setIsSelectionActive(false);
+
     setActiveAreaId(null);
+    setTimeout(() => {
+      setIsSelectionActive(false);
+    }, 10);
   };
 
   const [lastExtractedFingerprint, setLastExtractedFingerprint] =
@@ -394,7 +397,7 @@ function DataExtractionPage({
           <PdfViewer
             ref={pdfViewerRef}
             file={selectedFile}
-            isSelectingActive={isSelectionActive}
+            isSelectionActive={isSelectionActive}
             activeAreaId={activeAreaId}
             onFinishSelection={finishAreaSelection}
             areas={areas}

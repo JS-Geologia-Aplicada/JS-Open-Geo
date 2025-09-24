@@ -7,6 +7,7 @@ interface SelectedAreasProps {
   zoomScale: number;
   activeAreaId: string | null;
   onChangeCoords: (newCoords: SelectionArea, areaId: string) => void;
+  isSelectionActive: boolean;
 }
 
 const SelectedAreas: React.FC<SelectedAreasProps> = ({
@@ -14,6 +15,7 @@ const SelectedAreas: React.FC<SelectedAreasProps> = ({
   zoomScale,
   activeAreaId,
   onChangeCoords: onConfirmNewCoords,
+  isSelectionActive,
 }) => {
   const [editingAreaId, setEditingAreaId] = useState<string | null>(null);
   const [latestTempCoords, setLatestTempCoords] =
@@ -53,6 +55,7 @@ const SelectedAreas: React.FC<SelectedAreasProps> = ({
             onFinishEdit={handleFinishEdit}
             onConfirmNewCoords={onConfirmNewCoords}
             onTempCoordsChange={handleTempCoordsChange}
+            isSelectionActive={isSelectionActive}
           />
         );
       })}

@@ -9,6 +9,7 @@ interface EditablePolyAreaProps {
   onConfirmNewCoords: (newCoords: SelectionArea, areaId: string) => void;
   onTempCoordsChange: (areaId: string, coords: SelectionArea) => void;
   zoomScale: number;
+  isSelectionActive: boolean;
 }
 
 const getResizeHandles = (coords: SelectionArea, zoomScale: number) => {
@@ -59,6 +60,7 @@ const EditablePolyArea = ({
   onConfirmNewCoords: onChangeCoords,
   onTempCoordsChange,
   zoomScale,
+  isSelectionActive,
 }: EditablePolyAreaProps) => {
   const [tempCoords, setTempCoords] = useState<SelectionArea | null>(
     area.coordinates
@@ -191,6 +193,7 @@ const EditablePolyArea = ({
   };
 
   const handleClickArea = (e: React.MouseEvent) => {
+    if (isSelectionActive) return;
     if (!isEditing) {
       onStartEdit(area.id);
     } else {
