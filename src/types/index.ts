@@ -1,4 +1,9 @@
-export type PageType = "extraction" | "dxf" | "about" | "changelog"
+export type PageType =
+  | "extraction"
+  | "dxf"
+  | "transform"
+  | "about"
+  | "changelog";
 
 // Objeto de seleção de área retangular
 export interface SelectionArea {
@@ -249,7 +254,6 @@ export interface LayerSize {
   to: number;
 }
 
-
 export interface Version {
   version: string;
   date: string;
@@ -263,4 +267,11 @@ export interface Version {
 
 export interface VersionsData {
   versions: Version[];
+}
+
+export interface DxfData {
+  entities: any[];
+  blocks: any;
+  header: any;
+  tables: any;
 }

@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import AboutPage from "./components/AboutPage";
 import ChangelogPage from "./components/ChangelogPage";
 import AppFooter from "./components/AppFooter";
+import TransformPage from "./components/TransformPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>("extraction");
@@ -82,6 +83,8 @@ function App() {
             <AboutPage />
           ) : currentPage === "changelog" ? (
             <ChangelogPage />
+          ) : currentPage === "transform" ? (
+            <TransformPage />
           ) : (
             <div>Erro: página não encontrada</div>
           )}

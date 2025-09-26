@@ -33,6 +33,7 @@ const DxfPage = ({
     type: "success" | "error" | "warning";
     text: string;
   } | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<string>("padrao-1");
 
   // Carregar JSON de teste do public
   const loadExtractedData = async () => {
@@ -73,7 +74,7 @@ const DxfPage = ({
   };
 
   // Gerar DXF
-  const handleGenerateDXF = async (variant: string = "padrao-1") => {
+  const handleGenerateDXF = async () => {
     if (palitoData.length === 0) {
       toast.error("Nenhum dado carregado para gerar DXF");
       setMessage({
@@ -86,7 +87,7 @@ const DxfPage = ({
     try {
       setIsLoading(true);
       let result;
-      switch (variant) {
+      switch (selectedVariant) {
         case "metro":
           result = await generateDXFMetro(palitoData);
           break;
@@ -208,50 +209,65 @@ const DxfPage = ({
               </div>
 
               {/* Botão de gerar DXF */}
-              <div className="mb-4 d-flex gap-2">
-                <Button
-                  variant="success"
-                  size="lg"
-                  onClick={() => {
-                    handleGenerateDXF("padrao-1");
-                  }}
-                  disabled={isLoading || palitoData.length === 0}
-                  className="w-100"
-                >
-                  {isLoading
-                    ? "Gerando..."
-                    : `Gerar DXF padrão 1 (${palitoData.length} palito${
-                        palitoData.length !== 1 ? "s" : ""
-                      })`}
-                </Button>
-                <Button
-                  variant="success"
-                  size="lg"
-                  onClick={() => {
-                    handleGenerateDXF("padrao-2");
-                  }}
-                  disabled={isLoading || palitoData.length === 0}
-                  className="w-100"
-                >
-                  {isLoading
-                    ? "Gerando..."
-                    : `Gerar DXF padrão 2 (${palitoData.length} palito${
-                        palitoData.length !== 1 ? "s" : ""
-                      })`}
-                </Button>
-                <Button
-                  variant="success"
-                  size="lg"
-                  onClick={() => handleGenerateDXF("metro")}
-                  disabled={isLoading || palitoData.length === 0}
-                  className="w-100"
-                >
-                  {isLoading
-                    ? "Gerando..."
-                    : `Gerar DXF Metrô (${palitoData.length} palito${
-                        palitoData.length !== 1 ? "s" : ""
-                      })`}
-                </Button>
+              <div className="d-flex gap-3 justify-content-between align-items-center">
+                <div>
+                  <h6>Padrão do palito</h6>
+                  <div>
+                    <Form>
+                      <Form.Check
+                        className="small"
+                        inline
+                        type="radio"
+                        name="palito-variant"
+                        label="Padrão JS"
+                        value="padrao-1"
+                        checked={selectedVariant === "padrao-1"}
+                        onChange={(e) => {
+                          setSelectedVariant(e.target.value);
+                        }}
+                      />
+                      <Form.Check
+                        className="small"
+                        inline
+                        type="radio"
+                        name="palito-variant"
+                        label="Padrão 2 JS"
+                        value="padrao-2"
+                        checked={selectedVariant === "padrao-2"}
+                        onChange={(e) => {
+                          setSelectedVariant(e.target.value);
+                        }}
+                      />
+                      <Form.Check
+                        className="small"
+                        inline
+                        type="radio"
+                        name="palito-variant"
+                        label="Padrão Metrô"
+                        value="metro"
+                        checked={selectedVariant === "metro"}
+                        onChange={(e) => {
+                          setSelectedVariant(e.target.value);
+                        }}
+                      />
+                    </Form>
+                  </div>
+                </div>
+                <div>
+                  <Button
+                    variant="success"
+                    size="lg"
+                    onClick={handleGenerateDXF}
+                    disabled={isLoading || palitoData.length === 0}
+                    className="w-100"
+                  >
+                    {isLoading
+                      ? "Gerando..."
+                      : `Gerar DXF (${palitoData.length} palito${
+                          palitoData.length !== 1 ? "s" : ""
+                        })`}
+                  </Button>
+                </div>
               </div>
             </Card.Body>
           </Card>

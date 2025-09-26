@@ -46,6 +46,20 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             Geração de Palitos
           </Nav.Link>
           <Nav.Link
+            active={currentPage === "transform"}
+            onClick={
+              currentPage === "transform"
+                ? undefined
+                : () => onChangePage("transform")
+            }
+            style={{
+              cursor: currentPage === "transform" ? "default" : "pointer",
+            }}
+            className={`px-4 ${currentPage === "transform" && "fw-bold"}`}
+          >
+            Transformações
+          </Nav.Link>
+          <Nav.Link
             active={currentPage === "about"}
             onClick={
               currentPage === "about" ? undefined : () => onChangePage("about")
