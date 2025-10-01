@@ -7,14 +7,20 @@ export interface CodedDxf {
 }
 
 export interface DxfInsert {
-  x: string;
-  y: string;
+  x: number;
+  y: number;
   blockName: string;
   layer: string;
+  id?: string;
   attributes?: { tag: string | undefined; value: string | undefined }[];
 }
 
-export const parseDxf = (blockLines: string[]) => {
+export const detectDxfType = (fileText: string): "block" | "multileader" => {
+  return fileText.includes("ATTRIB") ? "block" : "multileader";
+};
+
+export const parseDxf = (input: string | string[]) => {
+  const blockLines = Array.isArray(input) ? input : input.split("\n");
   const parsedDxf: CodedDxf[] = [];
   for (let i = 0; i < blockLines.length - 1; i += 2) {
     const code = blockLines[i].trim();
@@ -87,6 +93,42 @@ export const getAttributedBlocks = (fileText: string) => {
     }
   }
   return blocks;
+};
+
+export const extractMultileaders = (fileText: string) => {
+  const parsed = parseDxf(fileText);
+  const multileaders: Array<{ x: number; y: number; text: string }> = [];
+
+  // Encontrar índices onde começa MULTILEADER
+  const mlIndexes = parsed
+    .map((item, index) =>
+      item.code === "0" && item.value === "MULTILEADER" ? index : -1
+    )
+    .filter((index) => index !== -1);
+
+  mlIndexes.forEach((startIndex) => {
+    // Procurar próxima entidade para delimitar
+    const nextEntityIndex = parsed.findIndex(
+      (item, idx) => idx > startIndex && item.code === "0"
+    );
+    const endIndex = nextEntityIndex !== -1 ? nextEntityIndex : parsed.length;
+
+    // Extrair dados deste multileader
+    const mlData = parsed.slice(startIndex, endIndex);
+    const x = parseFloat(
+      mlData.find((item) => item.code === "110")?.value || "0"
+    );
+    const y = parseFloat(
+      mlData.find((item) => item.code === "120")?.value || "0"
+    );
+    const text = mlData.find((item) => item.code === "304")?.value || "";
+
+    if (x && y && text) {
+      multileaders.push({ x, y, text });
+    }
+  });
+
+  return multileaders;
 };
 
 export const getInsertsFromDxf = (fileText: string): DxfInsert[] => {
