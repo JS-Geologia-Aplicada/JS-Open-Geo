@@ -33,7 +33,7 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             }}
             className={`px-4 ${currentPage === "extraction" && "fw-bold"}`}
           >
-            Extração de Dados
+            Dados de sondagem
           </Nav.Link>
           <Nav.Link
             active={currentPage === "dxf"}
@@ -43,7 +43,7 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             style={{ cursor: currentPage === "dxf" ? "default" : "pointer" }}
             className={`px-4 ${currentPage === "dxf" && "fw-bold"}`}
           >
-            Geração de Palitos
+            Palitos de sondagem
           </Nav.Link>
           <Nav.Link
             active={currentPage === "transform"}
@@ -81,7 +81,7 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             }}
             className={`px-4 ${currentPage === "changelog" && "fw-bold"}`}
           >
-            Detalhes da Versão
+            Histórico de versões
           </Nav.Link>
         </Nav>
       </Container>

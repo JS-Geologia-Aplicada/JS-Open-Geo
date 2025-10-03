@@ -1,14 +1,15 @@
 {
   "versions": [
     {
-      "version": "1.1.0-alpha.1",
-      "date": "2025-24-09",
-      "title": "JS OpenGeo alpha",
-      "summary": "Implementação de novas funções para testes internos",
+      "version": "1.1.0-beta",
+      "date": "2025-10-03",
+      "title": "JS OpenGeo beta",
+      "summary": "Implementação de novas funções para geração de palitos.",
       "features": [
         "Importar CSV no formato Leapfrog para gerar palitos",
         "Alterar NSPT inicial em todas as sondagens",
-        "Adição de novos padrões de palitos"
+        "Adição de novos padrões de palitos",
+        "Releases de versões anteriores podem ser acessadas pela página de histórico de versões"
       ],
       "improvements": [],
       "bugfixes": [

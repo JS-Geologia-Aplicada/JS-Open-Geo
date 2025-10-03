@@ -338,25 +338,11 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       getDocument: () => documentRef.current,
     }));
 
-    return !file ? (
-      // Mensagem antes de carregar algum pdf
-      <>
-        <div className="row">
-          <div
-            className="col-12 d-flex justify-content-center align-items-center"
-            style={{ minHeight: "50vh" }}
-          >
-            <p className="text-muted">Carregue um pdf para ser exibido aqui</p>
-          </div>
-        </div>
-      </>
-    ) : (
-      // Exibindo o pdf
+    return (
       <>
         <div
           className="pdf-container mt-2"
           style={{
-            // minWidth: "600px",
             height: "min(800px, 80vh)",
             overflow: "hidden",
             position: "relative",
@@ -364,143 +350,155 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             marginBottom: "15px",
           }}
         >
-          <div
-            ref={pdfRef}
-            className={`position-relative d-inline-block ${
-              isSelectionActive
-                ? "pdf-cursor-crosshair"
-                : isPanning
-                ? "pdf-cursor-grabbing"
-                : "pdf-cursor-grab"
-            }`}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            style={{
-              userSelect: "none",
-              transform: `translate(${pdfOffset.x}px, ${pdfOffset.y}px)`,
-            }}
-          >
-            {/* Documento */}
-            <Document
-              file={file}
-              onLoadSuccess={(pdfDoc) => {
-                setNumPages(pdfDoc.numPages);
-                setPageNumber(1);
-                setZoomScale(1);
-                documentRef.current = pdfDoc;
-              }}
-            >
-              <Page
-                pageNumber={pageNumber}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                scale={zoomScale}
-              />
-            </Document>
-            {/* Div para exibir área de seleção concluída */}
-            <SelectedAreas
-              areas={areas}
-              zoomScale={zoomScale}
-              activeAreaId={activeAreaId}
-              isSelectionActive={isSelectionActive}
-              onChangeCoords={onFinishSelection}
-            />
-            {/* Div para exibir área sendo selecionada */}
-            {currentSelection && (
+          {!file ? (
+            <div className="mt-3">
+              <p className="text-muted">
+                Carregue um pdf para ser exibido aqui
+              </p>
+            </div>
+          ) : (
+            <>
               <div
-                className="position-absolute border border-secondary"
+                ref={pdfRef}
+                className={`position-relative d-inline-block ${
+                  isSelectionActive
+                    ? "pdf-cursor-crosshair"
+                    : isPanning
+                    ? "pdf-cursor-grabbing"
+                    : "pdf-cursor-grab"
+                }`}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
                 style={{
-                  left: currentSelection.x * zoomScale,
-                  top: currentSelection.y * zoomScale,
-                  width: currentSelection.width * zoomScale,
-                  height: currentSelection.height * zoomScale,
-                  backgroundColor: "rgba(134, 142, 135, 0.2)",
-                  zIndex: 10,
+                  userSelect: "none",
+                  transform: `translate(${pdfOffset.x}px, ${pdfOffset.y}px)`,
                 }}
-              ></div>
-            )}
-          </div>
-          {/** Menu de navegação do pdf */}
-          <div
-            className="pdf-nav position-absolute bottom-0 start-0 end-0 d-flex align-items-center"
-            style={{
-              backgroundColor: "rgba(0, 0, 0, 0.7)",
-              backdropFilter: "blur(4px)",
-              padding: "4px 12px",
-            }}
-          >
-            <div className="flex-grow-1 d-flex justify-content-center">
-              {isEditingPage ? (
-                <div className="d-flex align-items-center gap-1">
-                  <input
-                    ref={pageInputRef}
-                    type="number"
-                    className="form-control form-control-sm text-center"
-                    style={{
-                      width: "40px",
-                      fontSize: "12px",
-                      backgroundColor: "rgba(108, 108, 108, 0.8)",
-                      border: "1px solid rgba(255, 255, 255, 0.3)",
-                      borderRadius: "2px",
-                      color: "white",
-                    }}
-                    value={editPageNumber}
-                    min={1}
-                    max={numPages || 1}
-                    onChange={(e) =>
-                      setEditPageNumber(parseInt(e.target.value) || 1)
-                    }
-                    onKeyDown={handlePageKeyDown}
-                    onBlur={handleCancelPage}
-                    autoFocus
-                  />
-                  <span className="text-white small">de {numPages || 1}</span>
-                </div>
-              ) : (
-                <span
-                  onClick={handlePageClick}
-                  className="text-white small"
-                  title="Selecionar página"
-                  style={{ cursor: "pointer" }}
+              >
+                {/* Documento */}
+                <Document
+                  file={file}
+                  onLoadSuccess={(pdfDoc) => {
+                    setNumPages(pdfDoc.numPages);
+                    setPageNumber(1);
+                    setZoomScale(1);
+                    documentRef.current = pdfDoc;
+                  }}
                 >
-                  Página {pageNumber || 1} {numPages && `de ${numPages}`}
-                </span>
-              )}
-            </div>
-            <div className="d-flex gap-1">
-              <button
-                className="pdf-nav-button"
-                title="Página anterior"
-                onClick={previousPage}
-                disabled={pageNumber <= 1}
+                  <Page
+                    pageNumber={pageNumber}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                    scale={zoomScale}
+                  />
+                </Document>
+                {/* Div para exibir área de seleção concluída */}
+                <SelectedAreas
+                  areas={areas}
+                  zoomScale={zoomScale}
+                  activeAreaId={activeAreaId}
+                  isSelectionActive={isSelectionActive}
+                  onChangeCoords={onFinishSelection}
+                />
+                {/* Div para exibir área sendo selecionada */}
+                {currentSelection && (
+                  <div
+                    className="position-absolute border border-secondary"
+                    style={{
+                      left: currentSelection.x * zoomScale,
+                      top: currentSelection.y * zoomScale,
+                      width: currentSelection.width * zoomScale,
+                      height: currentSelection.height * zoomScale,
+                      backgroundColor: "rgba(134, 142, 135, 0.2)",
+                      zIndex: 10,
+                    }}
+                  ></div>
+                )}
+              </div>
+              {/** Menu de navegação do pdf */}
+              <div
+                className="pdf-nav position-absolute bottom-0 start-0 end-0 d-flex align-items-center"
+                style={{
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  backdropFilter: "blur(4px)",
+                  padding: "4px 12px",
+                }}
               >
-                <ChevronLeft size={24} color="#d0d0d0" />
-              </button>
-              <button
-                className="pdf-nav-button"
-                title="Próxima página"
-                onClick={nextPage}
-                disabled={pageNumber >= (numPages ?? 0)}
-              >
-                <ChevronRight size={24} color="#d0d0d0" />
-              </button>
-              <button
-                className="pdf-nav-button"
-                onClick={zoomOut}
-                disabled={zoomScale <= MIN_ZOOM}
-              >
-                <ZoomOut size={24} color="#d0d0d0" />
-              </button>
-              <button
-                className="pdf-nav-button"
-                onClick={zoomIn}
-                disabled={zoomScale >= MAX_ZOOM}
-              >
-                <ZoomIn size={24} color="#d0d0d0" />
-              </button>
-            </div>
-          </div>
+                <div className="flex-grow-1 d-flex justify-content-center">
+                  {isEditingPage ? (
+                    <div className="d-flex align-items-center gap-1">
+                      <input
+                        ref={pageInputRef}
+                        type="number"
+                        className="form-control form-control-sm text-center"
+                        style={{
+                          width: "40px",
+                          fontSize: "12px",
+                          backgroundColor: "rgba(108, 108, 108, 0.8)",
+                          border: "1px solid rgba(255, 255, 255, 0.3)",
+                          borderRadius: "2px",
+                          color: "white",
+                        }}
+                        value={editPageNumber}
+                        min={1}
+                        max={numPages || 1}
+                        onChange={(e) =>
+                          setEditPageNumber(parseInt(e.target.value) || 1)
+                        }
+                        onKeyDown={handlePageKeyDown}
+                        onBlur={handleCancelPage}
+                        autoFocus
+                      />
+                      <span className="text-white small">
+                        de {numPages || 1}
+                      </span>
+                    </div>
+                  ) : (
+                    <span
+                      onClick={handlePageClick}
+                      className="text-white small"
+                      title="Selecionar página"
+                      style={{ cursor: "pointer" }}
+                    >
+                      Página {pageNumber || 1} {numPages && `de ${numPages}`}
+                    </span>
+                  )}
+                </div>
+                <div className="d-flex gap-1">
+                  <button
+                    className="pdf-nav-button"
+                    title="Página anterior"
+                    onClick={previousPage}
+                    disabled={pageNumber <= 1}
+                  >
+                    <ChevronLeft size={24} color="#d0d0d0" />
+                  </button>
+                  <button
+                    className="pdf-nav-button"
+                    title="Próxima página"
+                    onClick={nextPage}
+                    disabled={pageNumber >= (numPages ?? 0)}
+                  >
+                    <ChevronRight size={24} color="#d0d0d0" />
+                  </button>
+                  <button
+                    className="pdf-nav-button"
+                    onClick={zoomOut}
+                    disabled={zoomScale <= MIN_ZOOM}
+                  >
+                    <ZoomOut size={24} color="#d0d0d0" />
+                  </button>
+                  <button
+                    className="pdf-nav-button"
+                    onClick={zoomIn}
+                    disabled={zoomScale >= MAX_ZOOM}
+                  >
+                    <ZoomIn size={24} color="#d0d0d0" />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </>
     );

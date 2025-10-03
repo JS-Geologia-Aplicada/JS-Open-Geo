@@ -79,7 +79,7 @@ const AboutPage = () => {
               tem sugestões de melhoria? Entre em contato pelo nosso Linkedin,
               Instagram ou por e-mail.
             </div>
-            <div className="d-flex justify-content-center align-items-center gap-3 mt-2">
+            <div className="d-flex justify-content-center align-items-center gap-3 mt-1">
               <a
                 href="mailto:contato@jsgeo.com.br"
                 className="text-decoration-none text-dark"
@@ -110,6 +110,23 @@ const AboutPage = () => {
                   className="bi bi-instagram"
                   style={{ fontSize: "1.5rem" }}
                 ></i>
+              </a>
+            </div>
+            <div className="mt-2">
+              Você também pode acessar o código fonte do programa no link
+              abaixo. Mesmo se não souber programar, você poderá postar dúvidas,
+              pedidos e sugestões de melhorias, além de reportar bugs e
+              problemas.
+            </div>
+            <div className="d-flex justify-content-center mt-1">
+              <a
+                href="https://github.com/JS-Geologia-Aplicada"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-decoration-none text-dark"
+                title="Repositório"
+              >
+                https://github.com/JS-Geologia-Aplicada
               </a>
             </div>
           </Alert>
