@@ -157,7 +157,7 @@ const DxfPage = ({
         <Col md={6} lg={5}>
           <Card>
             <Card.Header>
-              <h3 className="mb-0">Gerador de Palitos DXF</h3>
+              <h3 className="mb-0">Palitos de sondagem</h3>
             </Card.Header>
             <Card.Body>
               {/* Mensagens */}

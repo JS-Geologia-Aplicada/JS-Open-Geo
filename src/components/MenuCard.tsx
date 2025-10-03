@@ -15,7 +15,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
   return (
     <div className="card mt-2">
       <div className="card-header">
-        <h4 className="card-title">Extrair dados de PDF</h4>
+        <h4 className="card-title">Dados de sondagem</h4>
       </div>
       <div className="card-body">{areasMenu}</div>
       {areas.length > 0 && <div className="card-footer">{extractMenu}</div>}
