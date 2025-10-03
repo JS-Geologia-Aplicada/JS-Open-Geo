@@ -137,6 +137,7 @@ export const getInsertsFromDxf = (fileText: string): DxfInsert[] => {
 
   try {
     const dxf = parser.parse(fileText) as DxfData;
+    console.log("dxf: ", dxf);
 
     const inserts = dxf.entities;
 
@@ -153,5 +154,20 @@ export const getInsertsFromDxf = (fileText: string): DxfInsert[] => {
   } catch (err) {
     console.error("Erro ao parsear DXF:", err);
     return sondagens;
+  }
+};
+
+export const getLayerColorsFromDxf = (fileText: string) => {
+  const parser = new DxfParser();
+  try {
+    const dxf = parser.parse(fileText) as DxfData;
+    const layersObj = dxf.tables.layer.layers;
+    const layersArray = Object.values(layersObj);
+    const styles = layersArray.map((l: any) => {
+      return { layerName: l.name, color: l.color };
+    });
+    return styles;
+  } catch (err) {
+    console.error("Erro ao parsear DXF:", err);
   }
 };

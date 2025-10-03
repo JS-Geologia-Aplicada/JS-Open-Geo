@@ -5,6 +5,7 @@ import {
   extractMultileaders,
   getAttributedBlocks,
   getInsertsFromDxf,
+  getLayerColorsFromDxf,
   type DxfInsert,
 } from "../utils/dxfParseUtils";
 
@@ -25,7 +26,12 @@ import {
   Row,
   Table,
 } from "react-bootstrap";
-import { KmlBuilder, type KmlData } from "../utils/kmlGenerator";
+import {
+  dxfColorToKml,
+  KmlBuilder,
+  KmlColors,
+  type KmlData,
+} from "../utils/kmlGenerator";
 
 const TrasformPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -177,6 +183,25 @@ const TrasformPage = () => {
 
     // 1. Criar KML
     const kml = new KmlBuilder("Sondagens DXF");
+
+    const layerColors = getLayerColorsFromDxf(fileText);
+    console.log("layerColors: ", layerColors);
+    const insertLayers = new Set(dxfData.map((data) => data.layer));
+    insertLayers.forEach((layer) => {
+      const layerColor = layerColors?.find((l: any) => l.layerName === layer);
+
+      const kmlColor = layerColor
+        ? dxfColorToKml(layerColor.color)
+        : KmlColors.Cyan;
+
+      kml.addStyle({
+        id: layer,
+        icon: {
+          color: kmlColor,
+          href: "https://maps.google.com/mapfiles/kml/shapes/target.png",
+        },
+      });
+    });
 
     // 2. Converter e adicionar cada ponto
     dxfData.forEach((item) => {

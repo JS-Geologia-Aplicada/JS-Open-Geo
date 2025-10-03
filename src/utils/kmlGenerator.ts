@@ -19,27 +19,27 @@ export interface KmlPoint {
 export interface KmlStyle {
   id: string;
   balloon?: {
-    bgColor: string;
-    textColor: string;
+    bgColor: KmlColor;
+    textColor: KmlColor;
     text: string;
     displayMode: string;
   };
   icon?: {
-    color?: string;
+    color?: KmlColor;
     scale?: number;
     href?: string;
   };
   label?: {
-    color?: string;
+    color?: KmlColor;
     scale?: number;
   };
   line?: {
-    color?: string;
+    color?: KmlColor;
     width?: number;
   };
   list?: {
     itemType?: "check" | "radioFolder" | "checkOffOnly" | "checkHideChildren";
-    bgColor?: string;
+    bgColor?: KmlColor;
     itemIcon?: {
       state:
         | "open"
@@ -52,7 +52,7 @@ export interface KmlStyle {
     }[];
   };
   poly?: {
-    color?: string;
+    color?: KmlColor;
     colorMode?: string;
   };
 }
@@ -66,6 +66,23 @@ export interface KmlData {
   displayName: string;
   value: string;
 }
+
+export const KmlColors = {
+  // Formato: aabbggrr
+  Red: "ff0000ff",
+  Green: "ff00ff00",
+  Blue: "ffff0000",
+  Yellow: "ff00ffff",
+  Cyan: "ffffff00",
+  Magenta: "ffff00ff",
+  White: "ffffffff",
+  Black: "ff000000",
+  Orange: "ff0080ff",
+  Purple: "ffff0080",
+  Pink: "ffff80ff",
+  Gray: "ff808080",
+} as const;
+export type KmlColor = (typeof KmlColors)[keyof typeof KmlColors] | string;
 
 interface KmlDocument {
   name: string;
@@ -303,3 +320,31 @@ ${placemarksXml}
       .replace(/'/g, "&apos;");
   }
 }
+
+export const dxfColorToRgb = (
+  dxfColor: number
+): { r: number; g: number; b: number } => {
+  const r = dxfColor & 0xff;
+  const g = (dxfColor >> 8) & 0xff;
+  const b = (dxfColor >> 16) & 0xff;
+  return { r, g, b };
+};
+
+// Para KML (aabbggrr):
+export const dxfColorToKml = (
+  dxfColor: number,
+  alpha: number = 255
+): string => {
+  const { r, g, b } = dxfColorToRgb(dxfColor);
+  return rgbToKmlColor(r, g, b, alpha);
+};
+
+export const rgbToKmlColor = (
+  r: number,
+  g: number,
+  b: number,
+  a: number = 255
+): KmlColor => {
+  const toHex = (n: number) => n.toString(16).padStart(2, "0");
+  return `${toHex(a)}${toHex(b)}${toHex(g)}${toHex(r)}`;
+};
