@@ -41,10 +41,12 @@ const PalitoPreviewCard = ({
     return (
       <Card className="mt-2">
         <Card.Header>
-          <h5 className="card-title">Preview dos Dados</h5>
+          <h5 className="card-title">Pré-visualização dos Dados</h5>
         </Card.Header>
         <Card.Body>
-          <p className="text-muted">Nenhum dado disponível para preview</p>
+          <p className="text-muted">
+            Nenhum dado disponível para pré-visualização
+          </p>
         </Card.Body>
       </Card>
     );
