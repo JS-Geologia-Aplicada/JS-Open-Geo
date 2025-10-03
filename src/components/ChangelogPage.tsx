@@ -38,7 +38,16 @@ const ChangelogPage = () => {
         <Row key={version.version} className="justify-content-center">
           <Col xs={10} lg={8} xl={6} className="mb-4 text-start">
             <div className="d-flex gap-3 mb-3 align-items-end">
-              <h4 className="mb-0">v{version.version}</h4>
+              <h4 className="mb-0">
+                <a
+                  target="_blanck"
+                  href={`https://github.com/JS-Geologia-Aplicada/JS-Open-Geo/releases/tag/v${version.version}`}
+                  className="text-decoration-none text-dark"
+                  title={`Release v${version.version}`}
+                >
+                  v{version.version}
+                </a>
+              </h4>
               <span className="text-muted">{formatDateToBR(version.date)}</span>
             </div>
             <h5>Visão geral</h5>

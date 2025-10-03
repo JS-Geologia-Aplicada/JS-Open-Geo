@@ -1,6 +1,26 @@
 {
   "versions": [
     {
+      "version": "1.1.0-beta",
+      "date": "2025-10-03",
+      "title": "JS OpenGeo beta",
+      "summary": "Implementação de novas funções para geração de palitos.",
+      "features": [
+        "Importar CSV no formato Leapfrog para gerar palitos",
+        "Alterar NSPT inicial em todas as sondagens",
+        "Adição de novos padrões de palitos",
+        "Releases de versões anteriores podem ser acessadas pela página de histórico de versões"
+      ],
+      "improvements": [],
+      "bugfixes": [
+        "Permitir início e conclusão da seleção de área clicando em cima de uma área existente."
+      ],
+      "known_issues": [
+        "OCR apresenta dados pouco confiáveis para NSPT e profundidades",
+        "Edições de dados para geração do palitos podem criar resultados inesperados"
+      ]
+    },
+    {
       "version": "1.0.0-beta",
       "date": "2025-09-08",
       "title": "JS OpenGeo beta",

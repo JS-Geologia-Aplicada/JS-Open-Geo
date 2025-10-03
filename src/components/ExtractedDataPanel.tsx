@@ -18,14 +18,14 @@ const ExtractedDataPanel = ({
       ? Object.keys(extractedTexts[0]).filter((key) => key !== "pageNumber")
       : [];
   return (
-    <div className="data-panel mt-2">
+    <div className="data-panel mt-2 border p-3">
       {isExtracting ? (
         <>
           <span className="spinner-border spinner-border-sm me-1" />
           {fileName ? `Extraindo dados do arquivo ${fileName}` : "Extraindo..."}
         </>
       ) : !extractedTexts || extractedTexts.length <= 0 ? (
-        <div>
+        <div className="mt-3">
           <p className="text-muted">Os dados extraídos serão exibidos aqui</p>
         </div>
       ) : (
