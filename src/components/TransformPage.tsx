@@ -32,6 +32,7 @@ import {
   KmlColors,
   type KmlData,
 } from "../utils/kmlGenerator";
+import JSZip from "jszip";
 
 const TrasformPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -175,7 +176,7 @@ const TrasformPage = () => {
     XLSX.writeFile(wb, "sondagens-dxf.xlsx");
   };
 
-  const exportToKML = () => {
+  const exportToKML = async (kmz = false) => {
     if (!selectedDatum || (selectedDatum !== "WGS84" && !selectedZone)) {
       alert("Selecione o sistema de coordenadas");
       return;
@@ -234,15 +235,40 @@ const TrasformPage = () => {
 
     // 3. Gerar e baixar
     const kmlString = kml.build();
-    const blob = new Blob([kmlString], {
-      type: "application/vnd.google-earth.kml+xml",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "sondagens.kml";
-    link.click();
-    URL.revokeObjectURL(url);
+
+    if (kmz) {
+      const zip = new JSZip();
+      zip.file("doc.kml", kmlString); // Nome padrão do KML dentro do KMZ
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "sondagens.kmz";
+      link.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const blob = new Blob([kmlString], {
+        type: "application/vnd.google-earth.kml+xml",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "sondagens.kml";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleKMLExport = (kmz = false) => {
+    if (dxfType === "block" && !selectedIdField) {
+      const proceed = window.confirm(
+        "Nenhum campo de nome foi selecionado. As sondagens no KML não terão título. Deseja continuar?"
+      );
+      if (!proceed) return;
+    }
+
+    exportToKML(kmz);
   };
 
   const baseStyle = {
@@ -324,63 +350,77 @@ const TrasformPage = () => {
                   <div className="mt-4">
                     <h6 className="text-start mb-2">Configurações para KML</h6>
                     <hr className="mt-0 mb-3" />
-                    {
-                      /* Seleção de campo ID */
-                      dxfType === "block" && (
-                        <div>
+
+                    <Row className="g-3">
+                      {/* Coluna Esquerda - Sistema de Coordenadas */}
+                      <Col md={6}>
+                        <h6 className="text-start mb-2 small">
+                          Sistema de coordenadas utilizado no DXF
+                        </h6>
+
+                        {/* Seleção de Datum */}
+                        <Form.Select
+                          aria-label="Datum"
+                          className="mb-2"
+                          value={selectedDatum || ""}
+                          onChange={(e) =>
+                            setSelectedDatum(e.target.value as DatumType)
+                          }
+                        >
+                          <option value="">Datum</option>
+                          {DATUMS.map((datum) => (
+                            <option key={datum.value} value={datum.value}>
+                              {datum.label}
+                            </option>
+                          ))}
+                        </Form.Select>
+
+                        {/* Seleção de Zona UTM */}
+                        <Form.Select
+                          aria-label="Zona UTM"
+                          value={selectedZone || ""}
+                          onChange={(e) =>
+                            setSelectedZone(e.target.value as ZoneType)
+                          }
+                          disabled={!selectedDatum || selectedDatum === "WGS84"}
+                        >
+                          <option value="">Zona UTM</option>
+                          {UTM_ZONES.map((zone) => (
+                            <option key={zone.value} value={zone.value}>
+                              {zone.label}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Col>
+
+                      {/* Coluna Direita - Atributo ID */}
+                      <Col md={6}>
+                        <h6 className="text-start mb-2 small">
+                          Atributo que representa o nome da sondagem
+                        </h6>
+
+                        {dxfType === "block" ? (
                           <Form.Select
                             aria-label="Id de Sondagem"
-                            value={selectedIdField}
+                            value={selectedIdField || ""}
                             onChange={(e) => setSelectedIdField(e.target.value)}
                             disabled={!dxfData || attributeColumns.length === 0}
                           >
-                            <option value={undefined}>
-                              Campo de nome da sondagem
-                            </option>
+                            <option value="">Selecione o campo</option>
                             {attributeColumns.map((att, i) => (
                               <option key={`${att}-${i}`} value={att}>
                                 {att}
                               </option>
                             ))}
                           </Form.Select>
-                        </div>
-                      )
-                    }
-                    {/* Seleção de Datum */}
-                    <div style={{ width: "200px" }}>
-                      <Form.Select
-                        aria-label="Datum"
-                        value={selectedDatum}
-                        onChange={(e) =>
-                          setSelectedDatum(e.target.value as DatumType)
-                        }
-                      >
-                        <option value={undefined}>Datum</option>
-                        {DATUMS.map((datum) => (
-                          <option key={datum.value} value={datum.value}>
-                            {datum.label}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </div>
-                    {/* Seleção de Zona UTM */}
-                    <div style={{ width: "200px" }}>
-                      <Form.Select
-                        aria-label="Zona UTM"
-                        value={selectedZone}
-                        onChange={(e) =>
-                          setSelectedZone(e.target.value as ZoneType)
-                        }
-                        disabled={!selectedDatum || selectedDatum === "WGS84"}
-                      >
-                        <option value={undefined}>Zona UTM</option>
-                        {UTM_ZONES.map((zone) => (
-                          <option key={zone.value} value={zone.value}>
-                            {zone.label}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </div>
+                        ) : (
+                          <p className="text-muted small mb-0">
+                            Configuração necessária apenas para DXFs com
+                            sondagens em blocos
+                          </p>
+                        )}
+                      </Col>
+                    </Row>
                   </div>
 
                   {/* Botões download */}
@@ -390,17 +430,34 @@ const TrasformPage = () => {
                     <div className="d-flex gap-2">
                       <Button
                         onClick={exportToExcel}
-                        disabled={!dxfData}
+                        disabled={!dxfData || dxfData.length === 0}
                         className="flex-fill"
                       >
                         XLSX
                       </Button>
                       <Button
-                        onClick={exportToKML}
-                        disabled={!dxfData}
+                        onClick={() => handleKMLExport(false)}
+                        disabled={
+                          !dxfData ||
+                          dxfData.length === 0 ||
+                          !selectedDatum ||
+                          (selectedDatum !== "WGS84" && !selectedZone)
+                        }
                         className="flex-fill"
                       >
                         KML
+                      </Button>
+                      <Button
+                        onClick={() => handleKMLExport(true)}
+                        disabled={
+                          !dxfData ||
+                          dxfData.length === 0 ||
+                          !selectedDatum ||
+                          (selectedDatum !== "WGS84" && !selectedZone)
+                        }
+                        className="flex-fill"
+                      >
+                        KMZ
                       </Button>
                     </div>
                   </div>
@@ -415,21 +472,86 @@ const TrasformPage = () => {
                       <div style={{ maxHeight: "50vh", overflow: "auto" }}>
                         <Table striped bordered hover>
                           <thead>
+                            {dxfType === "block" && (
+                              /* Primeira linha - headers agrupados */
+                              <tr>
+                                <th
+                                  colSpan={3}
+                                  style={{
+                                    position: "sticky",
+                                    top: 0,
+                                    backgroundColor: "white",
+                                    borderTop: "1px solid #dee2e6",
+                                    borderBottom: "1px solid #dee2e6",
+                                    zIndex: 10,
+                                  }}
+                                >
+                                  Dados
+                                </th>
+                                {attributeColumns.length > 0 && (
+                                  <th
+                                    colSpan={attributeColumns.length}
+                                    style={{
+                                      position: "sticky",
+                                      top: 0,
+                                      backgroundColor: "white",
+                                      borderTop: "1px solid #dee2e6",
+                                      borderBottom: "1px solid #dee2e6",
+                                    }}
+                                  >
+                                    Atributos do Bloco
+                                  </th>
+                                )}
+                              </tr>
+                            )}
                             <tr>
                               {dxfType === "multileader" && (
-                                <th style={{ position: "sticky", top: 0 }}>
+                                <th
+                                  style={{
+                                    position: "sticky",
+                                    top: 0,
+                                    borderBottom: "1px solid #dee2e6",
+                                  }}
+                                >
                                   ID
                                 </th>
                               )}
-                              <th style={{ position: "sticky", top: 0 }}>X</th>
-                              <th style={{ position: "sticky", top: 0 }}>Y</th>
-                              <th style={{ position: "sticky", top: 0 }}>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: dxfType === "multileader" ? 0 : "2.5rem",
+                                  borderBottom: "1px solid #dee2e6",
+                                }}
+                              >
+                                X
+                              </th>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: dxfType === "multileader" ? 0 : "2.5rem",
+                                  borderBottom: "1px solid #dee2e6",
+                                }}
+                              >
+                                Y
+                              </th>
+                              <th
+                                style={{
+                                  position: "sticky",
+                                  top: dxfType === "multileader" ? 0 : "2.5rem",
+                                  borderBottom: "1px solid #dee2e6",
+                                }}
+                              >
                                 Layer
                               </th>
                               {attributeColumns.map((col) => (
                                 <th
                                   key={col}
-                                  style={{ position: "sticky", top: 0 }}
+                                  style={{
+                                    position: "sticky",
+                                    top:
+                                      dxfType === "multileader" ? 0 : "2.5rem",
+                                    borderBottom: "1px solid #dee2e6",
+                                  }}
                                 >
                                   {col}
                                 </th>
