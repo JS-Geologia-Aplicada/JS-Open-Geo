@@ -324,22 +324,28 @@ const TrasformPage = () => {
                   <div className="mt-4">
                     <h6 className="text-start mb-2">Configurações para KML</h6>
                     <hr className="mt-0 mb-3" />
-                    {/* Seleção de campo ID */}
-                    <div>
-                      <Form.Select
-                        aria-label="Id de Sondagem"
-                        value={selectedIdField}
-                        onChange={(e) => setSelectedIdField(e.target.value)}
-                        disabled={!dxfData || attributeColumns.length === 0}
-                      >
-                        <option value={undefined}>Campo de ID</option>
-                        {attributeColumns.map((att, i) => (
-                          <option key={`${att}-${i}`} value={att}>
-                            {att}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </div>
+                    {
+                      /* Seleção de campo ID */
+                      dxfType === "block" && (
+                        <div>
+                          <Form.Select
+                            aria-label="Id de Sondagem"
+                            value={selectedIdField}
+                            onChange={(e) => setSelectedIdField(e.target.value)}
+                            disabled={!dxfData || attributeColumns.length === 0}
+                          >
+                            <option value={undefined}>
+                              Campo de nome da sondagem
+                            </option>
+                            {attributeColumns.map((att, i) => (
+                              <option key={`${att}-${i}`} value={att}>
+                                {att}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </div>
+                      )
+                    }
                     {/* Seleção de Datum */}
                     <div style={{ width: "200px" }}>
                       <Form.Select
@@ -379,7 +385,7 @@ const TrasformPage = () => {
 
                   {/* Botões download */}
                   <div className="mt-4">
-                    <h6 className="text-start mb-2">Downloads</h6>
+                    <h6 className="text-start mb-2">Exportar</h6>
                     <hr className="mt-0 mb-3" />
                     <div className="d-flex gap-2">
                       <Button
@@ -387,7 +393,7 @@ const TrasformPage = () => {
                         disabled={!dxfData}
                         className="flex-fill"
                       >
-                        XLS
+                        XLSX
                       </Button>
                       <Button
                         onClick={exportToKML}

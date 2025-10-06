@@ -57,7 +57,7 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             }}
             className={`px-4 ${currentPage === "transform" && "fw-bold"}`}
           >
-            Transformações
+            Ferramentas CAD/SIG
           </Nav.Link>
           <Nav.Link
             active={currentPage === "about"}
