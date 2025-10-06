@@ -18,6 +18,7 @@ import {
   type ZoneType,
 } from "../utils/mapUtils";
 import {
+  Accordion,
   Button,
   Card,
   Col,
@@ -60,6 +61,7 @@ const TrasformPage = () => {
     reader.onload = (e) => {
       const text = e.target?.result as string;
       setFileText(text);
+      console.log("fileText: ", text);
     };
 
     reader.readAsText(file);
@@ -112,7 +114,7 @@ const TrasformPage = () => {
       inserts.forEach((insert) => {
         const matchingMultileader = multileaders.find(
           (m) =>
-            Math.abs(m.x - insert.x) <= 0.01 && Math.abs(m.y - insert.y) <= 0.01 // Tolerância de 0.01
+            Math.abs(m.x - insert.x) <= 0.5 && Math.abs(m.y - insert.y) <= 0.5 // Tolerância de 0.01
         );
         if (
           !insertsWithId.find(
@@ -263,7 +265,7 @@ const TrasformPage = () => {
   const handleKMLExport = (kmz = false) => {
     if (dxfType === "block" && !selectedIdField) {
       const proceed = window.confirm(
-        "Nenhum campo de nome foi selecionado. As sondagens no KML não terão título. Deseja continuar?"
+        "Nenhum campo de nome foi selecionado. As sondagens no arquivo não terão título. Deseja continuar?"
       );
       if (!proceed) return;
     }
@@ -346,82 +348,101 @@ const TrasformPage = () => {
                       </p>
                     )}
                   </div>
-                  {/* Configurações KML */}
-                  <div className="mt-4">
-                    <h6 className="text-start mb-2">Configurações para KML</h6>
-                    <hr className="mt-0 mb-3" />
+                  <Accordion
+                    defaultActiveKey={["0"]}
+                    alwaysOpen
+                    className="mt-2"
+                  >
+                    <Accordion.Item eventKey="0">
+                      <Accordion.Header>
+                        Configurações para KML/KMZ
+                      </Accordion.Header>
+                      <Accordion.Body>
+                        <Row className="g-3">
+                          {/* Coluna Esquerda - Sistema de Coordenadas */}
+                          <Col md={6}>
+                            <h6 className="text-start mb-2 small">
+                              Sistema de coordenadas utilizado no DXF
+                            </h6>
 
-                    <Row className="g-3">
-                      {/* Coluna Esquerda - Sistema de Coordenadas */}
-                      <Col md={6}>
-                        <h6 className="text-start mb-2 small">
-                          Sistema de coordenadas utilizado no DXF
-                        </h6>
+                            {/* Seleção de Datum */}
+                            <Form.Select
+                              aria-label="Datum"
+                              className="mb-2"
+                              value={selectedDatum || ""}
+                              onChange={(e) =>
+                                setSelectedDatum(e.target.value as DatumType)
+                              }
+                            >
+                              <option value="">Datum</option>
+                              {DATUMS.map((datum) => (
+                                <option key={datum.value} value={datum.value}>
+                                  {datum.label}
+                                </option>
+                              ))}
+                            </Form.Select>
 
-                        {/* Seleção de Datum */}
-                        <Form.Select
-                          aria-label="Datum"
-                          className="mb-2"
-                          value={selectedDatum || ""}
-                          onChange={(e) =>
-                            setSelectedDatum(e.target.value as DatumType)
-                          }
-                        >
-                          <option value="">Datum</option>
-                          {DATUMS.map((datum) => (
-                            <option key={datum.value} value={datum.value}>
-                              {datum.label}
-                            </option>
-                          ))}
-                        </Form.Select>
+                            {/* Seleção de Zona UTM */}
+                            <Form.Select
+                              aria-label="Zona UTM"
+                              value={selectedZone || ""}
+                              onChange={(e) =>
+                                setSelectedZone(e.target.value as ZoneType)
+                              }
+                              disabled={
+                                !selectedDatum || selectedDatum === "WGS84"
+                              }
+                            >
+                              <option value="">Zona UTM</option>
+                              {UTM_ZONES.map((zone) => (
+                                <option key={zone.value} value={zone.value}>
+                                  {zone.label}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Col>
 
-                        {/* Seleção de Zona UTM */}
-                        <Form.Select
-                          aria-label="Zona UTM"
-                          value={selectedZone || ""}
-                          onChange={(e) =>
-                            setSelectedZone(e.target.value as ZoneType)
-                          }
-                          disabled={!selectedDatum || selectedDatum === "WGS84"}
-                        >
-                          <option value="">Zona UTM</option>
-                          {UTM_ZONES.map((zone) => (
-                            <option key={zone.value} value={zone.value}>
-                              {zone.label}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      </Col>
+                          {/* Coluna Direita - Atributo ID */}
+                          <Col md={6}>
+                            <h6 className="text-start mb-2 small">
+                              Atributo que representa o nome da sondagem
+                            </h6>
 
-                      {/* Coluna Direita - Atributo ID */}
-                      <Col md={6}>
-                        <h6 className="text-start mb-2 small">
-                          Atributo que representa o nome da sondagem
-                        </h6>
-
-                        {dxfType === "block" ? (
-                          <Form.Select
-                            aria-label="Id de Sondagem"
-                            value={selectedIdField || ""}
-                            onChange={(e) => setSelectedIdField(e.target.value)}
-                            disabled={!dxfData || attributeColumns.length === 0}
-                          >
-                            <option value="">Selecione o campo</option>
-                            {attributeColumns.map((att, i) => (
-                              <option key={`${att}-${i}`} value={att}>
-                                {att}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        ) : (
-                          <p className="text-muted small mb-0">
-                            Configuração necessária apenas para DXFs com
-                            sondagens em blocos
-                          </p>
-                        )}
-                      </Col>
-                    </Row>
-                  </div>
+                            {dxfType === "block" ? (
+                              <Form.Select
+                                aria-label="Id de Sondagem"
+                                value={selectedIdField || ""}
+                                onChange={(e) =>
+                                  setSelectedIdField(e.target.value)
+                                }
+                                disabled={
+                                  !dxfData || attributeColumns.length === 0
+                                }
+                              >
+                                <option value="">Selecione o campo</option>
+                                {attributeColumns.map((att, i) => (
+                                  <option key={`${att}-${i}`} value={att}>
+                                    {att}
+                                  </option>
+                                ))}
+                              </Form.Select>
+                            ) : (
+                              <p className="text-muted small mb-0">
+                                Configuração necessária apenas para DXFs com
+                                sondagens em blocos
+                              </p>
+                            )}
+                          </Col>
+                        </Row>
+                      </Accordion.Body>
+                    </Accordion.Item>
+                    <Accordion.Item eventKey="1">
+                      <Accordion.Header>Renomear sondagens</Accordion.Header>
+                      <Accordion.Body>
+                        Lorem ipsum dolor sit amet consectetur adipiscing elit.
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  </Accordion>
 
                   {/* Botões download */}
                   <div className="mt-4">

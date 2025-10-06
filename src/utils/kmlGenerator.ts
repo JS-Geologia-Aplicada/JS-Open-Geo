@@ -68,7 +68,7 @@ export interface KmlData {
 }
 
 export const KmlColors = {
-  // Formato: aabbggrr
+  // Formato: aabbggrr (CORRIGIR PARA AARRGGBB!!)
   Red: "ff0000ff",
   Green: "ff00ff00",
   Blue: "ffff0000",
@@ -346,5 +346,5 @@ export const rgbToKmlColor = (
   a: number = 255
 ): KmlColor => {
   const toHex = (n: number) => n.toString(16).padStart(2, "0");
-  return `${toHex(a)}${toHex(b)}${toHex(g)}${toHex(r)}`;
+  return `${toHex(a)}${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
