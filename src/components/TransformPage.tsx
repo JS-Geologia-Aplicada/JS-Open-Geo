@@ -107,7 +107,6 @@ const TrasformPage = () => {
         });
       });
       setDxfData(insertsWithAtt);
-      console.log("insertsWithAtt: ", insertsWithAtt);
     } else {
       const multileaders = extractMultileaders(fileText);
       const insertsWithId: DxfInsert[] = [];
@@ -124,6 +123,7 @@ const TrasformPage = () => {
           insertsWithId.push({
             ...insert,
             id: matchingMultileader?.text,
+            layer: matchingMultileader?.layer || insert.layer,
           });
         }
       });

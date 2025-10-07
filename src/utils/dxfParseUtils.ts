@@ -97,7 +97,12 @@ export const getAttributedBlocks = (fileText: string) => {
 
 export const extractMultileaders = (fileText: string) => {
   const parsed = parseDxf(fileText);
-  const multileaders: Array<{ x: number; y: number; text: string }> = [];
+  const multileaders: Array<{
+    x: number;
+    y: number;
+    layer: string;
+    text: string;
+  }> = [];
 
   // Encontrar índices onde começa MULTILEADER
   const mlIndexes = parsed
@@ -115,16 +120,24 @@ export const extractMultileaders = (fileText: string) => {
 
     // Extrair dados deste multileader
     const mlData = parsed.slice(startIndex, endIndex);
-    const x = parseFloat(
-      mlData.find((item) => item.code === "110")?.value || "0"
+    const layer = mlData.find((item) => item.code === "8")?.value || "";
+    const leaderLineStartIndex = mlData.findIndex((item) =>
+      item.value.includes("LEADER_LINE")
     );
-    const y = parseFloat(
-      mlData.find((item) => item.code === "120")?.value || "0"
-    );
+    const xItem =
+      mlData.find(
+        (item, index) => index > leaderLineStartIndex && item.code === "10"
+      )?.value || "0";
+    const yItem =
+      mlData.find(
+        (item, index) => index > leaderLineStartIndex && item.code === "20"
+      )?.value || "0";
+    const x = parseFloat(xItem);
+    const y = parseFloat(yItem);
     const text = mlData.find((item) => item.code === "304")?.value || "";
 
     if (x && y && text) {
-      multileaders.push({ x, y, text });
+      multileaders.push({ x, y, layer, text });
     }
   });
 
