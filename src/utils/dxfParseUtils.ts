@@ -12,8 +12,11 @@ export interface DxfInsert {
   blockName: string;
   layer: string;
   id?: string;
+  idIndex?: number;
   attributes?: { tag: string | undefined; value: string | undefined }[];
 }
+
+export type CardinalDirection = "N-S" | "O-E" | "S-N" | "E-O";
 
 export const detectDxfType = (fileText: string): "block" | "multileader" => {
   return fileText.includes("ATTRIB") ? "block" : "multileader";
@@ -95,13 +98,13 @@ export const getAttributedBlocks = (fileText: string) => {
   return blocks;
 };
 
-export const extractMultileaders = (fileText: string) => {
-  const parsed = parseDxf(fileText);
+export const extractMultileaders = (parsed: CodedDxf[]) => {
   const multileaders: Array<{
     x: number;
     y: number;
     layer: string;
     text: string;
+    textIndex: number;
   }> = [];
 
   // Encontrar índices onde começa MULTILEADER
@@ -135,9 +138,11 @@ export const extractMultileaders = (fileText: string) => {
     const x = parseFloat(xItem);
     const y = parseFloat(yItem);
     const text = mlData.find((item) => item.code === "304")?.value || "";
+    const textIndex =
+      startIndex + mlData.findIndex((item) => item.code === "304");
 
     if (x && y && text) {
-      multileaders.push({ x, y, layer, text });
+      multileaders.push({ x, y, layer, text, textIndex });
     }
   });
 
@@ -150,7 +155,6 @@ export const getInsertsFromDxf = (fileText: string): DxfInsert[] => {
 
   try {
     const dxf = parser.parse(fileText) as DxfData;
-    console.log("dxf: ", dxf);
 
     const inserts = dxf.entities;
 
@@ -183,4 +187,35 @@ export const getLayerColorsFromDxf = (fileText: string) => {
   } catch (err) {
     console.error("Erro ao parsear DXF:", err);
   }
+};
+
+export const reconstructDxf = (parsed: CodedDxf[]): string => {
+  return parsed.map((item) => `${item.code}\n${item.value}`).join("\n");
+};
+
+export const sortByDirection = (
+  data: DxfInsert[],
+  direction: CardinalDirection
+): DxfInsert[] => {
+  return data.sort((a, b) => {
+    switch (direction) {
+      case "N-S":
+        return b.y - a.y; // Maior Y primeiro (norte para sul)
+      case "S-N":
+        return a.y - b.y; // Menor Y primeiro (sul para norte)
+      case "O-E":
+        return a.x - b.x; // Menor X primeiro (oeste para leste)
+      case "E-O":
+        return b.x - a.x; // Maior X primeiro (leste para oeste)
+    }
+  });
+};
+
+export const groupBy = <T>(array: T[], key: keyof T): Record<string, T[]> => {
+  return array.reduce((result, item) => {
+    const group = String(item[key]);
+    if (!result[group]) result[group] = [];
+    result[group].push(item);
+    return result;
+  }, {} as Record<string, T[]>);
 };

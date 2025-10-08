@@ -1,4 +1,6 @@
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 
@@ -163,6 +165,17 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   appearance: none;
   -moz-appearance: textfield;
+}
+
+input[type="number"].show-arrow::-webkit-outer-spin-button,
+input[type="number"].show-arrow::-webkit-inner-spin-button {
+  -webkit-appearance: auto;
+  margin: 0;
+}
+
+input[type="number"].show-arrow {
+  appearance: auto;
+  -moz-appearance: number-input;
 }
 
 .navbar-nav .nav-item.dropdown:hover .dropdown-menu {

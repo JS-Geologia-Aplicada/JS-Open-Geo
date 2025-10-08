@@ -6,6 +6,12 @@ import {
   getAttributedBlocks,
   getInsertsFromDxf,
   getLayerColorsFromDxf,
+  groupBy,
+  parseDxf,
+  reconstructDxf,
+  sortByDirection,
+  type CodedDxf,
+  type CardinalDirection,
   type DxfInsert,
 } from "../utils/dxfParseUtils";
 
@@ -38,6 +44,21 @@ import JSZip from "jszip";
 const TrasformPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileText, setFileText] = useState<string>("");
+  const [codedDxf, setCodedDxf] = useState<CodedDxf[] | null>(null);
+  const [renamedFileText, setRenamedFileText] = useState<string | null>(null);
+  const [useNewName, setUseNewName] = useState(false);
+  const [renamingConfigs, setRenamingConfigs] = useState<{
+    direction: CardinalDirection;
+    generalPrefix: string;
+    numberLength: number;
+    layerPrefixes: Record<string, string>;
+  }>({
+    direction: "N-S",
+    generalPrefix: "",
+    numberLength: 3,
+    layerPrefixes: {},
+  });
+  const [fileLayers, setFileLayers] = useState<Set<string>>();
 
   const [dxfData, setDxfData] = useState<DxfInsert[]>([]);
   const [dxfType, setDxfType] = useState<"block" | "multileader" | null>(null);
@@ -61,7 +82,6 @@ const TrasformPage = () => {
     reader.onload = (e) => {
       const text = e.target?.result as string;
       setFileText(text);
-      console.log("fileText: ", text);
     };
 
     reader.readAsText(file);
@@ -73,16 +93,48 @@ const TrasformPage = () => {
     }
   };
 
+  // Série de UseEffects para atualizar os dados
+  // 1. Quando carrega arquivo, analisa automaticamente
   useEffect(() => {
     if (fileText && selectedFile) {
-      handleAnalyzeDxf();
+      const parsed = parseDxf(fileText);
+      setCodedDxf(parsed);
+      handleAnalyzeDxf(parsed);
     }
-  }, [fileText]);
+  }, [fileText, selectedFile]);
 
-  const handleAnalyzeDxf = () => {
-    if (!selectedFile || !fileText) {
-      return;
+  // 2. Quando configs de renomeação mudam, atualiza renamedFileText
+  useEffect(() => {
+    if (useNewName && dxfData && dxfData.length > 0) {
+      handleRename();
     }
+  }, [
+    useNewName,
+    renamingConfigs.direction,
+    renamingConfigs.generalPrefix,
+    renamingConfigs.numberLength,
+    renamingConfigs.layerPrefixes,
+  ]);
+
+  // 3. Quando renamedFileText muda E useNewName está ativo, re-analisa
+  useEffect(() => {
+    if (useNewName && renamedFileText) {
+      const parsed = parseDxf(renamedFileText);
+      setCodedDxf(parsed);
+      handleAnalyzeDxf(parsed);
+    }
+  }, [renamedFileText, useNewName]);
+
+  // 4. Quando desativa useNewName, volta para o original
+  useEffect(() => {
+    if (!useNewName && fileText) {
+      const parsed = parseDxf(fileText);
+      setCodedDxf(parsed);
+      handleAnalyzeDxf(parsed);
+    }
+  }, [useNewName]);
+
+  const handleAnalyzeDxf = (parsed: CodedDxf[]) => {
     const inserts = getInsertsFromDxf(fileText);
     const detectedType = detectDxfType(fileText);
     setDxfType(detectedType);
@@ -106,14 +158,16 @@ const TrasformPage = () => {
           attributes: attributes,
         });
       });
+      const insertLayers = new Set(insertsWithAtt.map((data) => data.layer));
+      setFileLayers(insertLayers);
       setDxfData(insertsWithAtt);
     } else {
-      const multileaders = extractMultileaders(fileText);
+      const multileaders = extractMultileaders(parsed);
       const insertsWithId: DxfInsert[] = [];
       inserts.forEach((insert) => {
         const matchingMultileader = multileaders.find(
           (m) =>
-            Math.abs(m.x - insert.x) <= 0.5 && Math.abs(m.y - insert.y) <= 0.5 // Tolerância de 0.01
+            Math.abs(m.x - insert.x) <= 0.1 && Math.abs(m.y - insert.y) <= 0.1 // Tolerância de 0.1
         );
         if (
           !insertsWithId.find(
@@ -123,10 +177,13 @@ const TrasformPage = () => {
           insertsWithId.push({
             ...insert,
             id: matchingMultileader?.text,
+            idIndex: matchingMultileader?.textIndex,
             layer: matchingMultileader?.layer || insert.layer,
           });
         }
       });
+      const insertLayers = new Set(insertsWithId.map((data) => data.layer));
+      setFileLayers(insertLayers);
       setDxfData(insertsWithId);
     }
   };
@@ -188,8 +245,10 @@ const TrasformPage = () => {
     const kml = new KmlBuilder("Sondagens DXF");
 
     const layerColors = getLayerColorsFromDxf(fileText);
-    console.log("layerColors: ", layerColors);
-    const insertLayers = new Set(dxfData.map((data) => data.layer));
+    const insertLayers = fileLayers
+      ? fileLayers
+      : new Set(dxfData.map((data) => data.layer));
+
     insertLayers.forEach((layer) => {
       const layerColor = layerColors?.find((l: any) => l.layerName === layer);
 
@@ -271,6 +330,69 @@ const TrasformPage = () => {
     }
 
     exportToKML(kmz);
+  };
+
+  const handleDownlaodDxf = () => {
+    if (!useNewName) {
+      const proceed = window.confirm(
+        "Não há alterações no DXF, deseja exportar mesmo assim?"
+      );
+      if (!proceed) return;
+    }
+    const dxfText = useNewName && renamedFileText ? renamedFileText : fileText;
+    const blob = new Blob([dxfText], {
+      type: "application/dxf",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "sondagens.dxf";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRename = () => {
+    if (!dxfData || dxfData.length === 0) return;
+
+    // 1. Ordenar baseado na direção
+    const sorted = sortByDirection([...dxfData], renamingConfigs.direction);
+
+    // 2. Agrupar por layer
+    const byLayer = groupBy(sorted, "layer");
+
+    // 3. Renumerar cada grupo
+    const renamed: DxfInsert[] = [];
+
+    Object.entries(byLayer).forEach(([layer, items]) => {
+      const layerPrefix = renamingConfigs.layerPrefixes[layer] || "";
+
+      items.forEach((item, index) => {
+        const number = (index + 1)
+          .toString()
+          .padStart(renamingConfigs.numberLength, "0");
+        const newId = `${renamingConfigs.generalPrefix}${layerPrefix}${number}`;
+
+        renamed.push({
+          ...item,
+          id: newId,
+        });
+      });
+    });
+    if (codedDxf !== null) {
+      const renamedDxf = [...codedDxf]; // Copiar array
+
+      renamed.forEach((insert) => {
+        if (insert.idIndex !== undefined && insert.id) {
+          renamedDxf[insert.idIndex] = {
+            ...renamedDxf[insert.idIndex],
+            value: insert.id,
+          };
+        }
+      });
+
+      const newFileText = reconstructDxf(renamedDxf);
+      setRenamedFileText(newFileText);
+    }
   };
 
   const baseStyle = {
@@ -439,7 +561,101 @@ const TrasformPage = () => {
                     <Accordion.Item eventKey="1">
                       <Accordion.Header>Renomear sondagens</Accordion.Header>
                       <Accordion.Body>
-                        Lorem ipsum dolor sit amet consectetur adipiscing elit.
+                        <Form.Check
+                          type="switch"
+                          label="Renomear sondagens"
+                          checked={useNewName}
+                          onChange={(e) => {
+                            setUseNewName(e.target.checked);
+                          }}
+                        />
+                        <div className="d-flex gap-3 text-start mb-2">
+                          <Form.Group>
+                            <Form.Label className="small ps-2">
+                              Direção
+                            </Form.Label>
+                            <Form.Select
+                              size="sm"
+                              value={renamingConfigs.direction}
+                              onChange={(e) => {
+                                setRenamingConfigs((prev) => ({
+                                  ...prev,
+                                  direction: e.target
+                                    .value as CardinalDirection,
+                                }));
+                              }}
+                            >
+                              <option value="N-S">Norte → Sul</option>
+                              <option value="O-E">Oeste → Leste</option>
+                              <option value="S-N">Sul → Norte</option>
+                              <option value="E-O">Leste → Oeste</option>
+                            </Form.Select>
+                          </Form.Group>
+                          <Form.Group>
+                            <Form.Label className="small ps-2">
+                              Quantidade de dígitos
+                            </Form.Label>
+
+                            <Form.Control
+                              size="sm"
+                              type="number"
+                              placeholder="Dígitos"
+                              className="show-arrow"
+                              value={renamingConfigs.numberLength}
+                              onChange={(e) => {
+                                setRenamingConfigs((prev) => ({
+                                  ...prev,
+                                  numberLength: parseInt(e.target.value) || 0,
+                                }));
+                              }}
+                            />
+                          </Form.Group>
+                        </div>
+                        <h6 className="text-start mt-3">Prefixos</h6>
+                        {/* Prefixos e configurações */}
+                        <div className="d-flex text-start gap-3">
+                          <div>
+                            <h6 className="small ps-2">Geral</h6>
+                            <Form.Control
+                              placeholder="Prefixo geral"
+                              onChange={(e) => {
+                                setRenamingConfigs((prev) => ({
+                                  ...prev,
+                                  generalPrefix: e.target.value,
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <h6 className="small ps-2">Camadas</h6>
+                            {fileLayers &&
+                              Array.from(fileLayers).map((layer) => {
+                                return (
+                                  <Form.Group>
+                                    <Form.Label className="small mt-2 mb-1">
+                                      {layer}
+                                    </Form.Label>
+                                    <Form.Control
+                                      placeholder="Prefixo da camada"
+                                      value={
+                                        renamingConfigs.layerPrefixes[layer] ||
+                                        ""
+                                      }
+                                      onChange={(e) => {
+                                        setRenamingConfigs((prev) => ({
+                                          ...prev,
+                                          layerPrefixes: {
+                                            ...prev.layerPrefixes,
+                                            [layer]: e.target.value,
+                                          },
+                                        }));
+                                      }}
+                                    />
+                                  </Form.Group>
+                                );
+                              })}
+                          </div>
+                        </div>
                       </Accordion.Body>
                     </Accordion.Item>
                   </Accordion>
@@ -480,6 +696,9 @@ const TrasformPage = () => {
                       >
                         KMZ
                       </Button>
+                      <Button onClick={handleDownlaodDxf} className="flex-fill">
+                        DXF
+                      </Button>
                     </div>
                   </div>
                 </Col>
@@ -490,7 +709,7 @@ const TrasformPage = () => {
                       <h5>Dados extraídos ({dxfData.length} sondagens)</h5>
 
                       {/* Tabela preview */}
-                      <div style={{ maxHeight: "50vh", overflow: "auto" }}>
+                      <div style={{ maxHeight: "100%", overflow: "auto" }}>
                         <Table striped bordered hover>
                           <thead>
                             {dxfType === "block" && (
