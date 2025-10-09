@@ -6,6 +6,17 @@ export interface CodedDxf {
   value: string;
 }
 
+export interface CodedDxfSection {
+  index: number;
+  codedDxf: CodedDxf[];
+}
+
+export interface DxfAttribute {
+  tag: string;
+  value: string;
+  valueIndex: number;
+}
+
 export interface DxfInsert {
   x: number;
   y: number;
@@ -13,7 +24,7 @@ export interface DxfInsert {
   layer: string;
   id?: string;
   idIndex?: number;
-  attributes?: { tag: string | undefined; value: string | undefined }[];
+  attributes?: DxfAttribute[];
 }
 
 export type CardinalDirection = "N-S" | "O-E" | "S-N" | "E-O";
@@ -36,8 +47,12 @@ export const parseDxf = (input: string | string[]) => {
   return parsedDxf;
 };
 
-export const parseBlockSection = (parsedDxf: CodedDxf[], section: string) => {
-  const attributes: CodedDxf[][] = [];
+export const parseBlockSection = (
+  parsedDxf: CodedDxf[],
+  section: string,
+  baseNumber: number = 0
+) => {
+  const attributeSections: CodedDxfSection[] = [];
   const entitiesIndexes = parsedDxf
     .map((item, index) => (item.code === "0" ? index : -1))
     .filter((index) => index !== -1);
@@ -52,44 +67,56 @@ export const parseBlockSection = (parsedDxf: CodedDxf[], section: string) => {
   attribIndexes.forEach((attribStart) => {
     const nextEntityIndex = entitiesIndexes.find((idx) => idx > attribStart);
     const attribEnd = nextEntityIndex || parsedDxf.length;
-    const attribData = parsedDxf.slice(attribStart, attribEnd);
+    const attribData = {
+      index: attribStart + baseNumber,
+      codedDxf: parsedDxf.slice(attribStart, attribEnd),
+    };
 
-    attributes.push(attribData);
+    attributeSections.push(attribData);
+  });
+
+  const attributes: DxfAttribute[] = [];
+  attributeSections.forEach((section) => {
+    const tag = section.codedDxf.find((a) => a.code === "2")?.value;
+    const value = section.codedDxf.find((a) => a.code === "1")?.value;
+    const valueIndex =
+      section.codedDxf.findIndex((a) => a.code === "1") + section.index;
+    if (tag && value) {
+      attributes.push({
+        tag: tag,
+        value: value,
+        valueIndex: valueIndex,
+      });
+    }
   });
 
   return attributes;
 };
 
-export const getAttributedBlocks = (fileText: string) => {
-  // 1. Dividir o texto em linhas
-  const lines = fileText.split("\n");
-
-  // 2. Encontrar índices das linhas que contêm *U
+export const getAttributedBlocks = (parsed: CodedDxf[]) => {
   const blockStartIndexes: number[] = [];
-  lines.forEach((line, index) => {
-    if (line.trim().startsWith("*U")) {
-      blockStartIndexes.push(index - 1);
+  parsed.forEach((entry, index) => {
+    if (entry.value.trim().startsWith("*U")) {
+      blockStartIndexes.push(index);
     }
   });
 
-  // 3. Criar blocos: de cada *U até o próximo *U (ou final do arquivo)
   const blocks: {
     blockName: string;
-    attributes: CodedDxf[][];
+    attributes: DxfAttribute[];
   }[] = [];
   for (let i = 0; i < blockStartIndexes.length; i++) {
     const startIndex = blockStartIndexes[i];
     const endIndex = blockStartIndexes[i + 1]
-      ? blockStartIndexes[i + 1] - 1
-      : lines.length;
+      ? blockStartIndexes[i + 1]
+      : parsed.length;
 
-    const blockLines = lines.slice(startIndex, endIndex);
-    const parsedDxf = parseDxf(blockLines);
+    const parsedBlocks = parsed.slice(startIndex, endIndex);
 
-    const attributes = parseBlockSection(parsedDxf, "ATTRIB");
+    const attributes = parseBlockSection(parsedBlocks, "ATTRIB", startIndex);
     if (attributes.length > 0) {
       const blockObj = {
-        blockName: lines[startIndex + 1].trim(),
+        blockName: parsed[startIndex].value.trim(),
         attributes: attributes,
       };
       blocks.push(blockObj);

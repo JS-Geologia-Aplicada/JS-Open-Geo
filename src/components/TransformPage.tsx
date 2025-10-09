@@ -40,6 +40,7 @@ import {
   type KmlData,
 } from "../utils/kmlGenerator";
 import JSZip from "jszip";
+import { toast } from "react-toastify";
 
 const TrasformPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -139,28 +140,21 @@ const TrasformPage = () => {
     const detectedType = detectDxfType(fileText);
     setDxfType(detectedType);
     if (detectedType === "block") {
-      const blocksAtt = getAttributedBlocks(fileText);
+      const blocksAtt = getAttributedBlocks(parsed);
       const insertsWithAtt: DxfInsert[] = [];
       inserts.forEach((entry) => {
         const matchingBlock = blocksAtt.find(
           (block) => block.blockName === entry.blockName
         );
-        const attributes = matchingBlock
-          ? matchingBlock.attributes.map((att) => {
-              return {
-                tag: att.find((a) => a.code === "2")?.value,
-                value: att.find((a) => a.code === "1")?.value,
-              };
-            })
-          : undefined;
         insertsWithAtt.push({
           ...entry,
-          attributes: attributes,
+          attributes: matchingBlock?.attributes,
         });
       });
       const insertLayers = new Set(insertsWithAtt.map((data) => data.layer));
       setFileLayers(insertLayers);
       setDxfData(insertsWithAtt);
+      console.log("insertsWithAtt: ", insertsWithAtt);
     } else {
       const multileaders = extractMultileaders(parsed);
       const insertsWithId: DxfInsert[] = [];
@@ -194,7 +188,8 @@ const TrasformPage = () => {
     const columns = new Set<string>();
     dxfData.forEach((item) => {
       item.attributes?.forEach((attr) => {
-        if (attr.tag) columns.add(attr.tag);
+        const tag = attr.tag;
+        if (tag) columns.add(tag);
       });
     });
     return Array.from(columns);
@@ -361,7 +356,7 @@ const TrasformPage = () => {
     const byLayer = groupBy(sorted, "layer");
 
     // 3. Renumerar cada grupo
-    const renamed: DxfInsert[] = [];
+    const linesToRename: { index: number; id: string }[] = [];
 
     Object.entries(byLayer).forEach(([layer, items]) => {
       const layerPrefix = renamingConfigs.layerPrefixes[layer] || "";
@@ -371,20 +366,27 @@ const TrasformPage = () => {
           .toString()
           .padStart(renamingConfigs.numberLength, "0");
         const newId = `${renamingConfigs.generalPrefix}${layerPrefix}${number}`;
+        const idIndex =
+          dxfType === "multileader"
+            ? item.idIndex
+            : item.attributes?.find((a) => a.tag === selectedIdField)
+                ?.valueIndex;
 
-        renamed.push({
-          ...item,
-          id: newId,
-        });
+        if (idIndex) {
+          linesToRename.push({
+            index: idIndex,
+            id: newId,
+          });
+        }
       });
     });
     if (codedDxf !== null) {
       const renamedDxf = [...codedDxf]; // Copiar array
 
-      renamed.forEach((insert) => {
-        if (insert.idIndex !== undefined && insert.id) {
-          renamedDxf[insert.idIndex] = {
-            ...renamedDxf[insert.idIndex],
+      linesToRename.forEach((insert) => {
+        if (insert.index !== undefined && insert.id) {
+          renamedDxf[insert.index] = {
+            ...renamedDxf[insert.index],
             value: insert.id,
           };
         }
@@ -393,6 +395,14 @@ const TrasformPage = () => {
       const newFileText = reconstructDxf(renamedDxf);
       setRenamedFileText(newFileText);
     }
+  };
+
+  const handleToggleRename = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (dxfType === "block" && !selectedIdField && !e.target.checked) {
+      toast.warn("Escolha um atributo como nome para poder renomear");
+      return;
+    }
+    setUseNewName(e.target.checked);
   };
 
   const baseStyle = {
@@ -470,6 +480,34 @@ const TrasformPage = () => {
                       </p>
                     )}
                   </div>
+                  {dxfType === "block" && (
+                    <div className="d-flex gap-2 mt-2">
+                      <h6 className="text-start mb-2 small">
+                        Atributo que representa o nome da sondagem
+                      </h6>
+
+                      {dxfType === "block" ? (
+                        <Form.Select
+                          aria-label="Id de Sondagem"
+                          value={selectedIdField || ""}
+                          onChange={(e) => setSelectedIdField(e.target.value)}
+                          disabled={!dxfData || attributeColumns.length === 0}
+                        >
+                          <option value="">Selecione o campo</option>
+                          {attributeColumns.map((att, i) => (
+                            <option key={`${att}-${i}`} value={att}>
+                              {att}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      ) : (
+                        <p className="text-muted small mb-0">
+                          Configuração necessária apenas para DXFs com sondagens
+                          em blocos
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <Accordion
                     defaultActiveKey={["0"]}
                     alwaysOpen
@@ -482,12 +520,12 @@ const TrasformPage = () => {
                       <Accordion.Body>
                         <Row className="g-3">
                           {/* Coluna Esquerda - Sistema de Coordenadas */}
-                          <Col md={6}>
-                            <h6 className="text-start mb-2 small">
-                              Sistema de coordenadas utilizado no DXF
-                            </h6>
+                          <h6 className="text-start mb-2 small">
+                            Sistema de coordenadas utilizado no DXF
+                          </h6>
 
-                            {/* Seleção de Datum */}
+                          {/* Seleção de Datum */}
+                          <div className="d-flex gap-3">
                             <Form.Select
                               aria-label="Datum"
                               className="mb-2"
@@ -522,39 +560,7 @@ const TrasformPage = () => {
                                 </option>
                               ))}
                             </Form.Select>
-                          </Col>
-
-                          {/* Coluna Direita - Atributo ID */}
-                          <Col md={6}>
-                            <h6 className="text-start mb-2 small">
-                              Atributo que representa o nome da sondagem
-                            </h6>
-
-                            {dxfType === "block" ? (
-                              <Form.Select
-                                aria-label="Id de Sondagem"
-                                value={selectedIdField || ""}
-                                onChange={(e) =>
-                                  setSelectedIdField(e.target.value)
-                                }
-                                disabled={
-                                  !dxfData || attributeColumns.length === 0
-                                }
-                              >
-                                <option value="">Selecione o campo</option>
-                                {attributeColumns.map((att, i) => (
-                                  <option key={`${att}-${i}`} value={att}>
-                                    {att}
-                                  </option>
-                                ))}
-                              </Form.Select>
-                            ) : (
-                              <p className="text-muted small mb-0">
-                                Configuração necessária apenas para DXFs com
-                                sondagens em blocos
-                              </p>
-                            )}
-                          </Col>
+                          </div>
                         </Row>
                       </Accordion.Body>
                     </Accordion.Item>
@@ -565,9 +571,7 @@ const TrasformPage = () => {
                           type="switch"
                           label="Renomear sondagens"
                           checked={useNewName}
-                          onChange={(e) => {
-                            setUseNewName(e.target.checked);
-                          }}
+                          onChange={handleToggleRename}
                         />
                         <div className="d-flex gap-3 text-start mb-2">
                           <Form.Group>
@@ -631,7 +635,7 @@ const TrasformPage = () => {
                             {fileLayers &&
                               Array.from(fileLayers).map((layer) => {
                                 return (
-                                  <Form.Group>
+                                  <Form.Group key={`${layer}-formgroup`}>
                                     <Form.Label className="small mt-2 mb-1">
                                       {layer}
                                     </Form.Label>
