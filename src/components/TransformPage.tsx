@@ -50,14 +50,17 @@ const TrasformPage = () => {
   const [useNewName, setUseNewName] = useState(false);
   const [renamingConfigs, setRenamingConfigs] = useState<{
     direction: CardinalDirection;
-    generalPrefix: string;
-    numberLength: number;
-    layerPrefixes: Record<string, string>;
+    layerConfigs: Record<
+      string,
+      {
+        prefix: string;
+        numberLength: number;
+        startNumber: number;
+      }
+    >;
   }>({
     direction: "N-S",
-    generalPrefix: "",
-    numberLength: 3,
-    layerPrefixes: {},
+    layerConfigs: {},
   });
   const [fileLayers, setFileLayers] = useState<Set<string>>();
 
@@ -109,13 +112,7 @@ const TrasformPage = () => {
     if (useNewName && dxfData && dxfData.length > 0) {
       handleRename();
     }
-  }, [
-    useNewName,
-    renamingConfigs.direction,
-    renamingConfigs.generalPrefix,
-    renamingConfigs.numberLength,
-    renamingConfigs.layerPrefixes,
-  ]);
+  }, [useNewName, renamingConfigs.direction, renamingConfigs.layerConfigs]);
 
   // 3. Quando renamedFileText muda E useNewName está ativo, re-analisa
   useEffect(() => {
@@ -134,6 +131,31 @@ const TrasformPage = () => {
       handleAnalyzeDxf(parsed);
     }
   }, [useNewName]);
+
+  // 5. Quando atualiza as layers, define as layerConfigs para um default
+  useEffect(() => {
+    if (!fileLayers) return;
+    const newLayerConfigs: Record<
+      string,
+      {
+        prefix: string;
+        numberLength: number;
+        startNumber: number;
+      }
+    > = {};
+    Array.from(fileLayers).forEach((layer) => {
+      newLayerConfigs[layer] = {
+        prefix: layer + "-",
+        numberLength: 3,
+        startNumber: 1,
+      };
+    });
+
+    setRenamingConfigs((prevConfigs) => ({
+      ...prevConfigs,
+      layerConfigs: newLayerConfigs,
+    }));
+  }, [fileLayers]);
 
   const handleAnalyzeDxf = (parsed: CodedDxf[]) => {
     const inserts = getInsertsFromDxf(fileText);
@@ -359,13 +381,13 @@ const TrasformPage = () => {
     const linesToRename: { index: number; id: string }[] = [];
 
     Object.entries(byLayer).forEach(([layer, items]) => {
-      const layerPrefix = renamingConfigs.layerPrefixes[layer] || "";
+      const configs = renamingConfigs.layerConfigs[layer] || "";
 
       items.forEach((item, index) => {
-        const number = (index + 1)
+        const number = (configs.startNumber + index)
           .toString()
-          .padStart(renamingConfigs.numberLength, "0");
-        const newId = `${renamingConfigs.generalPrefix}${layerPrefix}${number}`;
+          .padStart(configs.numberLength, "0");
+        const newId = `${configs.prefix}${number}`;
         const idIndex =
           dxfType === "multileader"
             ? item.idIndex
@@ -595,66 +617,106 @@ const TrasformPage = () => {
                               <option value="E-O">Leste → Oeste</option>
                             </Form.Select>
                           </Form.Group>
-                          <Form.Group>
-                            <Form.Label className="small ps-2">
-                              Quantidade de dígitos
-                            </Form.Label>
-
-                            <Form.Control
-                              size="sm"
-                              type="number"
-                              placeholder="Dígitos"
-                              className="show-arrow"
-                              value={renamingConfigs.numberLength}
-                              onChange={(e) => {
-                                setRenamingConfigs((prev) => ({
-                                  ...prev,
-                                  numberLength: parseInt(e.target.value) || 0,
-                                }));
-                              }}
-                            />
-                          </Form.Group>
                         </div>
                         <h6 className="text-start mt-3">Prefixos</h6>
                         {/* Prefixos e configurações */}
                         <div className="d-flex text-start gap-3">
                           <div>
-                            <h6 className="small ps-2">Geral</h6>
-                            <Form.Control
-                              placeholder="Prefixo geral"
-                              onChange={(e) => {
-                                setRenamingConfigs((prev) => ({
-                                  ...prev,
-                                  generalPrefix: e.target.value,
-                                }));
-                              }}
-                            />
-                          </div>
-                          <div>
                             <h6 className="small ps-2">Camadas</h6>
                             {fileLayers &&
                               Array.from(fileLayers).map((layer) => {
+                                const layerConfig = renamingConfigs
+                                  .layerConfigs[layer] || {
+                                  prefix: "",
+                                  numberLength: 3,
+                                  startNumber: 1,
+                                };
+
                                 return (
-                                  <Form.Group key={`${layer}-formgroup`}>
-                                    <Form.Label className="small mt-2 mb-1">
-                                      {layer}
+                                  <Form.Group key={layer} className="mb-3">
+                                    <Form.Label className="small">
+                                      <strong>{layer}</strong>
                                     </Form.Label>
-                                    <Form.Control
-                                      placeholder="Prefixo da camada"
-                                      value={
-                                        renamingConfigs.layerPrefixes[layer] ||
-                                        ""
-                                      }
-                                      onChange={(e) => {
-                                        setRenamingConfigs((prev) => ({
-                                          ...prev,
-                                          layerPrefixes: {
-                                            ...prev.layerPrefixes,
-                                            [layer]: e.target.value,
-                                          },
-                                        }));
-                                      }}
-                                    />
+                                    <div className="d-flex gap-2">
+                                      <Form.Group>
+                                        <Form.Label className="small mb-1">
+                                          Prefixo
+                                        </Form.Label>
+                                        <Form.Control
+                                          placeholder="Prefixo"
+                                          value={layerConfig.prefix}
+                                          onChange={(e) => {
+                                            setRenamingConfigs((prev) => ({
+                                              ...prev,
+                                              layerConfigs: {
+                                                ...prev.layerConfigs,
+                                                [layer]: {
+                                                  ...layerConfig,
+                                                  prefix: e.target.value,
+                                                },
+                                              },
+                                            }));
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </Form.Group>
+                                      <Form.Group>
+                                        <Form.Label className="small mb-1">
+                                          N. de dígitos
+                                        </Form.Label>
+                                        <Form.Control
+                                          type="number"
+                                          className="show-arrow"
+                                          placeholder="Dígitos"
+                                          // style={{ width: "80px" }}
+                                          value={layerConfig.numberLength}
+                                          onChange={(e) => {
+                                            setRenamingConfigs((prev) => ({
+                                              ...prev,
+                                              layerConfigs: {
+                                                ...prev.layerConfigs,
+                                                [layer]: {
+                                                  ...layerConfig,
+                                                  numberLength:
+                                                    parseInt(e.target.value) ||
+                                                    3,
+                                                },
+                                              },
+                                            }));
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </Form.Group>
+
+                                      <Form.Group>
+                                        <Form.Label className="small mb-1">
+                                          Número inicial
+                                        </Form.Label>
+
+                                        <Form.Control
+                                          type="number"
+                                          className="show-arrow"
+                                          placeholder="Primeiro número"
+                                          // style={{ width: "100px" }}
+                                          value={layerConfig.startNumber}
+                                          onChange={(e) => {
+                                            setRenamingConfigs((prev) => ({
+                                              ...prev,
+                                              layerConfigs: {
+                                                ...prev.layerConfigs,
+                                                [layer]: {
+                                                  ...layerConfig,
+                                                  startNumber:
+                                                    parseInt(e.target.value) ||
+                                                    1,
+                                                },
+                                              },
+                                            }));
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </Form.Group>
+                                    </div>
                                   </Form.Group>
                                 );
                               })}
