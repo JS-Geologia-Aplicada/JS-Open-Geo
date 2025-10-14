@@ -183,7 +183,7 @@ const TrasformPage = () => {
       inserts.forEach((insert) => {
         const matchingMultileader = multileaders.find(
           (m) =>
-            Math.abs(m.x - insert.x) <= 0.1 && Math.abs(m.y - insert.y) <= 0.1 // Tolerância de 0.1
+            Math.abs(m.x - insert.x) <= 0.8 && Math.abs(m.y - insert.y) <= 0.8 // Tolerância de 0.8
         );
         if (
           !insertsWithId.find(
