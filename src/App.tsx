@@ -1,17 +1,17 @@
 import { useState } from "react";
-import DataExtractionPage from "./components/DataExtractionPage";
+import DataExtractionPage from "./pages/DataExtractionPage";
 import AppHeader from "./components/AppHeader";
-import DxfPage from "./components/DxfPage";
+import DxfPage from "./pages/DxfPage";
 import AppNavigation from "./components/AppNavigation";
 import { Col, Container, Row } from "react-bootstrap";
 import type { Area, PageTextData, PageType, PalitoData } from "./types";
 import HelpModal from "./components/HelpModal";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import AboutPage from "./components/AboutPage";
-import ChangelogPage from "./components/ChangelogPage";
+import AboutPage from "./pages/AboutPage";
+import ChangelogPage from "./pages/ChangelogPage";
 import AppFooter from "./components/AppFooter";
-import TransformPage from "./components/TransformPage";
+import TransformPage from "./components/Tools/ExtractDxfTool";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>("extraction");

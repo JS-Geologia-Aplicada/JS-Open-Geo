@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Area, SelectionArea } from "../types";
+import type { Area, SelectionArea } from "@types";
 
 interface EditablePolyAreaProps {
   area: Area;

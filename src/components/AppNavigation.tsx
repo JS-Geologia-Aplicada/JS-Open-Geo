@@ -1,5 +1,5 @@
 import { Container, Nav, Navbar } from "react-bootstrap";
-import type { PageType } from "../types";
+import type { PageType } from "@types";
 
 interface AppNavigationProps {
   currentPage: PageType;

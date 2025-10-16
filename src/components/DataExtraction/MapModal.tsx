@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Download } from "lucide-react";
-import type { Area, PageTextData } from "../types";
+import type { Area, PageTextData } from "@types";
 import { Button, Form, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import {
   convertGeographicCoordinates,
@@ -11,7 +11,7 @@ import {
   type DatumType,
   type PointCoords,
   type ZoneType,
-} from "../utils/mapUtils";
+} from "@utils/mapUtils";
 import JSZip from "jszip";
 import LeafletMap from "./LeafletMap";
 import { toast } from "react-toastify";

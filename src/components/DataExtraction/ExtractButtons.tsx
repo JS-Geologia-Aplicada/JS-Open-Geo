@@ -6,7 +6,7 @@ import {
   type Area,
   type ExtractionProgress,
   type PageTextData,
-} from "../types";
+} from "@types";
 import {
   downloadAllValidation,
   downloadSingleCSV,
@@ -15,10 +15,10 @@ import {
   exportExcel,
   exportJSON,
   getDropdownItemClass,
-} from "../utils/downloadUtils";
-import { validateExportRequirements } from "../utils/leapfrogExport";
+} from "@utils/downloadUtils";
+import { validateExportRequirements } from "@utils/leapfrogExport";
 import { ChevronDown, ChevronUp, Settings } from "lucide-react";
-import { millisecondsToTimerFormat } from "../utils/helpers";
+import { millisecondsToTimerFormat } from "@utils/helpers";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import MapModal from "./MapModal";
 

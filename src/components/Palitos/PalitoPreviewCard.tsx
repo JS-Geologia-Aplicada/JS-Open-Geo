@@ -1,6 +1,6 @@
 import { Card, Form, Button, Row, Col, ButtonGroup } from "react-bootstrap";
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
-import type { PalitoData } from "../types";
+import type { PalitoData } from "@types";
 import { useState } from "react";
 
 interface PalitoPreviewCardProps {

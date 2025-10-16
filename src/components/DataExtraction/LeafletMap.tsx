@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { PointCoords } from "../utils/mapUtils";
+import type { PointCoords } from "@utils/mapUtils";
 import L from "leaflet";
 
 interface LeafletMapProps {

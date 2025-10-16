@@ -7,7 +7,7 @@ import {
   type Area,
   type DataType,
   type ExtractionType,
-} from "../types";
+} from "@types";
 import { Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 interface AreaItemProps {

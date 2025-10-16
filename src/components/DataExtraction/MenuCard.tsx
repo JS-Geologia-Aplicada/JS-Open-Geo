@@ -1,5 +1,5 @@
 import React from "react";
-import type { Area } from "../types";
+import type { Area } from "@types";
 
 interface MenuCardProps {
   areas: Area[];

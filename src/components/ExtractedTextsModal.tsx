@@ -1,4 +1,4 @@
-import type { Area, PageTextData } from "../types";
+import type { Area, PageTextData } from "@types";
 
 import * as XLSX from "xlsx";
 

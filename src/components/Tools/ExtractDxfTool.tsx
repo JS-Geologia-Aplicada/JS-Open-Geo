@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   detectDxfType,
@@ -13,7 +13,7 @@ import {
   type CodedDxf,
   type CardinalDirection,
   type DxfInsert,
-} from "../utils/dxfParseUtils";
+} from "@utils/dxfParseUtils";
 
 import * as XLSX from "xlsx";
 import {
@@ -22,7 +22,7 @@ import {
   UTM_ZONES,
   type DatumType,
   type ZoneType,
-} from "../utils/mapUtils";
+} from "@utils/mapUtils";
 import {
   Accordion,
   Button,
@@ -38,11 +38,11 @@ import {
   KmlBuilder,
   KmlColors,
   type KmlData,
-} from "../utils/kmlGenerator";
+} from "@utils/kmlGenerator";
 import JSZip from "jszip";
 import { toast } from "react-toastify";
 
-const TrasformPage = () => {
+const ExtractDxfTool = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileText, setFileText] = useState<string>("");
   const [codedDxf, setCodedDxf] = useState<CodedDxf[] | null>(null);
@@ -63,7 +63,7 @@ const TrasformPage = () => {
     layerConfigs: {},
   });
   const [fileLayers, setFileLayers] = useState<Set<string>>();
-
+  const layersInitialized = useRef<Set<string>>(new Set());
   const [dxfData, setDxfData] = useState<DxfInsert[]>([]);
   const [dxfType, setDxfType] = useState<"block" | "multileader" | null>(null);
   const [selectedDatum, setSelectedDatum] = useState<DatumType | undefined>(
@@ -143,18 +143,29 @@ const TrasformPage = () => {
         startNumber: number;
       }
     > = {};
+    let hasNewLayers = false;
     Array.from(fileLayers).forEach((layer) => {
+      // Se já foi inicializada, pula
+      if (layersInitialized.current.has(layer)) return;
+
+      // Nova layer, adiciona
       newLayerConfigs[layer] = {
         prefix: layer + "-",
         numberLength: 3,
         startNumber: 1,
       };
+      layersInitialized.current.add(layer);
+      hasNewLayers = true;
     });
-
-    setRenamingConfigs((prevConfigs) => ({
-      ...prevConfigs,
-      layerConfigs: newLayerConfigs,
-    }));
+    if (hasNewLayers) {
+      setRenamingConfigs((prevConfigs) => ({
+        ...prevConfigs,
+        layerConfigs: {
+          ...prevConfigs.layerConfigs, // Preserva configs existentes!
+          ...newLayerConfigs,
+        },
+      }));
+    }
   }, [fileLayers]);
 
   const handleAnalyzeDxf = (parsed: CodedDxf[]) => {
@@ -900,4 +911,4 @@ const TrasformPage = () => {
   );
 };
 
-export default TrasformPage;
+export default ExtractDxfTool;

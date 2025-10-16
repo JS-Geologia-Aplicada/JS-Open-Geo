@@ -5,7 +5,7 @@ import {
   type Area,
   type DataType,
   type ExtractionType,
-} from "../types";
+} from "@types";
 import AreaItem from "./AreaItem";
 import UploadFile from "./UploadFile";
 import PresetManager from "./PresetManager";

@@ -1,5 +1,5 @@
 import { Download, Play, Save, Trash2, X } from "lucide-react";
-import type { Area, AreaPreset } from "../types";
+import type { Area, AreaPreset } from "@types";
 import { useEffect, useState } from "react";
 
 interface PresetManagerProps {

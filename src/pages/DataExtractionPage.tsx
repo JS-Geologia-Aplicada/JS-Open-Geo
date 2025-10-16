@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import PdfViewer, { type PdfViewerRef } from "./PdfViewer";
-import Menu from "./Menu";
+import PdfViewer, {
+  type PdfViewerRef,
+} from "@components/DataExtraction/PdfViewer";
+import Menu from "@components/DataExtraction/Menu";
 import {
   DATA_TYPE_LABELS,
   EASY_ADD_TYPES,
@@ -13,7 +15,7 @@ import {
   type ExtractionType,
   type PageTextData,
   type SelectionArea,
-} from "../types";
+} from "@types";
 import {
   addNewArea,
   clearArea,
@@ -23,11 +25,11 @@ import {
   renameArea,
   shouldRename,
   updateAreaCoordinates,
-} from "../utils/areaUtils";
-import MenuCard from "./MenuCard";
-import { extractText } from "../utils/textExtractor";
-import ExtractedDataPanel from "./ExtractedDataPanel";
-import ExtractButtons from "./ExtractButtons";
+} from "@utils/areaUtils";
+import MenuCard from "@components/DataExtraction/MenuCard";
+import { extractText } from "@utils/textExtractor";
+import ExtractedDataPanel from "@components/DataExtraction/ExtractedDataPanel";
+import ExtractButtons from "@/components/DataExtraction/ExtractButtons";
 import { Col, Row } from "react-bootstrap";
 
 interface DataExtractionPageProps {

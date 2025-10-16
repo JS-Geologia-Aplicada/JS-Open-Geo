@@ -9,9 +9,9 @@ import {
   Row,
   Tooltip,
 } from "react-bootstrap";
-import type { PalitoData } from "../types";
+import type { PalitoData } from "@types";
 import { toast } from "react-toastify";
-import { parseNumber } from "../utils/helpers";
+import { parseNumber } from "@utils/helpers";
 
 interface LeapfrogToJsonModalProps {
   onDataProcessed: (data: PalitoData[]) => void;

@@ -1,6 +1,6 @@
 import { Table } from "react-bootstrap";
-import { type PageTextData } from "../types";
-import { formatPageNumbers } from "../utils/helpers";
+import { type PageTextData } from "@types";
+import { formatPageNumbers } from "@utils/helpers";
 
 interface ExtractedDataPanelProps {
   extractedTexts: PageTextData[];

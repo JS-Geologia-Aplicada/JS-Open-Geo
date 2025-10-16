@@ -11,9 +11,9 @@ import { generateDxfJs, generateDXFMetro } from "../utils/dxfGenerator";
 import { useState } from "react";
 import type { Area, PageTextData, PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";
-import PalitoPreviewCard from "./PalitoPreviewCard";
+import PalitoPreviewCard from "@/components/Palitos/PalitoPreviewCard";
 import { toast } from "react-toastify";
-import LeapfrogToJsonModal from "./LeapfrogToJsonModal";
+import LeapfrogToJsonModal from "@/components/Palitos/LeapfrogToJsonModal";
 
 interface DxfPageProps {
   areas: Area[];
