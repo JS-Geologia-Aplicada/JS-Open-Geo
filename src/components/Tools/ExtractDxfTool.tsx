@@ -490,11 +490,29 @@ const ExtractDxfTool = () => {
         <Col md={10}>
           <Card>
             <Card.Header>
-              <h4 className="mb-0">Transformar DXF</h4>
+              <h4 className="mb-0">Ferramentas DXF</h4>
             </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={4}>
+            <Card.Body
+              style={{
+                height: "calc(100vh - 300px)",
+                overflow: "hidden",
+              }}
+            >
+              <Row
+                className="g-0"
+                style={{
+                  height: "100%",
+                  margin: 0,
+                }}
+              >
+                <Col
+                  md={4}
+                  style={{
+                    maxHeight: "100%",
+                    overflowY: "auto",
+                    paddingRight: "1rem",
+                  }}
+                >
                   {/* Área de Upload */}
                   <div {...getRootProps({ style })}>
                     <input {...getInputProps()} />
@@ -708,7 +726,6 @@ const ExtractDxfTool = () => {
                                           type="number"
                                           className="show-arrow"
                                           placeholder="Primeiro número"
-                                          // style={{ width: "100px" }}
                                           value={layerConfig.startNumber}
                                           onChange={(e) => {
                                             setRenamingConfigs((prev) => ({
@@ -779,15 +796,29 @@ const ExtractDxfTool = () => {
                     </div>
                   </div>
                 </Col>
-                <Col md={8}>
+                <Col
+                  md={8}
+                  style={{
+                    maxHeight: "100%",
+                    overflowY: "hidden", // ← Não rola a coluna toda
+                    paddingLeft: "1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
                   {/* Se tem dados, mostrar preview + config */}
                   {dxfData.length > 0 && (
                     <>
                       <h5>Dados extraídos ({dxfData.length} sondagens)</h5>
 
                       {/* Tabela preview */}
-                      <div style={{ maxHeight: "100%", overflow: "auto" }}>
-                        <Table striped bordered hover>
+                      <div style={{ overflow: "auto" }}>
+                        <Table
+                          striped
+                          bordered
+                          hover
+                          style={{ overflowX: "auto" }}
+                        >
                           <thead>
                             {dxfType === "block" && (
                               /* Primeira linha - headers agrupados */

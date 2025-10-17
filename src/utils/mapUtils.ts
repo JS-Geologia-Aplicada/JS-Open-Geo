@@ -28,7 +28,7 @@ export type ZoneType = (typeof UTM_ZONES)[number]["value"];
 
 export interface CoordinateSystem {
   datum: "SAD69" | "SIRGAS2000" | "WGS84";
-  zone: "18S" | "19S" | "20S" | "21S" | "22S" | "23S" | "24S" | "25S";
+  zone?: "18S" | "19S" | "20S" | "21S" | "22S" | "23S" | "24S" | "25S";
 }
 
 export interface PointCoords {
@@ -38,15 +38,31 @@ export interface PointCoords {
 
 export const convertGeographicCoordinates = (
   coords: [number, number],
-  system: CoordinateSystem
+  sourceSystem: CoordinateSystem,
+  targetSystem?: CoordinateSystem
 ): [number, number] => {
-  const sourceProj = getProj4String(system.datum, system.zone);
-  const targetProj = "+proj=longlat +datum=WGS84 +no_defs"; // Sempre WGS84 para Google Maps
+  const sourceProj = getProj4String(sourceSystem.datum, sourceSystem.zone);
+  const targetProj = targetSystem
+    ? getProj4String(targetSystem.datum, targetSystem.zone)
+    : "+proj=longlat +datum=WGS84 +no_defs";
 
   return proj4(sourceProj, targetProj, coords);
 };
 
-export const getProj4String = (datum: string, zone: string): string => {
+export const getProj4String = (datum: string, zone?: string): string => {
+  if (!zone) {
+    switch (datum) {
+      case "WGS84":
+        return "+proj=longlat +datum=WGS84 +no_defs";
+      case "SAD69":
+        return "+proj=longlat +datum=SAD69 +no_defs";
+      case "SIRGAS2000":
+        return "+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs";
+      default:
+        throw new Error(`Datum não suportado: ${datum}`);
+    }
+  }
+
   const zoneNumber = zone.replace("S", "");
 
   switch (datum) {

@@ -37,9 +37,9 @@ export const ToolsPage = () => {
             onToggleCollapse={handleToggleSidebar}
           />
           <div
-            className="flex-grow-1 overflow-auto p-4"
+            className="flex-grow-1 overflow-auto"
             style={{
-              marginLeft: sidebarCollapsed ? "60px" : "60px",
+              marginLeft: sidebarCollapsed ? "60px" : "280px",
               transition: "margin-left 0.3s ease",
             }}
           >
