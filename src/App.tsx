@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import AboutPage from "./pages/AboutPage";
 import ChangelogPage from "./pages/ChangelogPage";
 import AppFooter from "./components/AppFooter";
-import TransformPage from "./components/Tools/ExtractDxfTool";
+import { ToolsPage } from "./pages/ToolsPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>("extraction");
@@ -37,7 +37,7 @@ function App() {
   return (
     <div className="app-container">
       <div className="main-content">
-        <Container fluid className="text-center px-xl-5">
+        <Container fluid className="text-center p-0">
           <ToastContainer
             position="top-right"
             autoClose={6000}
@@ -50,12 +50,12 @@ function App() {
             setShow={setShowHelp}
           />
           <Row className="justify-content-center">
-            <Col>
+            <Col className="px-0">
               <AppHeader />
             </Col>
           </Row>
           <Row className="justify-content-center">
-            <Col>
+            <Col className="px-0">
               <AppNavigation
                 currentPage={currentPage}
                 onChangePage={setCurrentPage}
@@ -84,7 +84,7 @@ function App() {
           ) : currentPage === "changelog" ? (
             <ChangelogPage />
           ) : currentPage === "transform" ? (
-            <TransformPage />
+            <ToolsPage />
           ) : (
             <div>Erro: página não encontrada</div>
           )}

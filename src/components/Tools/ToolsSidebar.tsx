@@ -1,4 +1,5 @@
 import type { ToolsType } from "@/data/tools";
+import { X } from "lucide-react";
 import { Button, Nav } from "react-bootstrap";
 
 type Props = {
@@ -19,10 +20,10 @@ export const ToolsSidebar = ({
     <div
       style={{
         width: collapsed ? "60px" : "280px",
-        height: "100vh",
+        height: "calc(100vh - 192px)",
         position: "fixed",
+        top: "133.76px",
         left: 0,
-        top: 0,
         backgroundColor: "#f8f9fa",
         borderRight: "1px solid #dee2e6",
         transition: "width 0.3s ease",
@@ -46,7 +47,7 @@ export const ToolsSidebar = ({
           className="p-0"
           style={{ minWidth: "24px" }}
         >
-          {collapsed ? "☰" : "✕"}
+          {collapsed ? "☰" : <X />}
         </Button>
       </div>
 
@@ -76,7 +77,9 @@ export const ToolsSidebar = ({
               </span>
             ) : (
               <div>
-                <div style={{ fontWeight: 500 }}>{tool.name}</div>
+                <div style={{ fontWeight: 500, color: "black" }}>
+                  {tool.name}
+                </div>
                 <small className="text-muted d-block mt-1">
                   {tool.description}
                 </small>

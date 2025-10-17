@@ -9,7 +9,7 @@ export const ToolsGrid = ({ tools, onSelectTool }: Props) => {
   return (
     <div
       className="d-flex align-items-center justify-content-center"
-      style={{ minHeight: "100vh", padding: "2rem" }}
+      style={{ minHeight: "calc(100vh - 192px)", padding: "2rem" }}
     >
       <div style={{ maxWidth: "1200px", width: "100%" }}>
         <h1 className="text-center mb-5">Ferramentas CAD/SIG</h1>

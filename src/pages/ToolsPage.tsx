@@ -20,13 +20,15 @@ export const ToolsPage = () => {
   const SelectedComponent = selectedToolData?.component;
 
   return (
-    <Container fluid className="p-0" style={{ height: "100vh" }}>
+    <Container fluid className="p-0">
       {!selectedTool ? (
         // Grid inicial centralizado
-        <ToolsGrid tools={TOOLS} onSelectTool={handleSelectTool} />
+        <div style={{ minHeight: "calc(100vh - 192px)" }}>
+          <ToolsGrid tools={TOOLS} onSelectTool={handleSelectTool} />
+        </div>
       ) : (
         // Layout com sidebar + conteúdo
-        <div className="d-flex" style={{ height: "100%" }}>
+        <div className="d-flex" style={{ minHeight: "calc(100vh - 192px)" }}>
           <ToolsSidebar
             tools={TOOLS}
             selectedTool={selectedTool}
@@ -37,7 +39,7 @@ export const ToolsPage = () => {
           <div
             className="flex-grow-1 overflow-auto p-4"
             style={{
-              marginLeft: sidebarCollapsed ? "60px" : "280px",
+              marginLeft: sidebarCollapsed ? "60px" : "60px",
               transition: "margin-left 0.3s ease",
             }}
           >

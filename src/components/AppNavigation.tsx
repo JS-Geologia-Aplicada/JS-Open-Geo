@@ -8,9 +8,9 @@ interface AppNavigationProps {
 
 const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
   return (
-    <Navbar className="border-bottom mb-2">
-      <Container fluid className="px-4">
-        <Navbar.Brand className="text-dark fw-bold">
+    <Navbar className="border-bottom">
+      <Container fluid className="px-0">
+        <Navbar.Brand className="text-dark fw-bold ps-3">
           <div className="d-flex align-items-end">
             <img
               src="js_open_geo_logo.png"
