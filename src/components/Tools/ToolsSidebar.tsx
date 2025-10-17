@@ -1,5 +1,5 @@
 import type { ToolsType } from "@/data/tools";
-import { X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button, Nav } from "react-bootstrap";
 
 type Props = {
@@ -47,7 +47,7 @@ export const ToolsSidebar = ({
           className="p-0"
           style={{ minWidth: "24px" }}
         >
-          {collapsed ? "☰" : <X />}
+          {collapsed ? <ChevronRight /> : <ChevronLeft />}
         </Button>
       </div>
 
