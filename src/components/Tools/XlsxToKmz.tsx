@@ -9,7 +9,6 @@ import {
   Row,
   Table,
 } from "react-bootstrap";
-import * as XLSX from "xlsx";
 import JSZip from "jszip";
 import { KmlBuilder, type KmlData } from "@/utils/kmlGenerator";
 import {
@@ -20,10 +19,7 @@ import {
   type ZoneType,
 } from "@/utils/mapUtils";
 import { toast } from "react-toastify";
-
-interface XlsxRow {
-  [key: string]: any;
-}
+import { processXlsxData, readXlsxFile, type XlsxRow } from "@/utils/xlsxUtils";
 
 interface ParsedSondagem {
   name: string;
@@ -59,56 +55,20 @@ const XlsxToKmz = () => {
     setHasHeader(false);
 
     try {
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-
-      const dataArray: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-      });
+      const dataArray = await readXlsxFile(file);
 
       if (dataArray.length === 0) {
         toast.error("Planilha vazia!");
         return;
       }
 
-      processData(dataArray, false);
+      const processed = processXlsxData(dataArray, false);
+      setHeaders(processed.headers);
+      setRawData(processed.data);
     } catch (error) {
       console.error("Erro ao ler arquivo:", error);
       toast.error("Erro ao ler arquivo XLSX");
     }
-  };
-
-  const processData = (dataArray: any[][], hasHeaderRow: boolean) => {
-    let actualData: XlsxRow[];
-    let cols: string[];
-
-    if (hasHeaderRow && dataArray.length > 1) {
-      const headerRow = dataArray[0];
-      cols = headerRow.map((v, i) => String(v || `Coluna ${i + 1}`));
-
-      actualData = dataArray.slice(1).map((row) => {
-        const mapped: XlsxRow = {};
-        cols.forEach((col, i) => {
-          mapped[col] = row[i];
-        });
-        return mapped;
-      });
-    } else {
-      const numCols = dataArray[0]?.length || 0;
-      cols = Array.from({ length: numCols }, (_, i) => `col_${i}`);
-
-      actualData = dataArray.map((row) => {
-        const mapped: XlsxRow = {};
-        cols.forEach((col, i) => {
-          mapped[col] = row[i];
-        });
-        return mapped;
-      });
-    }
-
-    setHeaders(cols);
-    setRawData(actualData);
   };
 
   // Processar dados com conversão
@@ -214,22 +174,19 @@ const XlsxToKmz = () => {
   };
 
   // Recarregar quando mudar hasHeader
-  const handleHeaderToggle = (checked: boolean) => {
+  const handleHeaderToggle = async (checked: boolean) => {
     setHasHeader(checked);
 
     // Re-processar dados com novo modo
     if (selectedFile) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const buffer = e.target?.result as ArrayBuffer;
-        const workbook = XLSX.read(buffer);
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const dataArray: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-          header: 1,
-        });
-        processData(dataArray, checked);
-      };
-      reader.readAsArrayBuffer(selectedFile);
+      try {
+        const dataArray = await readXlsxFile(selectedFile);
+        const processed = processXlsxData(dataArray, checked);
+        setHeaders(processed.headers);
+        setRawData(processed.data);
+      } catch (error) {
+        toast.error("Erro ao reprocessar:" + error);
+      }
     }
   };
 
@@ -487,10 +444,10 @@ const XlsxToKmz = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {rawData.map((row, idx) => (
-                              <tr key={idx}>
+                            {rawData.map((r, i) => (
+                              <tr key={i}>
                                 {headers.map((h) => (
-                                  <td key={h}>{String(row[h] ?? "")}</td>
+                                  <td key={h}>{String(r[h] ?? "")}</td>
                                 ))}
                               </tr>
                             ))}

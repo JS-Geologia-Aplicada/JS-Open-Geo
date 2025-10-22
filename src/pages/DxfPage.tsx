@@ -7,7 +7,7 @@ import {
   Form,
   Row,
 } from "react-bootstrap";
-import { generateDxfJs, generateDXFMetro } from "../utils/dxfGenerator";
+import { generateDxfJs, generateDXFMetro } from "../utils/dxfPalitoGenerator";
 import { useState } from "react";
 import type { Area, PageTextData, PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";

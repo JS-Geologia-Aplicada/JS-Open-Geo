@@ -2,6 +2,7 @@ import KmlToXlsx from "@/components/Tools/KmlToXlsx";
 import TransformPage from "@/components/Tools/ExtractDxfTool";
 import type { ComponentType } from "react";
 import XlsxToKmz from "@/components/Tools/XlsxToKmz";
+import XlsxToDxfProfile from "@/components/Tools/XlsxToDxfProfile";
 
 export interface Tool {
   id: string;
@@ -31,11 +32,12 @@ export const TOOLS: Tool[] = [
     description: "Extrair dados de KMZ para planilha",
     component: KmlToXlsx,
   },
-  //   {
-  //     id: "xlsx-profile-to-dxf",
-  //     name: "XLSX Perfil → DXF",
-  //     description: "Criar perfil DXF a partir de planilha",
-  //   },
+  {
+    id: "xlsx-to-dxf-profile",
+    name: "XLSX → Perfil DXF",
+    description: "Criar perfil DXF a partir de planilha",
+    component: XlsxToDxfProfile,
+  },
   //   {
   //     id: "dxf-to-table",
   //     name: "DXF → Tabela DXF",

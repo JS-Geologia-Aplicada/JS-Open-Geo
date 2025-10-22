@@ -1090,7 +1090,7 @@ export const generateDXFMetro = async (data: PalitoData[]) => {
   };
 };
 
-const downloadDXF = (content: string, filename: string) => {
+export const downloadDXF = (content: string, filename: string) => {
   const blob = new Blob([content], { type: "application/dxf" });
   const url = URL.createObjectURL(blob);
 

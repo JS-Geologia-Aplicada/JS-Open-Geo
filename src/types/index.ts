@@ -275,3 +275,9 @@ export interface DxfData {
   header: any;
   tables: any;
 }
+
+export interface ProfileSondagem {
+  name: string;
+  distance: number;
+  z: number;
+}
