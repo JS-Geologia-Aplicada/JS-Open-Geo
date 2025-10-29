@@ -27,6 +27,12 @@ export interface DxfInsert {
   attributes?: DxfAttribute[];
 }
 
+export interface DxfPolyline {
+  layer: string;
+  vertices: Array<{ x: number; y: number; bulge?: number }>;
+  closed?: boolean;
+}
+
 export type CardinalDirection = "N-S" | "O-E" | "S-N" | "E-O";
 
 export const detectDxfType = (fileText: string): "block" | "multileader" => {
@@ -186,6 +192,10 @@ export const getInsertsFromDxf = (fileText: string): DxfInsert[] => {
     const inserts = dxf.entities;
 
     inserts.forEach((insert) => {
+      if (!insert.position) {
+        console.warn("Insert sem posição:", insert);
+        return; // Pula este insert
+      }
       const sondagem = {
         x: insert.position.x,
         y: insert.position.y,
@@ -245,4 +255,58 @@ export const groupBy = <T>(array: T[], key: keyof T): Record<string, T[]> => {
     result[group].push(item);
     return result;
   }, {} as Record<string, T[]>);
+};
+
+export const getPolylinesFromDxf = (fileText: string) => {
+  const parser = new DxfParser();
+  const polylines: DxfPolyline[] = [];
+
+  try {
+    const dxf = parser.parse(fileText) as DxfData;
+    const plEntities = dxf.entities.filter(
+      (entity) => entity.type === "LWPOLYLINE" || entity.type === "POLYLINE"
+    );
+
+    plEntities.forEach((pl) => {
+      if (pl.vertices && pl.vertices.length > 0) {
+        polylines.push({
+          layer: pl.layer,
+          vertices: pl.vertices,
+          closed: pl.shape || "false",
+        });
+      }
+    });
+    return polylines;
+  } catch (err) {
+    console.log("Erro ao extrair polylines: ", err);
+    return polylines;
+  }
+};
+
+export const subdivideArc = (
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  bulge: number,
+  maxError: number,
+  result: { x: number; y: number }[] = []
+) => {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p2.x;
+  const chord = Math.sqrt(dx * dx + dy * dy);
+  const sagitta = Math.abs((bulge * chord) / 2);
+
+  if (sagitta < maxError) {
+    result.push(p1);
+    return result;
+  }
+
+  const arcMidpoint = {
+    x: (p1.x + p2.x + dy * sagitta) / 2,
+    y: (p1.y + p2.y - dx * sagitta) / 2,
+  };
+
+  const newBulge = bulge / (1 + Math.sqrt(1 + bulge * bulge));
+  subdivideArc(p1, arcMidpoint, newBulge, maxError, result);
+  subdivideArc(arcMidpoint, p2, newBulge, maxError, result);
+  return result;
 };

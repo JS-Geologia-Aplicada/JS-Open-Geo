@@ -3,6 +3,7 @@ import TransformPage from "@/components/Tools/ExtractDxfTool";
 import type { ComponentType } from "react";
 import XlsxToKmz from "@/components/Tools/XlsxToKmz";
 import XlsxToDxfProfile from "@/components/Tools/XlsxToDxfProfile";
+import DistanceTool from "@/components/Tools/DistanceTool";
 
 export interface Tool {
   id: string;
@@ -38,16 +39,12 @@ export const TOOLS: Tool[] = [
     description: "Criar perfil DXF a partir de planilha",
     component: XlsxToDxfProfile,
   },
-  //   {
-  //     id: "dxf-to-table",
-  //     name: "DXF → Tabela DXF",
-  //     description: "Criar tabela DXF com dados das sondagens",
-  //   },
-  //   {
-  //     id: "dxf-distances",
-  //     name: "Medir Distâncias DXF",
-  //     description: "Calcular distâncias entre sondagens e linha de referência",
-  //   },
+  {
+    id: "distance-tool",
+    name: "Medir Distâncias DXF",
+    description: "Calcular distâncias entre sondagens e linha de referência",
+    component: DistanceTool,
+  },
 ];
 
 export type ToolsType = (typeof TOOLS)[number];

@@ -147,7 +147,7 @@ const XlsxToDxfProfile = () => {
                           <strong>{selectedFile.name}</strong>
                         </p>
                         <p className="mb-0 small">
-                          Clique ou arraste para trocar
+                          Clique ou arraste para trocar o arquivo
                         </p>
                       </div>
                     ) : (

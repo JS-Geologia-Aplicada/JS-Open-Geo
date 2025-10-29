@@ -187,7 +187,6 @@ const ExtractDxfTool = () => {
       const insertLayers = new Set(insertsWithAtt.map((data) => data.layer));
       setFileLayers(insertLayers);
       setDxfData(insertsWithAtt);
-      console.log("insertsWithAtt: ", insertsWithAtt);
     } else {
       const multileaders = extractMultileaders(parsed);
       const insertsWithId: DxfInsert[] = [];
