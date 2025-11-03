@@ -19,7 +19,7 @@ export const ToolsSidebar = ({
   return (
     <div
       style={{
-        width: collapsed ? "60px" : "280px",
+        width: collapsed ? "70px" : "280px",
         height: "calc(100vh - 192px)",
         position: "fixed",
         top: "133.76px",
@@ -72,9 +72,11 @@ export const ToolsSidebar = ({
           >
             {collapsed ? (
               // Apenas primeira letra quando colapsado
-              <span style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-                {tool.name.charAt(0)}
-              </span>
+              <img
+                src={tool.icon}
+                alt={`Ícone ${tool.name}`}
+                style={{ maxWidth: "40px" }}
+              />
             ) : (
               <div>
                 <div style={{ fontWeight: 500, color: "black" }}>

@@ -35,6 +35,11 @@ export const ToolsGrid = ({ tools, onSelectTool }: Props) => {
                 onClick={() => onSelectTool(tool)}
               >
                 <Card.Body>
+                  <img
+                    src={tool.icon}
+                    alt={`Ícone ${tool.name}`}
+                    style={{ maxWidth: "100px" }}
+                  />
                   <Card.Title className="mb-3">{tool.name}</Card.Title>
                   <Card.Text className="text-muted">
                     {tool.description}
