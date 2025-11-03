@@ -76,7 +76,7 @@ const AboutPage = () => {
             </li>
           </ol>
           <div className="d-flex gap-3">
-            <Alert variant="warning" className="text-center">
+            <Alert variant="info" className="text-center">
               <div>
                 Encontrou alguma falha, problema ou bug? Precisa de informações
                 ou tem sugestões de melhoria? Entre em contato pelo nosso
@@ -116,7 +116,7 @@ const AboutPage = () => {
                 </a>
               </div>
             </Alert>
-            <Alert variant="info">
+            <Alert variant="secondary">
               <div className="mt-2 text-center">
                 Você também pode acessar o código fonte do programa no link
                 abaixo. Mesmo se não souber programar, você poderá postar
