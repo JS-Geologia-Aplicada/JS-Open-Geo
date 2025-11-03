@@ -4,14 +4,16 @@ const AboutPage = () => {
   return (
     <Container fluid>
       <Row className="justify-content-center">
-        <Col xs={10} lg={8} xxl={6} className="text-start">
+        <Col xs={10} lg={8} xxl={6} className="text-start mt-2">
           <h4 className="text-center">Sobre o JS Open Geo</h4>
           <p>
             O JS OpenGeo é um programa totalmente on-line, gratuito e de código
-            aberto da JS Geologia Aplicada, desenvolvido para automatizar a
-            extração de informações de relatórios de sondagem e outros
-            documentos técnicos, facilitando a organização e análise de dados
-            geológicos.
+            aberto da JS Geologia Aplicada, desenvolvido para facilitar e
+            agilizar a organização e análise de dados geológico-geotécnicos. O
+            programa é composto por módulos para automatizar a extração de
+            informações de relatórios de sondagem e outros documentos técnicos e
+            de ferramentas para conversão e trabalho com arquivos CAD (DXF), SIG
+            (KML) e planilhas (XLSX).
           </p>
           <p>
             A digitalização de dados geológico-geotécnicos é uma necessidade
@@ -73,63 +75,67 @@ const AboutPage = () => {
               portanto esta é a nossa parte.
             </li>
           </ol>
-          <Alert variant={"dark"} className="mx-3">
-            <div>
-              Encontrou alguma falha, problema ou bug? Precisa de informações ou
-              tem sugestões de melhoria? Entre em contato pelo nosso Linkedin,
-              Instagram ou por e-mail.
-            </div>
-            <div className="d-flex justify-content-center align-items-center gap-3 mt-1">
-              <a
-                href="mailto:contato@jsgeo.com.br"
-                className="text-decoration-none text-dark"
-                title="Email"
-              >
-                contato@jsgeo.com.br
-              </a>
-              <a
-                href="https://www.linkedin.com/company/js-geologia-aplicada"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-decoration-none text-dark"
-                title="LinkedIn"
-              >
-                <i
-                  className="bi bi-linkedin"
-                  style={{ fontSize: "1.5rem" }}
-                ></i>
-              </a>
-              <a
-                href="https://www.instagram.com/js.geologia/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-decoration-none text-dark"
-                title="Instagram"
-              >
-                <i
-                  className="bi bi-instagram"
-                  style={{ fontSize: "1.5rem" }}
-                ></i>
-              </a>
-            </div>
-            <div className="mt-2">
-              Você também pode acessar o código fonte do programa no link
-              abaixo. Mesmo se não souber programar, você poderá postar dúvidas,
-              pedidos e sugestões de melhorias, além de reportar bugs e
-              problemas.
-            </div>
-            <div className="d-flex justify-content-center mt-1">
-              <a
-                href="https://github.com/JS-Geologia-Aplicada"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-decoration-none text-dark"
-                title="Repositório"
-              >
-                https://github.com/JS-Geologia-Aplicada
-              </a>
-            </div>
-          </Alert>
+          <div className="d-flex gap-3">
+            <Alert variant="warning" className="text-center">
+              <div>
+                Encontrou alguma falha, problema ou bug? Precisa de informações
+                ou tem sugestões de melhoria? Entre em contato pelo nosso
+                Linkedin, Instagram ou por e-mail.
+              </div>
+              <div className="d-flex justify-content-center align-items-center gap-3 mt-1">
+                <a
+                  href="mailto:contato@jsgeo.com.br"
+                  className="text-decoration-none text-dark"
+                  title="Email"
+                >
+                  contato@jsgeo.com.br
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/js-geologia-aplicada"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-decoration-none text-dark"
+                  title="LinkedIn"
+                >
+                  <i
+                    className="bi bi-linkedin"
+                    style={{ fontSize: "1.5rem" }}
+                  ></i>
+                </a>
+                <a
+                  href="https://www.instagram.com/js.geologia/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-decoration-none text-dark"
+                  title="Instagram"
+                >
+                  <i
+                    className="bi bi-instagram"
+                    style={{ fontSize: "1.5rem" }}
+                  ></i>
+                </a>
+              </div>
+            </Alert>
+            <Alert variant="info">
+              <div className="mt-2 text-center">
+                Você também pode acessar o código fonte do programa no link
+                abaixo. Mesmo se não souber programar, você poderá postar
+                dúvidas, pedidos e sugestões de melhorias, além de reportar bugs
+                e problemas.
+              </div>
+              <div className="d-flex justify-content-center mt-1">
+                <a
+                  href="https://github.com/JS-Geologia-Aplicada"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-decoration-none text-dark"
+                  title="Repositório"
+                >
+                  https://github.com/JS-Geologia-Aplicada
+                </a>
+              </div>
+            </Alert>
+          </div>
         </Col>
       </Row>
     </Container>
