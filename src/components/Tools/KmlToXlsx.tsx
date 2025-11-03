@@ -1,14 +1,5 @@
 import { useMemo, useState } from "react";
-import { useDropzone } from "react-dropzone";
-import {
-  Button,
-  Card,
-  Col,
-  Container,
-  Form,
-  Row,
-  Table,
-} from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import * as XLSX from "xlsx";
 import { parseKmlFile, type KmlSondagem } from "@/utils/kmlParser";
 import JSZip from "jszip";
@@ -19,6 +10,10 @@ import {
   type DatumType,
   type ZoneType,
 } from "@/utils/mapUtils";
+import { ToolLayout } from "./ToolLayout";
+import { ToolControlSection } from "./ToolControlSection";
+import { FileDropzone } from "../FileDropzone";
+import { DataTable } from "../DataTable";
 
 const KmlToXlsx = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -34,7 +29,6 @@ const KmlToXlsx = () => {
 
   const processedSondagens = useMemo(() => {
     if (!convertCoordinates || !selectedDatum) {
-      // Sem conversão, retorna original
       return sondagens.map((s) => ({
         ...s,
         displayCoords: {
@@ -46,7 +40,6 @@ const KmlToXlsx = () => {
       }));
     }
 
-    // Com conversão
     return sondagens.map((s) => {
       let x = s.coordinates.lon;
       let y = s.coordinates.lat;
@@ -54,11 +47,9 @@ const KmlToXlsx = () => {
       let yLabel = "Latitude";
 
       if (selectedDatum === "WGS84") {
-        // WGS84 → já está em lat/lon
         xLabel = "Longitude";
         yLabel = "Latitude";
       } else if (selectedZone) {
-        // Converter para UTM
         [x, y] = convertGeographicCoordinates(
           [s.coordinates.lon, s.coordinates.lat],
           { datum: "WGS84", zone: undefined },
@@ -84,12 +75,9 @@ const KmlToXlsx = () => {
     try {
       let kmlText: string;
 
-      // Se for KMZ (ZIP), extrair o KML de dentro
       if (file.name.endsWith(".kmz")) {
         const zip = new JSZip();
         const zipContent = await zip.loadAsync(file);
-
-        // Procurar arquivo .kml dentro do ZIP
         const kmlFile = Object.keys(zipContent.files).find((name) =>
           name.endsWith(".kml")
         );
@@ -100,11 +88,9 @@ const KmlToXlsx = () => {
 
         kmlText = await zipContent.files[kmlFile].async("text");
       } else {
-        // Ler KML direto
         kmlText = await file.text();
       }
 
-      // Parsear e extrair sondagens
       const parsedSondagens = parseKmlFile(kmlText);
       setSondagens(parsedSondagens);
     } catch (error) {
@@ -124,187 +110,145 @@ const KmlToXlsx = () => {
       ...s.extendedData,
     }));
 
-    // Criar e baixar Excel
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sondagens");
     XLSX.writeFile(wb, "sondagens-kml.xlsx");
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      "application/vnd.google-earth.kml+xml": [".kml"],
-      "application/vnd.google-earth.kmz": [".kmz"],
-    },
-    onDropAccepted: handleFileChange,
-    maxFiles: 1,
-  });
-
-  // Coletar todas as colunas únicas de ExtendedData
   const extendedDataColumns = Array.from(
     new Set(sondagens.flatMap((s) => Object.keys(s.extendedData)))
   );
 
   return (
-    <Container fluid className="mt-4">
-      <Row className="justify-content-center">
-        <Col md={10}>
-          <Card>
-            <Card.Header>
-              <h4 className="mb-0">KMZ/KML → XLSX</h4>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={4}>
-                  {/* Área de Upload */}
-                  <div
-                    {...getRootProps()}
-                    style={{
-                      border: "2px dashed #ccc",
-                      borderRadius: "4px",
-                      padding: "20px",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      backgroundColor: isDragActive ? "#e3f2fd" : "#fafafa",
-                    }}
-                  >
-                    <input {...getInputProps()} />
-                    {selectedFile ? (
-                      <div style={{ color: "#4caf50" }}>
-                        <p className="mb-0">
-                          <strong>{selectedFile.name}</strong>
-                        </p>
-                        <p className="mb-0 small">
-                          Clique ou arraste para trocar o arquivo
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="mb-0">
-                        Arraste seu arquivo KML/KMZ aqui, ou clique para
-                        selecionar
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Configurações de conversão */}
-                  <Card className="mt-3">
-                    <Card.Header>
+    <ToolLayout
+      title="KML → XLSX"
+      controls={
+        <>
+          {/* Área de Upload */}
+          <FileDropzone
+            onFileSelect={handleFileChange}
+            selectedFile={selectedFile}
+            accept={{
+              "application/vnd.google-earth.kml+xml": [".kml"],
+              "application/vnd.google-earth.kmz": [".kmz"],
+            }}
+          />
+          {selectedFile && (
+            <>
+              <ToolControlSection title="Conversão de Coordenadas">
+                <>
+                  <Form.Group>
+                    <div className="d-flex gap-2 text-start mb-2 align-items-center">
                       <Form.Check
                         type="switch"
-                        label="Converter coordenadas"
                         checked={convertCoordinates}
                         onChange={(e) =>
                           setConvertCoordinates(e.target.checked)
                         }
                       />
-                    </Card.Header>
-                    {convertCoordinates && (
-                      <Card.Body>
-                        <div className="d-flex gap-2">
-                          <Form.Group className="mb-2">
-                            <Form.Label className="small">Datum</Form.Label>
-                            <Form.Select
-                              size="sm"
-                              value={selectedDatum || ""}
-                              onChange={(e) =>
-                                setSelectedDatum(e.target.value as DatumType)
-                              }
-                            >
-                              <option value="">Selecione o Datum</option>
-                              {DATUMS.map((datum) => (
-                                <option key={datum.value} value={datum.value}>
-                                  {datum.label}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-
-                          <Form.Group>
-                            <Form.Label className="small">Zona UTM</Form.Label>
-                            <Form.Select
-                              size="sm"
-                              value={selectedZone || ""}
-                              onChange={(e) =>
-                                setSelectedZone(e.target.value as ZoneType)
-                              }
-                            >
-                              <option value="">Selecione a Zona</option>
-                              {UTM_ZONES.map((zone) => (
-                                <option key={zone.value} value={zone.value}>
-                                  {zone.label}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </div>
-                      </Card.Body>
-                    )}
-                  </Card>
-
-                  {/* Botão de exportar */}
-                  <div className="mt-4">
-                    <Button
-                      onClick={handleExportXlsx}
-                      disabled={sondagens.length === 0}
-                      className="w-100"
+                      <Form.Label className="mb-0">
+                        Converter coordenadas
+                      </Form.Label>
+                    </div>
+                  </Form.Group>
+                  <div className="d-flex gap-3">
+                    <Form.Select
+                      aria-label="Datum"
+                      value={selectedDatum || ""}
+                      onChange={(e) =>
+                        setSelectedDatum(e.target.value as DatumType)
+                      }
                     >
-                      Exportar XLSX
-                    </Button>
-                  </div>
-                </Col>
+                      <option value="">Datum</option>
+                      {DATUMS.map((datum) => (
+                        <option key={datum.value} value={datum.value}>
+                          {datum.label}
+                        </option>
+                      ))}
+                    </Form.Select>
 
-                <Col md={8}>
-                  {/* Preview dos dados */}
-                  {sondagens.length > 0 && (
-                    <>
-                      <h5>Dados extraídos ({sondagens.length} sondagens)</h5>
-                      <div style={{ maxHeight: "500px", overflow: "auto" }}>
-                        <Table striped bordered hover>
-                          <thead>
-                            <tr>
-                              <th>Nome</th>
-                              <th>Longitude</th>
-                              <th>Latitude</th>
-                              {extendedDataColumns.map((col) => (
-                                <th key={col}>{col}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {processedSondagens.map((s, idx) => (
-                              <tr key={idx}>
-                                <td>{s.name}</td>
-                                <td>
-                                  {s.displayCoords.x.toLocaleString("pt-BR", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 3,
-                                  })}
-                                </td>
-                                <td>
-                                  {s.displayCoords.y.toLocaleString("pt-BR", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 3,
-                                  })}
-                                </td>
-                                {extendedDataColumns.map((col) => (
-                                  <td key={col}>
-                                    {s.extendedData[col] || "-"}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
-                      </div>
-                    </>
-                  )}
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+                    {/* Seleção de Zona UTM */}
+                    <Form.Select
+                      aria-label="Zona UTM"
+                      value={selectedZone || ""}
+                      onChange={(e) =>
+                        setSelectedZone(e.target.value as ZoneType)
+                      }
+                      disabled={!selectedDatum || selectedDatum === "WGS84"}
+                    >
+                      <option value="">Zona UTM</option>
+                      {UTM_ZONES.map((zone) => (
+                        <option key={zone.value} value={zone.value}>
+                          {zone.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </div>
+                </>
+              </ToolControlSection>
+              <ToolControlSection title="Exportar">
+                <Button
+                  onClick={handleExportXlsx}
+                  disabled={sondagens.length === 0}
+                  className="w-100"
+                >
+                  XLSX
+                </Button>
+              </ToolControlSection>
+            </>
+          )}
+        </>
+      }
+      panel={
+        <>
+          {sondagens.length > 0 && (
+            <>
+              <DataTable
+                data={processedSondagens as Record<string, any>[]}
+                columns={[
+                  { key: "name", header: "Nome" },
+                  {
+                    key: "x",
+                    header:
+                      processedSondagens[0]?.displayCoords.xLabel ||
+                      "Longitude",
+                    render: (row) =>
+                      row.displayCoords.x.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 3,
+                      }),
+                  },
+                  {
+                    key: "y",
+                    header:
+                      processedSondagens[0]?.displayCoords.yLabel || "Latitude",
+                    render: (row) =>
+                      row.displayCoords.y.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 3,
+                      }),
+                  },
+                  {
+                    key: "elevation",
+                    header: "Elevação",
+                    render: (row) =>
+                      row.coordinates.elevation?.toFixed(2) || "-",
+                  },
+                  ...extendedDataColumns.map((col) => ({
+                    key: col,
+                    header: col,
+                    render: (row: any) => row.extendedData[col] || "-",
+                  })),
+                ]}
+                maxHeight="calc(100vh - 400px)"
+                title={`Dados extraídos (${sondagens.length} pontos)`}
+              />
+            </>
+          )}
+        </>
+      }
+    />
   );
 };
 

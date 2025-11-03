@@ -1,14 +1,5 @@
 import { useState, useMemo } from "react";
-import { useDropzone } from "react-dropzone";
-import {
-  Button,
-  Card,
-  Col,
-  Container,
-  Form,
-  Row,
-  Table,
-} from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import JSZip from "jszip";
 import { KmlBuilder, type KmlData } from "@/utils/kmlGenerator";
 import {
@@ -20,6 +11,10 @@ import {
 } from "@/utils/mapUtils";
 import { toast } from "react-toastify";
 import { processXlsxData, readXlsxFile, type XlsxRow } from "@/utils/xlsxUtils";
+import { ToolLayout } from "./ToolLayout";
+import { FileDropzone } from "../FileDropzone";
+import { ToolControlSection } from "./ToolControlSection";
+import { DataTable } from "../DataTable";
 
 interface ParsedSondagem {
   name: string;
@@ -190,17 +185,6 @@ const XlsxToKmz = () => {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-        ".xlsx",
-      ],
-      "application/vnd.ms-excel": [".xls"],
-    },
-    onDropAccepted: handleFileChange,
-    maxFiles: 1,
-  });
-
   const canExport =
     nameColumnIndex &&
     xColumnIndex &&
@@ -210,259 +194,190 @@ const XlsxToKmz = () => {
     processedData.length > 0;
 
   return (
-    <Container fluid className="mt-4">
-      <Row className="justify-content-center">
-        <Col md={10}>
-          <Card>
-            <Card.Header>
-              <h4 className="mb-0">XLSX → KMZ/KML</h4>
-            </Card.Header>
-            <Card.Body style={{ height: "calc(100vh - 300px)", padding: 0 }}>
-              <Row className="g-0" style={{ height: "100%", margin: 0 }}>
-                <Col
-                  md={4}
-                  style={{
-                    height: "100%",
-                    overflowY: "auto",
-                    padding: "1rem",
-                    borderRight: "1px solid #dee2e6",
-                  }}
-                >
-                  {/* Upload */}
-                  <div
-                    {...getRootProps()}
-                    style={{
-                      border: "2px dashed #ccc",
-                      borderRadius: "4px",
-                      padding: "20px",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      backgroundColor: isDragActive ? "#e3f2fd" : "#fafafa",
-                      marginBottom: "1rem",
-                    }}
-                  >
-                    <input {...getInputProps()} />
-                    {selectedFile ? (
-                      <div style={{ color: "#4caf50" }}>
-                        <p className="mb-0">
-                          <strong>{selectedFile.name}</strong>
-                        </p>
-                        <p className="mb-0 small">
-                          Clique ou arraste para trocar
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="mb-0">Arraste seu arquivo XLSX aqui</p>
-                    )}
-                  </div>
-
-                  {/* Header toggle */}
+    <ToolLayout
+      title="XLSX → KMZ/KML"
+      controls={
+        <>
+          <FileDropzone
+            onFileSelect={handleFileChange}
+            selectedFile={selectedFile}
+            accept={{
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                [".xlsx"],
+              "application/vnd.ms-excel": [".xls"],
+            }}
+          />
+          {selectedFile && (
+            <>
+              <ToolControlSection title="Dados da planilha" collapsible>
+                <>
                   <Form.Check
                     type="switch"
-                    label="Planilha possui linha de cabeçalho"
+                    label="Possui linha de cabeçalho"
                     disabled={!selectedFile}
                     checked={hasHeader}
                     onChange={(e) => handleHeaderToggle(e.target.checked)}
                     className="mb-3 text-start"
                   />
-
-                  {/* Mapeamento de colunas */}
-                  {headers.length > 0 && (
-                    <>
-                      <h6 className="mb-2 text-start fw-bold">
-                        Mapeamento de Colunas
-                      </h6>
-                      <div className="d-flex gap-2">
-                        <Form.Group className="mb-2 text-start">
-                          <Form.Label className="small">Nome</Form.Label>
-                          <Form.Select
-                            size="sm"
-                            value={nameColumnIndex}
-                            onChange={(e) =>
-                              setNameColumnIndex(Number(e.target.value))
-                            }
-                          >
-                            <option value="">Selecione</option>
-                            {headers.map((h, i) => (
-                              <option key={h} value={i}>
-                                {hasHeader ? h : `Coluna ${i + 1}`}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Form.Group>
-
-                        <Form.Group className="mb-4 text-start">
-                          <Form.Label className="small">Longitude</Form.Label>
-                          <Form.Select
-                            size="sm"
-                            value={xColumnIndex}
-                            onChange={(e) =>
-                              setXColumnIndex(Number(e.target.value))
-                            }
-                          >
-                            <option value="">Selecione</option>
-                            {headers.map((h, i) => (
-                              <option key={h} value={i}>
-                                {hasHeader ? h : `Coluna ${i + 1}`}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Form.Group>
-
-                        <Form.Group className="mb-2 text-start">
-                          <Form.Label className="small">Latitude</Form.Label>
-                          <Form.Select
-                            size="sm"
-                            value={yColumnIndex}
-                            onChange={(e) =>
-                              setYColumnIndex(Number(e.target.value))
-                            }
-                          >
-                            <option value="">Selecione</option>
-                            {headers.map((h, i) => (
-                              <option key={h} value={i}>
-                                {hasHeader ? h : `Coluna ${i + 1}`}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Form.Group>
-                      </div>
-
-                      {/* Sistema de coordenadas */}
-                      <h6 className="mb-1 text-start fw-bold">
-                        Sistema de Coordenadas
-                      </h6>
-                      <div className="d-flex gap-2">
-                        <Form.Group className="mb-4 text-start">
-                          <Form.Label className="small">Datum</Form.Label>
-                          <Form.Select
-                            size="sm"
-                            value={selectedDatum || ""}
-                            onChange={(e) =>
-                              setSelectedDatum(e.target.value as DatumType)
-                            }
-                          >
-                            <option value="">Selecione o Datum</option>
-                            {DATUMS.map((datum) => (
-                              <option key={datum.value} value={datum.value}>
-                                {datum.label}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Form.Group>
-
-                        <Form.Group className="mb-2 text-start">
-                          <Form.Label className="small">Zona UTM</Form.Label>
-                          <Form.Select
-                            size="sm"
-                            value={selectedZone || ""}
-                            disabled={
-                              !selectedDatum || selectedDatum === "WGS84"
-                            }
-                            onChange={(e) =>
-                              setSelectedZone(e.target.value as ZoneType)
-                            }
-                          >
-                            <option value="">Selecione a Zona</option>
-                            {UTM_ZONES.map((zone) => (
-                              <option key={zone.value} value={zone.value}>
-                                {zone.label}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Form.Group>
-                      </div>
-
-                      {/* Botões */}
-                      <h6 className="mb-2 text-start fw-bold">Exportar</h6>
-                      <div className="d-flex gap-2">
-                        <Button
-                          onClick={() => handleExport(false)}
-                          disabled={!canExport}
-                          className="flex-fill"
+                  <h6 className="mb-2 text-start" style={{ fontWeight: 500 }}>
+                    Mapeamento de Colunas
+                  </h6>
+                  <div className="f-flex gap-2">
+                    <Form.Group>
+                      <div className="d-flex gap-2 text-start mb-2 align-items-center">
+                        <Form.Label
+                          className="small mb-0"
+                          style={{ width: "75px" }}
                         >
-                          KML
-                        </Button>
-                        <Button
-                          onClick={() => handleExport(true)}
-                          disabled={!canExport}
-                          className="flex-fill"
-                        >
-                          KMZ
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </Col>
-
-                <Col
-                  md={8}
-                  style={{
-                    height: "100%",
-                    overflowY: "hidden",
-                    padding: "1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {rawData.length > 0 && (
-                    <>
-                      <h5 className="mb-3">
-                        Planilha Carregada ({rawData.length} linhas)
-                      </h5>
-
-                      <div
-                        style={{
-                          flex: 1,
-                          overflow: "auto",
-                          border: "1px solid #dee2e6",
-                          borderRadius: "4px",
-                          minHeight: 0,
-                        }}
-                      >
-                        <Table
-                          striped
-                          bordered
-                          hover
+                          Nome
+                        </Form.Label>
+                        <Form.Select
                           size="sm"
-                          className="mb-0"
+                          value={nameColumnIndex}
+                          onChange={(e) => {
+                            setNameColumnIndex(Number(e.target.value));
+                          }}
+                          style={{ maxWidth: "200px" }}
                         >
-                          <thead
-                            style={{
-                              position: "sticky",
-                              top: 0,
-                              backgroundColor: "white",
-                              zIndex: 10,
-                            }}
-                          >
-                            <tr>
-                              {headers.map((h, i) => (
-                                <th key={h}>
-                                  {hasHeader ? h : `Coluna ${i + 1}`}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rawData.map((r, i) => (
-                              <tr key={i}>
-                                {headers.map((h) => (
-                                  <td key={h}>{String(r[h] ?? "")}</td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
+                          <option value="">Selecione</option>
+                          {headers.map((h, i) => (
+                            <option key={h} value={i}>
+                              {hasHeader ? h : `Coluna ${i + 1}`}
+                            </option>
+                          ))}
+                        </Form.Select>
                       </div>
-                    </>
-                  )}
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+                    </Form.Group>
+                    <Form.Group>
+                      <div className="d-flex gap-2 text-start mb-2 align-items-center">
+                        <Form.Label
+                          className="small mb-0"
+                          style={{ width: "75px" }}
+                        >
+                          Longitude (X)
+                        </Form.Label>
+                        <Form.Select
+                          size="sm"
+                          value={xColumnIndex}
+                          onChange={(e) => {
+                            setXColumnIndex(Number(e.target.value));
+                          }}
+                          style={{ maxWidth: "200px" }}
+                        >
+                          <option value="">Selecione</option>
+                          {headers.map((h, i) => (
+                            <option key={h} value={i}>
+                              {hasHeader ? h : `Coluna ${i + 1}`}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </div>
+                    </Form.Group>
+                    <Form.Group>
+                      <div className="d-flex gap-2 text-start mb-2 align-items-center">
+                        <Form.Label
+                          className="small mb-0"
+                          style={{ width: "75px" }}
+                        >
+                          Latitude (Y)
+                        </Form.Label>
+                        <Form.Select
+                          size="sm"
+                          value={yColumnIndex}
+                          onChange={(e) => {
+                            setYColumnIndex(Number(e.target.value));
+                          }}
+                          style={{ maxWidth: "200px" }}
+                        >
+                          <option value="">Selecione</option>
+                          {headers.map((h, i) => (
+                            <option key={h} value={i}>
+                              {hasHeader ? h : `Coluna ${i + 1}`}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </div>
+                    </Form.Group>
+                  </div>
+                </>
+              </ToolControlSection>
+              <ToolControlSection title="Sistema de Coordenadas">
+                <>
+                  <div className="d-flex gap-3">
+                    <Form.Select
+                      aria-label="Datum"
+                      value={selectedDatum || ""}
+                      onChange={(e) =>
+                        setSelectedDatum(e.target.value as DatumType)
+                      }
+                    >
+                      <option value="">Datum</option>
+                      {DATUMS.map((datum) => (
+                        <option key={datum.value} value={datum.value}>
+                          {datum.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+
+                    {/* Seleção de Zona UTM */}
+                    <Form.Select
+                      aria-label="Zona UTM"
+                      value={selectedZone || ""}
+                      onChange={(e) =>
+                        setSelectedZone(e.target.value as ZoneType)
+                      }
+                      disabled={!selectedDatum || selectedDatum === "WGS84"}
+                    >
+                      <option value="">Zona UTM</option>
+                      {UTM_ZONES.map((zone) => (
+                        <option key={zone.value} value={zone.value}>
+                          {zone.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </div>
+                </>
+              </ToolControlSection>
+              <ToolControlSection title="Exportar">
+                <div className="d-flex gap-2">
+                  <Button
+                    onClick={() => handleExport(false)}
+                    disabled={!canExport}
+                    className="flex-fill"
+                  >
+                    KML
+                  </Button>
+                  <Button
+                    onClick={() => handleExport(true)}
+                    disabled={!canExport}
+                    className="flex-fill"
+                  >
+                    KMZ
+                  </Button>
+                </div>
+              </ToolControlSection>
+            </>
+          )}
+        </>
+      }
+      panel={
+        <>
+          {rawData.length > 0 && (
+            <DataTable<XlsxRow>
+              data={rawData}
+              columns={headers.map((h, i) => ({
+                key: h,
+                header: hasHeader ? h : `Coluna ${i + 1}`,
+                render: (row) => String(row[h] ?? ""),
+              }))}
+              maxHeight="calc(100vh - 400px)"
+              emptyMessage="Nenhum dado na planilha"
+              title={`Planilha carregada (${rawData.length} linhas)`}
+            />
+          )}
+        </>
+      }
+    ></ToolLayout>
   );
 };
 

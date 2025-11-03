@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useDropzone } from "react-dropzone";
 import {
   detectDxfType,
   extractMultileaders,
@@ -23,16 +22,7 @@ import {
   type DatumType,
   type ZoneType,
 } from "@utils/mapUtils";
-import {
-  Accordion,
-  Button,
-  Card,
-  Col,
-  Container,
-  Form,
-  Row,
-  Table,
-} from "react-bootstrap";
+import { Button, Form, Table } from "react-bootstrap";
 import {
   dxfColorToKml,
   KmlBuilder,
@@ -41,6 +31,9 @@ import {
 } from "@utils/kmlGenerator";
 import JSZip from "jszip";
 import { toast } from "react-toastify";
+import { ToolLayout } from "./ToolLayout";
+import { ToolControlSection } from "./ToolControlSection";
+import { FileDropzone } from "../FileDropzone";
 
 const ExtractDxfTool = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -89,12 +82,6 @@ const ExtractDxfTool = () => {
     };
 
     reader.readAsText(file);
-  };
-
-  const handleRejectedFiles = (rejectedFiles: any[]) => {
-    if (rejectedFiles.length > 0) {
-      alert(`Arquivo deve ser um DXF válido!`);
-    }
   };
 
   // Série de UseEffects para atualizar os dados
@@ -437,507 +424,394 @@ const ExtractDxfTool = () => {
     setUseNewName(e.target.checked);
   };
 
-  const baseStyle = {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    padding: "20px",
-    borderWidth: 2,
-    borderRadius: 2,
-    borderColor: "#eeeeee",
-    borderStyle: "dashed",
-    backgroundColor: "#fafafa",
-    color: "#bdbdbd",
-    outline: "none",
-    transition: "border .24s ease-in-out",
-  };
-
-  const focusedStyle = {
-    borderColor: "#2196f3",
-  };
-
-  const acceptStyle = {
-    borderColor: "#00e676",
-  };
-
-  const rejectStyle = {
-    borderColor: "#ff1744",
-  };
-
-  const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } =
-    useDropzone({
-      accept: { "application/dxf": [".dxf"] },
-      onDropAccepted: handleFileChange,
-      onDropRejected: handleRejectedFiles,
-      maxFiles: 1,
-    });
-
-  const style = useMemo(
-    () => ({
-      ...baseStyle,
-      ...(isFocused ? focusedStyle : {}),
-      ...(isDragAccept ? acceptStyle : {}),
-      ...(isDragReject ? rejectStyle : {}),
-    }),
-    [isFocused, isDragAccept, isDragReject]
-  );
-
   return (
-    <Container fluid className="mt-4">
-      <Row className="justify-content-center">
-        <Col md={10}>
-          <Card>
-            <Card.Header>
-              <h4 className="mb-0">Ferramentas DXF</h4>
-            </Card.Header>
-            <Card.Body
-              style={{
-                height: "calc(100vh - 300px)",
-                overflow: "hidden",
-              }}
-            >
-              <Row
-                className="g-0"
+    <ToolLayout
+      title="Ferramentas DXF"
+      controls={
+        <>
+          {/* Área de Upload */}
+          <FileDropzone
+            onFileSelect={handleFileChange}
+            selectedFile={selectedFile}
+            accept={{
+              "application/dxf": [".dxf"],
+            }}
+          />
+          {selectedFile && (
+            <>
+              {dxfType === "block" && (
+                <>
+                  <ToolControlSection
+                    title="Atributo nome da sondagem"
+                    collapsible={true}
+                  >
+                    <Form.Select
+                      aria-label="Id de Sondagem"
+                      value={selectedIdField || ""}
+                      onChange={(e) => setSelectedIdField(e.target.value)}
+                      disabled={!dxfData || attributeColumns.length === 0}
+                    >
+                      <option value="">Selecione o campo</option>
+                      {attributeColumns.map((att, i) => (
+                        <option key={`${att}-${i}`} value={att}>
+                          {att}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </ToolControlSection>
+                </>
+              )}
+              <ToolControlSection
+                title="Sistema de coordenadas (para KML/KMZ)"
+                collapsible={true}
+                defaultOpen={false}
+              >
+                <>
+                  <div className="d-flex gap-3">
+                    <Form.Select
+                      aria-label="Datum"
+                      value={selectedDatum || ""}
+                      onChange={(e) =>
+                        setSelectedDatum(e.target.value as DatumType)
+                      }
+                    >
+                      <option value="">Datum</option>
+                      {DATUMS.map((datum) => (
+                        <option key={datum.value} value={datum.value}>
+                          {datum.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+
+                    {/* Seleção de Zona UTM */}
+                    <Form.Select
+                      aria-label="Zona UTM"
+                      value={selectedZone || ""}
+                      onChange={(e) =>
+                        setSelectedZone(e.target.value as ZoneType)
+                      }
+                      disabled={!selectedDatum || selectedDatum === "WGS84"}
+                    >
+                      <option value="">Zona UTM</option>
+                      {UTM_ZONES.map((zone) => (
+                        <option key={zone.value} value={zone.value}>
+                          {zone.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </div>
+                </>
+              </ToolControlSection>
+              <ToolControlSection
+                title="Renomear sondagens"
+                collapsible={true}
+                defaultOpen={false}
+              >
+                <div>
+                  <Form.Group>
+                    <div className="d-flex gap-2 text-start mb-2 align-items-center">
+                      <Form.Check
+                        type="switch"
+                        checked={useNewName}
+                        onChange={handleToggleRename}
+                        disabled={dxfType === "block" && !selectedIdField}
+                      />
+                      <Form.Label className="mb-0">
+                        Renomear sondagens
+                      </Form.Label>
+                    </div>
+                  </Form.Group>
+                  <Form.Group>
+                    <div className="d-flex gap-2 text-start mb-2 align-items-center">
+                      <Form.Label className="mb-0">Direção</Form.Label>
+                      <Form.Select
+                        size="sm"
+                        value={renamingConfigs.direction}
+                        onChange={(e) => {
+                          setRenamingConfigs((prev) => ({
+                            ...prev,
+                            direction: e.target.value as CardinalDirection,
+                          }));
+                        }}
+                        style={{ maxWidth: "200px" }}
+                      >
+                        <option value="N-S">Norte → Sul</option>
+                        <option value="O-E">Oeste → Leste</option>
+                        <option value="S-N">Sul → Norte</option>
+                        <option value="E-O">Leste → Oeste</option>
+                      </Form.Select>
+                    </div>
+                  </Form.Group>
+                  {/* Prefixos e configurações */}
+                  <div className="d-flex text-start gap-3">
+                    <div>
+                      {fileLayers &&
+                        Array.from(fileLayers).map((layer) => {
+                          const layerConfig = renamingConfigs.layerConfigs[
+                            layer
+                          ] || {
+                            prefix: "",
+                            numberLength: 3,
+                            startNumber: 1,
+                          };
+
+                          return (
+                            <Form.Group key={layer} className="mb-3">
+                              <Form.Label className="small mb-0">
+                                <strong>{layer}</strong>
+                              </Form.Label>
+                              <div className="d-flex gap-2">
+                                <Form.Group>
+                                  <Form.Label className="small mb-1">
+                                    Prefixo
+                                  </Form.Label>
+                                  <Form.Control
+                                    placeholder="Prefixo"
+                                    value={layerConfig.prefix}
+                                    onChange={(e) => {
+                                      setRenamingConfigs((prev) => ({
+                                        ...prev,
+                                        layerConfigs: {
+                                          ...prev.layerConfigs,
+                                          [layer]: {
+                                            ...layerConfig,
+                                            prefix: e.target.value,
+                                          },
+                                        },
+                                      }));
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </Form.Group>
+                                <Form.Group>
+                                  <Form.Label className="small mb-1">
+                                    N. de dígitos
+                                  </Form.Label>
+                                  <Form.Control
+                                    type="number"
+                                    className="show-arrow"
+                                    placeholder="Dígitos"
+                                    // style={{ width: "80px" }}
+                                    value={layerConfig.numberLength}
+                                    onChange={(e) => {
+                                      setRenamingConfigs((prev) => ({
+                                        ...prev,
+                                        layerConfigs: {
+                                          ...prev.layerConfigs,
+                                          [layer]: {
+                                            ...layerConfig,
+                                            numberLength:
+                                              parseInt(e.target.value) || 3,
+                                          },
+                                        },
+                                      }));
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </Form.Group>
+
+                                <Form.Group>
+                                  <Form.Label className="small mb-1">
+                                    Número inicial
+                                  </Form.Label>
+
+                                  <Form.Control
+                                    type="number"
+                                    className="show-arrow"
+                                    placeholder="Primeiro número"
+                                    value={layerConfig.startNumber}
+                                    onChange={(e) => {
+                                      setRenamingConfigs((prev) => ({
+                                        ...prev,
+                                        layerConfigs: {
+                                          ...prev.layerConfigs,
+                                          [layer]: {
+                                            ...layerConfig,
+                                            startNumber:
+                                              parseInt(e.target.value) || 1,
+                                          },
+                                        },
+                                      }));
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </Form.Group>
+                              </div>
+                            </Form.Group>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              </ToolControlSection>
+              <ToolControlSection title="Exportar">
+                <div className="d-flex gap-2">
+                  <Button
+                    onClick={exportToExcel}
+                    disabled={!dxfData || dxfData.length === 0}
+                    className="flex-fill"
+                  >
+                    XLSX
+                  </Button>
+                  <Button
+                    onClick={() => handleKMLExport(false)}
+                    disabled={
+                      !dxfData ||
+                      dxfData.length === 0 ||
+                      !selectedDatum ||
+                      (selectedDatum !== "WGS84" && !selectedZone)
+                    }
+                    className="flex-fill"
+                  >
+                    KML
+                  </Button>
+                  <Button
+                    onClick={() => handleKMLExport(true)}
+                    disabled={
+                      !dxfData ||
+                      dxfData.length === 0 ||
+                      !selectedDatum ||
+                      (selectedDatum !== "WGS84" && !selectedZone)
+                    }
+                    className="flex-fill"
+                  >
+                    KMZ
+                  </Button>
+                  <Button onClick={handleDownlaodDxf} className="flex-fill">
+                    DXF
+                  </Button>
+                </div>
+              </ToolControlSection>
+            </>
+          )}
+        </>
+      }
+      panel={
+        <>
+          {dxfData.length > 0 && (
+            <>
+              <h5>Dados extraídos ({dxfData.length} sondagens)</h5>
+
+              {/* Tabela preview */}
+
+              <div
                 style={{
-                  height: "100%",
-                  margin: 0,
+                  maxHeight: "calc(100vh - 400px)",
+                  overflow: "auto",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "4px",
                 }}
               >
-                <Col
-                  md={4}
-                  style={{
-                    maxHeight: "100%",
-                    overflowY: "auto",
-                    paddingRight: "1rem",
-                  }}
-                >
-                  {/* Área de Upload */}
-                  <div {...getRootProps({ style })}>
-                    <input {...getInputProps()} />
-                    {selectedFile ? (
-                      <div style={{ color: "#4caf50", textAlign: "center" }}>
-                        <p className="mb-0">
-                          <strong>{selectedFile.name}</strong>
-                        </p>
-                        <p className="mb-0 small">
-                          Clique ou arraste para trocar o arquivo
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="mb-0">
-                        Arraste seu arquivo DXF aqui, ou clique para selecionar
-                      </p>
-                    )}
-                  </div>
-                  {dxfType === "block" && (
-                    <div className="d-flex gap-2 mt-2">
-                      <h6 className="text-start mb-2 small">
-                        Atributo que representa o nome da sondagem
-                      </h6>
-
-                      {dxfType === "block" ? (
-                        <Form.Select
-                          aria-label="Id de Sondagem"
-                          value={selectedIdField || ""}
-                          onChange={(e) => setSelectedIdField(e.target.value)}
-                          disabled={!dxfData || attributeColumns.length === 0}
+                <Table striped bordered hover style={{ overflowX: "auto" }}>
+                  <thead>
+                    {dxfType === "block" && (
+                      /* Primeira linha - headers agrupados */
+                      <tr>
+                        <th
+                          colSpan={3}
+                          style={{
+                            position: "sticky",
+                            top: 0,
+                            backgroundColor: "white",
+                            borderTop: "1px solid #dee2e6",
+                            borderBottom: "1px solid #dee2e6",
+                            zIndex: 10,
+                          }}
                         >
-                          <option value="">Selecione o campo</option>
-                          {attributeColumns.map((att, i) => (
-                            <option key={`${att}-${i}`} value={att}>
-                              {att}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      ) : (
-                        <p className="text-muted small mb-0">
-                          Configuração necessária apenas para DXFs com sondagens
-                          em blocos
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  <Accordion
-                    defaultActiveKey={["0"]}
-                    alwaysOpen
-                    className="mt-2"
-                  >
-                    <Accordion.Item eventKey="0">
-                      <Accordion.Header>
-                        Configurações para KML/KMZ
-                      </Accordion.Header>
-                      <Accordion.Body>
-                        <Row className="g-3">
-                          {/* Coluna Esquerda - Sistema de Coordenadas */}
-                          <h6 className="text-start mb-2 small">
-                            Sistema de coordenadas utilizado no DXF
-                          </h6>
-
-                          {/* Seleção de Datum */}
-                          <div className="d-flex gap-3">
-                            <Form.Select
-                              aria-label="Datum"
-                              className="mb-2"
-                              value={selectedDatum || ""}
-                              onChange={(e) =>
-                                setSelectedDatum(e.target.value as DatumType)
-                              }
-                            >
-                              <option value="">Datum</option>
-                              {DATUMS.map((datum) => (
-                                <option key={datum.value} value={datum.value}>
-                                  {datum.label}
-                                </option>
-                              ))}
-                            </Form.Select>
-
-                            {/* Seleção de Zona UTM */}
-                            <Form.Select
-                              aria-label="Zona UTM"
-                              value={selectedZone || ""}
-                              onChange={(e) =>
-                                setSelectedZone(e.target.value as ZoneType)
-                              }
-                              disabled={
-                                !selectedDatum || selectedDatum === "WGS84"
-                              }
-                            >
-                              <option value="">Zona UTM</option>
-                              {UTM_ZONES.map((zone) => (
-                                <option key={zone.value} value={zone.value}>
-                                  {zone.label}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </div>
-                        </Row>
-                      </Accordion.Body>
-                    </Accordion.Item>
-                    <Accordion.Item eventKey="1">
-                      <Accordion.Header>Renomear sondagens</Accordion.Header>
-                      <Accordion.Body>
-                        <Form.Check
-                          type="switch"
-                          label="Renomear sondagens"
-                          checked={useNewName}
-                          onChange={handleToggleRename}
-                        />
-                        <div className="d-flex gap-3 text-start mb-2">
-                          <Form.Group>
-                            <Form.Label className="small ps-2">
-                              Direção
-                            </Form.Label>
-                            <Form.Select
-                              size="sm"
-                              value={renamingConfigs.direction}
-                              onChange={(e) => {
-                                setRenamingConfigs((prev) => ({
-                                  ...prev,
-                                  direction: e.target
-                                    .value as CardinalDirection,
-                                }));
-                              }}
-                            >
-                              <option value="N-S">Norte → Sul</option>
-                              <option value="O-E">Oeste → Leste</option>
-                              <option value="S-N">Sul → Norte</option>
-                              <option value="E-O">Leste → Oeste</option>
-                            </Form.Select>
-                          </Form.Group>
-                        </div>
-                        <h6 className="text-start mt-3">Prefixos</h6>
-                        {/* Prefixos e configurações */}
-                        <div className="d-flex text-start gap-3">
-                          <div>
-                            <h6 className="small ps-2">Camadas</h6>
-                            {fileLayers &&
-                              Array.from(fileLayers).map((layer) => {
-                                const layerConfig = renamingConfigs
-                                  .layerConfigs[layer] || {
-                                  prefix: "",
-                                  numberLength: 3,
-                                  startNumber: 1,
-                                };
-
-                                return (
-                                  <Form.Group key={layer} className="mb-3">
-                                    <Form.Label className="small">
-                                      <strong>{layer}</strong>
-                                    </Form.Label>
-                                    <div className="d-flex gap-2">
-                                      <Form.Group>
-                                        <Form.Label className="small mb-1">
-                                          Prefixo
-                                        </Form.Label>
-                                        <Form.Control
-                                          placeholder="Prefixo"
-                                          value={layerConfig.prefix}
-                                          onChange={(e) => {
-                                            setRenamingConfigs((prev) => ({
-                                              ...prev,
-                                              layerConfigs: {
-                                                ...prev.layerConfigs,
-                                                [layer]: {
-                                                  ...layerConfig,
-                                                  prefix: e.target.value,
-                                                },
-                                              },
-                                            }));
-                                          }}
-                                          onFocus={(e) => e.target.select()}
-                                        />
-                                      </Form.Group>
-                                      <Form.Group>
-                                        <Form.Label className="small mb-1">
-                                          N. de dígitos
-                                        </Form.Label>
-                                        <Form.Control
-                                          type="number"
-                                          className="show-arrow"
-                                          placeholder="Dígitos"
-                                          // style={{ width: "80px" }}
-                                          value={layerConfig.numberLength}
-                                          onChange={(e) => {
-                                            setRenamingConfigs((prev) => ({
-                                              ...prev,
-                                              layerConfigs: {
-                                                ...prev.layerConfigs,
-                                                [layer]: {
-                                                  ...layerConfig,
-                                                  numberLength:
-                                                    parseInt(e.target.value) ||
-                                                    3,
-                                                },
-                                              },
-                                            }));
-                                          }}
-                                          onFocus={(e) => e.target.select()}
-                                        />
-                                      </Form.Group>
-
-                                      <Form.Group>
-                                        <Form.Label className="small mb-1">
-                                          Número inicial
-                                        </Form.Label>
-
-                                        <Form.Control
-                                          type="number"
-                                          className="show-arrow"
-                                          placeholder="Primeiro número"
-                                          value={layerConfig.startNumber}
-                                          onChange={(e) => {
-                                            setRenamingConfigs((prev) => ({
-                                              ...prev,
-                                              layerConfigs: {
-                                                ...prev.layerConfigs,
-                                                [layer]: {
-                                                  ...layerConfig,
-                                                  startNumber:
-                                                    parseInt(e.target.value) ||
-                                                    1,
-                                                },
-                                              },
-                                            }));
-                                          }}
-                                          onFocus={(e) => e.target.select()}
-                                        />
-                                      </Form.Group>
-                                    </div>
-                                  </Form.Group>
-                                );
-                              })}
-                          </div>
-                        </div>
-                      </Accordion.Body>
-                    </Accordion.Item>
-                  </Accordion>
-
-                  {/* Botões download */}
-                  <div className="mt-4">
-                    <h6 className="text-start mb-2">Exportar</h6>
-                    <hr className="mt-0 mb-3" />
-                    <div className="d-flex gap-2">
-                      <Button
-                        onClick={exportToExcel}
-                        disabled={!dxfData || dxfData.length === 0}
-                        className="flex-fill"
-                      >
-                        XLSX
-                      </Button>
-                      <Button
-                        onClick={() => handleKMLExport(false)}
-                        disabled={
-                          !dxfData ||
-                          dxfData.length === 0 ||
-                          !selectedDatum ||
-                          (selectedDatum !== "WGS84" && !selectedZone)
-                        }
-                        className="flex-fill"
-                      >
-                        KML
-                      </Button>
-                      <Button
-                        onClick={() => handleKMLExport(true)}
-                        disabled={
-                          !dxfData ||
-                          dxfData.length === 0 ||
-                          !selectedDatum ||
-                          (selectedDatum !== "WGS84" && !selectedZone)
-                        }
-                        className="flex-fill"
-                      >
-                        KMZ
-                      </Button>
-                      <Button onClick={handleDownlaodDxf} className="flex-fill">
-                        DXF
-                      </Button>
-                    </div>
-                  </div>
-                </Col>
-                <Col
-                  md={8}
-                  style={{
-                    maxHeight: "100%",
-                    overflowY: "hidden", // ← Não rola a coluna toda
-                    paddingLeft: "1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {/* Se tem dados, mostrar preview + config */}
-                  {dxfData.length > 0 && (
-                    <>
-                      <h5>Dados extraídos ({dxfData.length} sondagens)</h5>
-
-                      {/* Tabela preview */}
-                      <div style={{ overflow: "auto" }}>
-                        <Table
-                          striped
-                          bordered
-                          hover
-                          style={{ overflowX: "auto" }}
-                        >
-                          <thead>
-                            {dxfType === "block" && (
-                              /* Primeira linha - headers agrupados */
-                              <tr>
-                                <th
-                                  colSpan={3}
-                                  style={{
-                                    position: "sticky",
-                                    top: 0,
-                                    backgroundColor: "white",
-                                    borderTop: "1px solid #dee2e6",
-                                    borderBottom: "1px solid #dee2e6",
-                                    zIndex: 10,
-                                  }}
-                                >
-                                  Dados
-                                </th>
-                                {attributeColumns.length > 0 && (
-                                  <th
-                                    colSpan={attributeColumns.length}
-                                    style={{
-                                      position: "sticky",
-                                      top: 0,
-                                      backgroundColor: "white",
-                                      borderTop: "1px solid #dee2e6",
-                                      borderBottom: "1px solid #dee2e6",
-                                    }}
-                                  >
-                                    Atributos do Bloco
-                                  </th>
-                                )}
-                              </tr>
-                            )}
-                            <tr>
-                              {dxfType === "multileader" && (
-                                <th
-                                  style={{
-                                    position: "sticky",
-                                    top: 0,
-                                    borderBottom: "1px solid #dee2e6",
-                                  }}
-                                >
-                                  ID
-                                </th>
-                              )}
-                              <th
-                                style={{
-                                  position: "sticky",
-                                  top: dxfType === "multileader" ? 0 : "2.5rem",
-                                  borderBottom: "1px solid #dee2e6",
-                                }}
-                              >
-                                X
-                              </th>
-                              <th
-                                style={{
-                                  position: "sticky",
-                                  top: dxfType === "multileader" ? 0 : "2.5rem",
-                                  borderBottom: "1px solid #dee2e6",
-                                }}
-                              >
-                                Y
-                              </th>
-                              <th
-                                style={{
-                                  position: "sticky",
-                                  top: dxfType === "multileader" ? 0 : "2.5rem",
-                                  borderBottom: "1px solid #dee2e6",
-                                }}
-                              >
-                                Layer
-                              </th>
-                              {attributeColumns.map((col) => (
-                                <th
-                                  key={col}
-                                  style={{
-                                    position: "sticky",
-                                    top:
-                                      dxfType === "multileader" ? 0 : "2.5rem",
-                                    borderBottom: "1px solid #dee2e6",
-                                  }}
-                                >
-                                  {col}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody
-                            style={{ maxHeight: "400px", overflowY: "auto" }}
+                          Dados
+                        </th>
+                        {attributeColumns.length > 0 && (
+                          <th
+                            colSpan={attributeColumns.length}
+                            style={{
+                              position: "sticky",
+                              top: 0,
+                              backgroundColor: "white",
+                              borderTop: "1px solid #dee2e6",
+                              borderBottom: "1px solid #dee2e6",
+                            }}
                           >
-                            {dxfData.map((item, idx) => (
-                              <tr key={idx}>
-                                {dxfType === "multileader" && (
-                                  <td>{item.id}</td>
-                                )}
-                                <td>{item.x.toFixed(3).replace(".", ",")}</td>
-                                <td>{item.y.toFixed(3).replace(".", ",")}</td>
-                                <td>{item.layer}</td>
-                                {attributeColumns.map((col) => {
-                                  const attr = item.attributes?.find(
-                                    (a) => a.tag === col
-                                  );
-                                  return (
-                                    <td key={col}>{attr?.value || "-"}</td>
-                                  );
-                                })}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
-                      </div>
-                    </>
-                  )}
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+                            Atributos do Bloco
+                          </th>
+                        )}
+                      </tr>
+                    )}
+                    <tr>
+                      {dxfType === "multileader" && (
+                        <th
+                          style={{
+                            position: "sticky",
+                            top: 0,
+                            borderBottom: "1px solid #dee2e6",
+                          }}
+                        >
+                          ID
+                        </th>
+                      )}
+                      <th
+                        style={{
+                          position: "sticky",
+                          top: dxfType === "multileader" ? 0 : "2.5rem",
+                          borderBottom: "1px solid #dee2e6",
+                        }}
+                      >
+                        X
+                      </th>
+                      <th
+                        style={{
+                          position: "sticky",
+                          top: dxfType === "multileader" ? 0 : "2.5rem",
+                          borderBottom: "1px solid #dee2e6",
+                        }}
+                      >
+                        Y
+                      </th>
+                      <th
+                        style={{
+                          position: "sticky",
+                          top: dxfType === "multileader" ? 0 : "2.5rem",
+                          borderBottom: "1px solid #dee2e6",
+                        }}
+                      >
+                        Layer
+                      </th>
+                      {attributeColumns.map((col) => (
+                        <th
+                          key={col}
+                          style={{
+                            position: "sticky",
+                            top: dxfType === "multileader" ? 0 : "2.5rem",
+                            borderBottom: "1px solid #dee2e6",
+                          }}
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody style={{ maxHeight: "400px", overflowY: "auto" }}>
+                    {dxfData.map((item, idx) => (
+                      <tr key={idx}>
+                        {dxfType === "multileader" && <td>{item.id}</td>}
+                        <td>{item.x.toFixed(3).replace(".", ",")}</td>
+                        <td>{item.y.toFixed(3).replace(".", ",")}</td>
+                        <td>{item.layer}</td>
+                        {attributeColumns.map((col) => {
+                          const attr = item.attributes?.find(
+                            (a) => a.tag === col
+                          );
+                          return <td key={col}>{attr?.value || "-"}</td>;
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </>
+          )}
+        </>
+      }
+    />
   );
 };
 

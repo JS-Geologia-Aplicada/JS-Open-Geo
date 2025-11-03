@@ -1,16 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { useDropzone } from "react-dropzone";
 import * as XLSX from "xlsx";
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  Container,
-  Form,
-  Row,
-  Table,
-} from "react-bootstrap";
+import { Alert, Button, Form } from "react-bootstrap";
 import {
   detectDxfType,
   extractMultileaders,
@@ -34,6 +24,10 @@ import {
   reverseLineString,
 } from "@/utils/distanceUtils";
 import type { DistanceResult, LineString, Point } from "@/types/geometryTypes";
+import { ToolLayout } from "./ToolLayout";
+import { FileDropzone } from "../FileDropzone";
+import { ToolControlSection } from "./ToolControlSection";
+import { DataTable } from "../DataTable";
 
 interface DirectionOption {
   label: string;
@@ -154,58 +148,6 @@ const DistanceTool = () => {
 
     reader.readAsText(file);
   };
-
-  const handleRejectedFiles = (rejectedFiles: any[]) => {
-    if (rejectedFiles.length > 0) {
-      alert("Arquivo deve ser um DXF válido!");
-    }
-  };
-
-  const baseStyle = {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    padding: "20px",
-    borderWidth: 2,
-    borderRadius: 2,
-    borderColor: "#eeeeee",
-    borderStyle: "dashed",
-    backgroundColor: "#fafafa",
-    color: "#bdbdbd",
-    outline: "none",
-    transition: "border .24s ease-in-out",
-  };
-
-  const focusedStyle = {
-    borderColor: "#2196f3",
-  };
-
-  const acceptStyle = {
-    borderColor: "#00e676",
-  };
-
-  const rejectStyle = {
-    borderColor: "#ff1744",
-  };
-
-  const { getRootProps, getInputProps, isFocused, isDragAccept, isDragReject } =
-    useDropzone({
-      accept: { "application/dxf": [".dxf"] },
-      onDropAccepted: handleFileChange,
-      onDropRejected: handleRejectedFiles,
-      maxFiles: 1,
-    });
-
-  const style = useMemo(
-    () => ({
-      ...baseStyle,
-      ...(isFocused ? focusedStyle : {}),
-      ...(isDragAccept ? acceptStyle : {}),
-      ...(isDragReject ? rejectStyle : {}),
-    }),
-    [isFocused, isDragAccept, isDragReject]
-  );
 
   const getPointsDistances = () => {
     const validInserts = inserts.filter((i) =>
@@ -340,60 +282,45 @@ const DistanceTool = () => {
   };
 
   return (
-    <Container fluid className="mt-4">
-      <Row className="justify-content-center">
-        <Col md={10}>
-          <Card>
-            <Card.Header>
-              <h4 className="justify-content-center">
-                Calcular Distâncias DXF
-              </h4>
-            </Card.Header>
-            <Card.Body style={{ height: "calc(100vh - 300px)", padding: 0 }}>
-              <Row className="g-0" style={{ height: "100%", margin: 0 }}>
-                <Col
-                  md={4}
-                  style={{
-                    height: "100%",
-                    overflowY: "auto",
-                    padding: "1rem",
-                    borderRight: "1px solid #dee2e6",
-                  }}
-                >
-                  {/* Upload */}
-                  <div {...getRootProps({ style })}>
-                    <input {...getInputProps()} />
-                    {selectedFile ? (
-                      <div style={{ color: "#4caf50", textAlign: "center" }}>
-                        <p className="mb-0">
-                          <strong>{selectedFile.name}</strong>
-                        </p>
-                        <p className="mb-0 small">
-                          Clique ou arraste para trocar o arquivo
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="mb-0">
-                        Arraste seu arquivo DXF aqui, ou clique para selecionar
-                      </p>
-                    )}
-                  </div>
-                  <Form.Group className="mb-2">
-                    <Form.Label className="small">Layer da Polyline</Form.Label>
-                    <Form.Select
-                      size="sm"
-                      value={selectedPolylineLayer}
-                      onChange={(e) => {
-                        setSelectedPolylineLayer(e.target.value);
-                      }}
-                    >
-                      <option value="">Selecione</option>
-                      {polylineLayers.map((plLayer) => (
-                        <option key={plLayer} value={plLayer}>
-                          {plLayer}
-                        </option>
-                      ))}
-                    </Form.Select>
+    <>
+      <ToolLayout
+        title="Calcular distâncias DXF"
+        controls={
+          <>
+            <FileDropzone
+              onFileSelect={handleFileChange}
+              selectedFile={selectedFile}
+              accept={{
+                "application/dxf": [".dxf"],
+              }}
+            />
+            {selectedFile && (
+              <>
+                <ToolControlSection title="Dados da Polyline" collapsible>
+                  <Form.Group>
+                    <div className="d-flex gap-2 text-start mb-2 align-items-center">
+                      <Form.Label
+                        className="small mb-0"
+                        style={{ width: "125px" }}
+                      >
+                        Layer da Polyline
+                      </Form.Label>
+                      <Form.Select
+                        size="sm"
+                        value={selectedPolylineLayer}
+                        onChange={(e) => {
+                          setSelectedPolylineLayer(e.target.value);
+                        }}
+                        style={{ maxWidth: "200px" }}
+                      >
+                        <option value="">Selecione</option>
+                        {polylineLayers.map((plLayer) => (
+                          <option key={plLayer} value={plLayer}>
+                            {plLayer}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
                   </Form.Group>
                   {polylines.filter((pl) => pl.layer === selectedPolylineLayer)
                     .length > 1 && (
@@ -413,30 +340,38 @@ const DistanceTool = () => {
                       </Alert>
                     </>
                   )}
-
                   <Form.Group>
-                    <Form.Label>Sentido da polyline</Form.Label>
-                    <Form.Select
-                      size="sm"
-                      value={selectedDirection}
-                      onChange={(e) => {
-                        setSelectedDirection(
-                          e.target.value as CardinalOrdinalDirection
-                        );
-                      }}
-                    >
-                      <option value="">Selecione</option>
-                      {directionOptions?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </Form.Select>
+                    <div className="d-flex gap-2 text-start mb-2 align-items-center">
+                      <Form.Label
+                        className="small mb-0"
+                        style={{ width: "125px" }}
+                      >
+                        Sentido da Polyline
+                      </Form.Label>
+                      <Form.Select
+                        size="sm"
+                        value={selectedDirection}
+                        onChange={(e) => {
+                          setSelectedDirection(
+                            e.target.value as CardinalOrdinalDirection
+                          );
+                        }}
+                        style={{ maxWidth: "200px" }}
+                      >
+                        <option value="">Selecione</option>
+                        {directionOptions?.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
                   </Form.Group>
-
+                </ToolControlSection>
+                <ToolControlSection title="Layers de sondagens" collapsible>
                   <Form.Group>
                     <Form.Label className="small">
-                      Layers de Sondagens
+                      Selecione as layers com sondagens
                     </Form.Label>
                     <div
                       style={{
@@ -469,83 +404,69 @@ const DistanceTool = () => {
                       ))}
                     </div>
                   </Form.Group>
+                </ToolControlSection>
+                <ToolControlSection title="Calcular Distâncias">
                   <div className="d-flex gap-2 mt-2">
-                    <Button onClick={getPointsDistances}>
-                      Calcular Distâncias
+                    <Button onClick={getPointsDistances} className="flex-fill">
+                      Calcular
                     </Button>
-                    <Button onClick={handleExport}>Exportar XLSX</Button>
+                    <Button onClick={handleExport} className="flex-fill">
+                      Exportar XLSX
+                    </Button>
                   </div>
-                </Col>
-
-                <Col
-                  md={8}
-                  style={{
-                    height: "100%",
-                    overflowY: "hidden",
-                    padding: "1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {distanceResults.length > 0 && (
-                    <>
-                      <h5 className="mt-4">Resultados</h5>
-                      <div
-                        style={{
-                          flex: 1,
-                          overflow: "auto",
-                          border: "1px solid #dee2e6",
-                          borderRadius: "4px",
-                          minHeight: 0,
-                        }}
+                </ToolControlSection>
+              </>
+            )}
+          </>
+        }
+        panel={
+          <>
+            {distanceResults.length > 0 && (
+              <DataTable
+                data={distanceResults}
+                columns={[
+                  {
+                    key: "name",
+                    header: "Nome",
+                  },
+                  {
+                    key: "distance",
+                    header: "Distância (m)",
+                    align: "end",
+                    render: (row) => row.distance.toFixed(2),
+                  },
+                  {
+                    key: "side",
+                    header: "Lado",
+                    align: "center",
+                    render: (row) => (
+                      <span
+                        className={`badge ${
+                          row.side === "Left"
+                            ? "bg-primary"
+                            : row.side === "Right"
+                            ? "bg-success"
+                            : "bg-secondary"
+                        }`}
                       >
-                        <Table
-                          striped
-                          bordered
-                          hover
-                          size="sm"
-                          style={{ overflowX: "auto" }}
-                        >
-                          <thead>
-                            <tr
-                              style={{
-                                position: "sticky",
-                                top: 0,
-                                backgroundColor: "white",
-                                zIndex: 10,
-                              }}
-                            >
-                              <th>Nome</th>
-                              <th>Distância (m)</th>
-                              <th>Lado</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {distanceResults.map((r, i) => (
-                              <tr key={i}>
-                                <td>{r.name}</td>
-                                <td>{r.distance.toFixed(2)}</td>
-                                <td>
-                                  {r.side === "Left"
-                                    ? "Esquerda"
-                                    : r.side === "Right"
-                                    ? "Direita"
-                                    : "Sobre"}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
-                      </div>
-                    </>
-                  )}
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+                        {row.side === "Left"
+                          ? "Esquerda"
+                          : row.side === "Right"
+                          ? "Direita"
+                          : "Sobre"}
+                      </span>
+                    ),
+                  },
+                ]}
+                maxHeight="calc(100vh - 500px)"
+                emptyMessage="Configure as camadas e direção para calcular distâncias"
+                title={`Distâncias (${distanceResults.length} pontos)`}
+              />
+            )}
+          </>
+        }
+      />
+    </>
   );
 };
 
