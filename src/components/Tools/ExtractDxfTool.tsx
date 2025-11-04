@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import {
   detectDxfType,
   extractMultileaders,
@@ -34,51 +34,37 @@ import { toast } from "react-toastify";
 import { ToolLayout } from "./ToolLayout";
 import { ToolControlSection } from "./ToolControlSection";
 import { FileDropzone } from "../FileDropzone";
+import { useToolState } from "@/hooks/useToolState";
+import { useDidMountEffect } from "@/hooks/useDidMountEffect";
 
 const ExtractDxfTool = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileText, setFileText] = useState<string>("");
-  const [codedDxf, setCodedDxf] = useState<CodedDxf[] | null>(null);
-  const [renamedFileText, setRenamedFileText] = useState<string | null>(null);
-  const [useNewName, setUseNewName] = useState(false);
-  const [renamingConfigs, setRenamingConfigs] = useState<{
-    direction: CardinalDirection;
-    layerConfigs: Record<
-      string,
-      {
-        prefix: string;
-        numberLength: number;
-        startNumber: number;
-      }
-    >;
-  }>({
-    direction: "N-S",
-    layerConfigs: {},
-  });
-  const [fileLayers, setFileLayers] = useState<Set<string>>();
-  const layersInitialized = useRef<Set<string>>(new Set());
-  const [dxfData, setDxfData] = useState<DxfInsert[]>([]);
-  const [dxfType, setDxfType] = useState<"block" | "multileader" | null>(null);
-  const [selectedDatum, setSelectedDatum] = useState<DatumType | undefined>(
-    undefined
-  );
-  const [selectedZone, setSelectedZone] = useState<ZoneType | undefined>(
-    undefined
-  );
-  const [selectedIdField, setSelectedIdField] = useState<string | undefined>(
-    undefined
-  );
+  const { state, update } = useToolState("extractDxfTool");
+  const {
+    selectedFile,
+    fileText,
+    selectedDatum,
+    selectedZone,
+    selectedIdField,
+    useNewName,
+    renamingConfigs,
+    dxfData,
+    dxfType,
+    codedDxf,
+    renamedFileText,
+    fileLayers,
+  } = state;
 
+  const layersInitialized = useRef<Set<string>>(new Set());
   const handleFileChange = (files: File[]) => {
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    setSelectedFile(file);
+    update({ selectedFile: file });
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      setFileText(text);
+      update({ fileText: text });
     };
 
     reader.readAsText(file);
@@ -86,41 +72,41 @@ const ExtractDxfTool = () => {
 
   // Série de UseEffects para atualizar os dados
   // 1. Quando carrega arquivo, analisa automaticamente
-  useEffect(() => {
+  useDidMountEffect(() => {
     if (fileText && selectedFile) {
       const parsed = parseDxf(fileText);
-      setCodedDxf(parsed);
+      update({ codedDxf: parsed });
       handleAnalyzeDxf(parsed);
     }
   }, [fileText, selectedFile]);
 
   // 2. Quando configs de renomeação mudam, atualiza renamedFileText
-  useEffect(() => {
+  useDidMountEffect(() => {
     if (useNewName && dxfData && dxfData.length > 0) {
       handleRename();
     }
   }, [useNewName, renamingConfigs.direction, renamingConfigs.layerConfigs]);
 
   // 3. Quando renamedFileText muda E useNewName está ativo, re-analisa
-  useEffect(() => {
+  useDidMountEffect(() => {
     if (useNewName && renamedFileText) {
       const parsed = parseDxf(renamedFileText);
-      setCodedDxf(parsed);
+      update({ codedDxf: parsed });
       handleAnalyzeDxf(parsed);
     }
   }, [renamedFileText, useNewName]);
 
   // 4. Quando desativa useNewName, volta para o original
-  useEffect(() => {
+  useDidMountEffect(() => {
     if (!useNewName && fileText) {
       const parsed = parseDxf(fileText);
-      setCodedDxf(parsed);
+      update({ codedDxf: parsed });
       handleAnalyzeDxf(parsed);
     }
   }, [useNewName]);
 
   // 5. Quando atualiza as layers, define as layerConfigs para um default
-  useEffect(() => {
+  useDidMountEffect(() => {
     if (!fileLayers) return;
     const newLayerConfigs: Record<
       string,
@@ -145,20 +131,22 @@ const ExtractDxfTool = () => {
       hasNewLayers = true;
     });
     if (hasNewLayers) {
-      setRenamingConfigs((prevConfigs) => ({
-        ...prevConfigs,
-        layerConfigs: {
-          ...prevConfigs.layerConfigs, // Preserva configs existentes!
-          ...newLayerConfigs,
+      update({
+        renamingConfigs: {
+          ...renamingConfigs,
+          layerConfigs: {
+            ...renamingConfigs.layerConfigs,
+            ...newLayerConfigs,
+          },
         },
-      }));
+      });
     }
   }, [fileLayers]);
 
   const handleAnalyzeDxf = (parsed: CodedDxf[]) => {
     const inserts = getInsertsFromDxf(fileText);
     const detectedType = detectDxfType(fileText);
-    setDxfType(detectedType);
+    update({ dxfType: detectedType });
     if (detectedType === "block") {
       const blocksAtt = getAttributedBlocks(parsed);
       const insertsWithAtt: DxfInsert[] = [];
@@ -172,8 +160,8 @@ const ExtractDxfTool = () => {
         });
       });
       const insertLayers = new Set(insertsWithAtt.map((data) => data.layer));
-      setFileLayers(insertLayers);
-      setDxfData(insertsWithAtt);
+      update({ fileLayers: insertLayers });
+      update({ dxfData: insertsWithAtt });
     } else {
       const multileaders = extractMultileaders(parsed);
       const insertsWithId: DxfInsert[] = [];
@@ -196,8 +184,8 @@ const ExtractDxfTool = () => {
         }
       });
       const insertLayers = new Set(insertsWithId.map((data) => data.layer));
-      setFileLayers(insertLayers);
-      setDxfData(insertsWithId);
+      update({ fileLayers: insertLayers });
+      update({ dxfData: insertsWithId });
     }
   };
 
@@ -399,7 +387,7 @@ const ExtractDxfTool = () => {
         }
       });
     });
-    if (codedDxf !== null) {
+    if (codedDxf) {
       const renamedDxf = [...codedDxf]; // Copiar array
 
       linesToRename.forEach((insert) => {
@@ -412,7 +400,7 @@ const ExtractDxfTool = () => {
       });
 
       const newFileText = reconstructDxf(renamedDxf);
-      setRenamedFileText(newFileText);
+      update({ renamedFileText: newFileText });
     }
   };
 
@@ -421,7 +409,7 @@ const ExtractDxfTool = () => {
       toast.warn("Escolha um atributo como nome para poder renomear");
       return;
     }
-    setUseNewName(e.target.checked);
+    update({ useNewName: e.target.checked });
   };
 
   return (
@@ -448,7 +436,9 @@ const ExtractDxfTool = () => {
                     <Form.Select
                       aria-label="Id de Sondagem"
                       value={selectedIdField || ""}
-                      onChange={(e) => setSelectedIdField(e.target.value)}
+                      onChange={(e) =>
+                        update({ selectedIdField: e.target.value })
+                      }
                       disabled={!dxfData || attributeColumns.length === 0}
                     >
                       <option value="">Selecione o campo</option>
@@ -472,7 +462,7 @@ const ExtractDxfTool = () => {
                       aria-label="Datum"
                       value={selectedDatum || ""}
                       onChange={(e) =>
-                        setSelectedDatum(e.target.value as DatumType)
+                        update({ selectedDatum: e.target.value as DatumType })
                       }
                     >
                       <option value="">Datum</option>
@@ -488,7 +478,7 @@ const ExtractDxfTool = () => {
                       aria-label="Zona UTM"
                       value={selectedZone || ""}
                       onChange={(e) =>
-                        setSelectedZone(e.target.value as ZoneType)
+                        update({ selectedZone: e.target.value as ZoneType })
                       }
                       disabled={!selectedDatum || selectedDatum === "WGS84"}
                     >
@@ -528,10 +518,12 @@ const ExtractDxfTool = () => {
                         size="sm"
                         value={renamingConfigs.direction}
                         onChange={(e) => {
-                          setRenamingConfigs((prev) => ({
-                            ...prev,
-                            direction: e.target.value as CardinalDirection,
-                          }));
+                          update({
+                            renamingConfigs: {
+                              ...renamingConfigs,
+                              direction: e.target.value as CardinalDirection,
+                            },
+                          });
                         }}
                         style={{ maxWidth: "200px" }}
                       >
@@ -569,16 +561,18 @@ const ExtractDxfTool = () => {
                                     placeholder="Prefixo"
                                     value={layerConfig.prefix}
                                     onChange={(e) => {
-                                      setRenamingConfigs((prev) => ({
-                                        ...prev,
-                                        layerConfigs: {
-                                          ...prev.layerConfigs,
-                                          [layer]: {
-                                            ...layerConfig,
-                                            prefix: e.target.value,
+                                      update({
+                                        renamingConfigs: {
+                                          ...renamingConfigs,
+                                          layerConfigs: {
+                                            ...renamingConfigs.layerConfigs,
+                                            [layer]: {
+                                              ...layerConfig,
+                                              prefix: e.target.value,
+                                            },
                                           },
                                         },
-                                      }));
+                                      });
                                     }}
                                     onFocus={(e) => e.target.select()}
                                   />
@@ -594,17 +588,19 @@ const ExtractDxfTool = () => {
                                     // style={{ width: "80px" }}
                                     value={layerConfig.numberLength}
                                     onChange={(e) => {
-                                      setRenamingConfigs((prev) => ({
-                                        ...prev,
-                                        layerConfigs: {
-                                          ...prev.layerConfigs,
-                                          [layer]: {
-                                            ...layerConfig,
-                                            numberLength:
-                                              parseInt(e.target.value) || 3,
+                                      update({
+                                        renamingConfigs: {
+                                          ...renamingConfigs,
+                                          layerConfigs: {
+                                            ...renamingConfigs.layerConfigs,
+                                            [layer]: {
+                                              ...layerConfig,
+                                              numberLength:
+                                                parseInt(e.target.value) || 3,
+                                            },
                                           },
                                         },
-                                      }));
+                                      });
                                     }}
                                     onFocus={(e) => e.target.select()}
                                   />
@@ -621,17 +617,19 @@ const ExtractDxfTool = () => {
                                     placeholder="Primeiro número"
                                     value={layerConfig.startNumber}
                                     onChange={(e) => {
-                                      setRenamingConfigs((prev) => ({
-                                        ...prev,
-                                        layerConfigs: {
-                                          ...prev.layerConfigs,
-                                          [layer]: {
-                                            ...layerConfig,
-                                            startNumber:
-                                              parseInt(e.target.value) || 1,
+                                      update({
+                                        renamingConfigs: {
+                                          ...renamingConfigs,
+                                          layerConfigs: {
+                                            ...renamingConfigs.layerConfigs,
+                                            [layer]: {
+                                              ...layerConfig,
+                                              startNumber:
+                                                parseInt(e.target.value) || 1,
+                                            },
                                           },
                                         },
-                                      }));
+                                      });
                                     }}
                                     onFocus={(e) => e.target.select()}
                                   />

@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Button, Form } from "react-bootstrap";
 import * as XLSX from "xlsx";
-import { parseKmlFile, type KmlSondagem } from "@/utils/kmlParser";
+import { parseKmlFile } from "@/utils/kmlParser";
 import JSZip from "jszip";
 import {
   convertGeographicCoordinates,
@@ -14,18 +14,17 @@ import { ToolLayout } from "./ToolLayout";
 import { ToolControlSection } from "./ToolControlSection";
 import { FileDropzone } from "../FileDropzone";
 import { DataTable } from "../DataTable";
+import { useToolState } from "@/hooks/useToolState";
 
 const KmlToXlsx = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [sondagens, setSondagens] = useState<KmlSondagem[]>([]);
-
-  const [convertCoordinates, setConvertCoordinates] = useState(false);
-  const [selectedDatum, setSelectedDatum] = useState<DatumType | undefined>(
-    undefined
-  );
-  const [selectedZone, setSelectedZone] = useState<ZoneType | undefined>(
-    undefined
-  );
+  const { state, update } = useToolState("kmlToXlsx");
+  const {
+    selectedFile,
+    convertCoordinates,
+    selectedDatum,
+    selectedZone,
+    sondagens,
+  } = state;
 
   const processedSondagens = useMemo(() => {
     if (!convertCoordinates || !selectedDatum) {
@@ -70,7 +69,7 @@ const KmlToXlsx = () => {
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    setSelectedFile(file);
+    update({ selectedFile: file });
 
     try {
       let kmlText: string;
@@ -92,7 +91,7 @@ const KmlToXlsx = () => {
       }
 
       const parsedSondagens = parseKmlFile(kmlText);
-      setSondagens(parsedSondagens);
+      update({ sondagens: parsedSondagens });
     } catch (error) {
       console.error("Erro ao processar arquivo:", error);
       alert("Erro ao processar arquivo KML/KMZ: " + error);
@@ -144,7 +143,7 @@ const KmlToXlsx = () => {
                         type="switch"
                         checked={convertCoordinates}
                         onChange={(e) =>
-                          setConvertCoordinates(e.target.checked)
+                          update({ convertCoordinates: e.target.checked })
                         }
                       />
                       <Form.Label className="mb-0">
@@ -157,7 +156,7 @@ const KmlToXlsx = () => {
                       aria-label="Datum"
                       value={selectedDatum || ""}
                       onChange={(e) =>
-                        setSelectedDatum(e.target.value as DatumType)
+                        update({ selectedDatum: e.target.value as DatumType })
                       }
                     >
                       <option value="">Datum</option>
@@ -173,7 +172,7 @@ const KmlToXlsx = () => {
                       aria-label="Zona UTM"
                       value={selectedZone || ""}
                       onChange={(e) =>
-                        setSelectedZone(e.target.value as ZoneType)
+                        update({ selectedZone: e.target.value as ZoneType })
                       }
                       disabled={!selectedDatum || selectedDatum === "WGS84"}
                     >

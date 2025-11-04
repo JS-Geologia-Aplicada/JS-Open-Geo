@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { Alert, Button, Form } from "react-bootstrap";
 import {
@@ -10,7 +10,6 @@ import {
   groupBy,
   parseDxf,
   type DxfInsert,
-  type DxfPolyline,
 } from "@/utils/dxfParseUtils";
 import {
   getCardinalDirection,
@@ -28,6 +27,7 @@ import { ToolLayout } from "./ToolLayout";
 import { FileDropzone } from "../FileDropzone";
 import { ToolControlSection } from "./ToolControlSection";
 import { DataTable } from "../DataTable";
+import { useToolState } from "@/hooks/useToolState";
 
 interface DirectionOption {
   label: string;
@@ -36,28 +36,21 @@ interface DirectionOption {
 }
 
 const DistanceTool = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileText, setFileText] = useState<string>("");
+  const { state, update } = useToolState("distanceTool");
 
-  // Dados extraídos
-  const [inserts, setInserts] = useState<DxfInsert[]>([]);
-  const [polylines, setPolylines] = useState<DxfPolyline[]>([]);
-
-  // Layers disponíveis
-  const [insertLayers, setInsertLayers] = useState<string[]>([]);
-  const [polylineLayers, setPolylineLayers] = useState<string[]>([]);
-
-  // Seleções do usuário
-  const [selectedPolylineLayer, setSelectedPolylineLayer] =
-    useState<string>("");
-  const [selectedInsertLayers, setSelectedInsertLayers] = useState<string[]>(
-    []
-  );
-
-  const [selectedDirection, setSelectedDirection] = useState<
-    CardinalOrdinalDirection | undefined
-  >(undefined);
-  const [distanceResults, setDistanceResults] = useState<DistanceResult[]>([]);
+  const {
+    selectedFile,
+    fileText,
+    inserts,
+    polylines,
+    insertLayers,
+    polylineLayers,
+    selectedInsertLayers,
+    selectedPolylineLayer,
+    selectedDirection,
+    // selectedIdField,
+    distanceResults,
+  } = state;
 
   const plAsLineString = useMemo((): LineString[] | undefined => {
     const eligiblePolylines = polylines.filter(
@@ -122,7 +115,7 @@ const DistanceTool = () => {
       const forward =
         directionOptions.find((opt) => opt.direction === "forward")?.value ||
         undefined;
-      setSelectedDirection(forward);
+      update({ selectedDirection: forward });
     }
   }, [directionOptions]);
 
@@ -130,20 +123,21 @@ const DistanceTool = () => {
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    setSelectedFile(file);
+    update({ selectedFile: file });
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      setFileText(text);
 
       // Analisar e salvar dados
       const analysis = analyzeFile(text);
-
-      setInserts(analysis.inserts);
-      setPolylines(analysis.polylines);
-      setInsertLayers(analysis.insertLayers);
-      setPolylineLayers(analysis.polylineLayers);
+      update({
+        fileText: text,
+        inserts: analysis.inserts,
+        polylines: analysis.polylines,
+        insertLayers: analysis.insertLayers,
+        polylineLayers: analysis.polylineLayers,
+      });
     };
 
     reader.readAsText(file);
@@ -259,8 +253,7 @@ const DistanceTool = () => {
           side,
         };
       });
-
-    setDistanceResults(results);
+    update({ distanceResults: results });
   };
 
   const handleExport = () => {
@@ -309,7 +302,7 @@ const DistanceTool = () => {
                         size="sm"
                         value={selectedPolylineLayer}
                         onChange={(e) => {
-                          setSelectedPolylineLayer(e.target.value);
+                          update({ selectedPolylineLayer: e.target.value });
                         }}
                         style={{ maxWidth: "200px" }}
                       >
@@ -352,9 +345,10 @@ const DistanceTool = () => {
                         size="sm"
                         value={selectedDirection}
                         onChange={(e) => {
-                          setSelectedDirection(
-                            e.target.value as CardinalOrdinalDirection
-                          );
+                          update({
+                            selectedDirection: e.target
+                              .value as CardinalOrdinalDirection,
+                          });
                         }}
                         style={{ maxWidth: "200px" }}
                       >
@@ -382,22 +376,30 @@ const DistanceTool = () => {
                         padding: "8px",
                       }}
                     >
-                      {insertLayers.map((l) => (
+                      {insertLayers.map((layer) => (
                         <Form.Check
-                          label={l}
-                          value={l}
-                          key={l}
-                          checked={selectedInsertLayers.includes(l)}
+                          label={layer}
+                          value={layer}
+                          key={layer}
+                          checked={selectedInsertLayers.includes(layer)}
                           onChange={(e) => {
                             if (
                               e.target.checked &&
-                              !selectedInsertLayers.includes(l)
+                              !selectedInsertLayers.includes(layer)
                             ) {
-                              setSelectedInsertLayers((prev) => [...prev, l]);
+                              update({
+                                selectedInsertLayers: [
+                                  ...selectedInsertLayers,
+                                  layer,
+                                ],
+                              });
                             } else if (!e.target.checked) {
-                              setSelectedInsertLayers((prev) =>
-                                prev.filter((layer) => layer !== l)
-                              );
+                              update({
+                                selectedInsertLayers:
+                                  selectedInsertLayers.filter(
+                                    (l) => l !== layer
+                                  ),
+                              });
                             }
                           }}
                         />

@@ -193,8 +193,7 @@ export const getInsertsFromDxf = (fileText: string): DxfInsert[] => {
 
     inserts.forEach((insert) => {
       if (!insert.position) {
-        console.warn("Insert sem posição:", insert);
-        return; // Pula este insert
+        return; // Pula inserts sem posição
       }
       const sondagem = {
         x: insert.position.x,

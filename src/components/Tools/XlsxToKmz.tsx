@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Button, Form } from "react-bootstrap";
 import JSZip from "jszip";
 import { KmlBuilder, type KmlData } from "@/utils/kmlGenerator";
@@ -15,6 +15,7 @@ import { ToolLayout } from "./ToolLayout";
 import { FileDropzone } from "../FileDropzone";
 import { ToolControlSection } from "./ToolControlSection";
 import { DataTable } from "../DataTable";
+import { useToolState } from "@/hooks/useToolState";
 
 interface ParsedSondagem {
   name: string;
@@ -24,30 +25,25 @@ interface ParsedSondagem {
 }
 
 const XlsxToKmz = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [rawData, setRawData] = useState<XlsxRow[]>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [hasHeader, setHasHeader] = useState(false);
+  const { state, update } = useToolState("xlsxToKml");
 
-  // Mapeamento de colunas por índice
-  const [nameColumnIndex, setNameColumnIndex] = useState<number>(0);
-  const [xColumnIndex, setXColumnIndex] = useState<number>(1);
-  const [yColumnIndex, setYColumnIndex] = useState<number>(2);
-
-  // Sistema de coordenadas
-  const [selectedDatum, setSelectedDatum] = useState<DatumType | undefined>(
-    undefined
-  );
-  const [selectedZone, setSelectedZone] = useState<ZoneType | undefined>(
-    undefined
-  );
+  const {
+    selectedFile,
+    rawData,
+    headers,
+    hasHeader,
+    nameColumnIndex,
+    xColumnIndex,
+    yColumnIndex,
+    selectedDatum,
+    selectedZone,
+  } = state;
 
   const handleFileChange = async (files: File[]) => {
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    setSelectedFile(file);
-    setHasHeader(false);
+    update({ selectedFile: file, hasHeader: false });
 
     try {
       const dataArray = await readXlsxFile(file);
@@ -58,8 +54,7 @@ const XlsxToKmz = () => {
       }
 
       const processed = processXlsxData(dataArray, false);
-      setHeaders(processed.headers);
-      setRawData(processed.data);
+      update({ headers: processed.headers, rawData: processed.data });
     } catch (error) {
       console.error("Erro ao ler arquivo:", error);
       toast.error("Erro ao ler arquivo XLSX");
@@ -170,15 +165,14 @@ const XlsxToKmz = () => {
 
   // Recarregar quando mudar hasHeader
   const handleHeaderToggle = async (checked: boolean) => {
-    setHasHeader(checked);
+    update({ hasHeader: checked });
 
     // Re-processar dados com novo modo
     if (selectedFile) {
       try {
         const dataArray = await readXlsxFile(selectedFile);
         const processed = processXlsxData(dataArray, checked);
-        setHeaders(processed.headers);
-        setRawData(processed.data);
+        update({ headers: processed.headers, rawData: processed.data });
       } catch (error) {
         toast.error("Erro ao reprocessar:" + error);
       }
@@ -235,7 +229,7 @@ const XlsxToKmz = () => {
                           size="sm"
                           value={nameColumnIndex}
                           onChange={(e) => {
-                            setNameColumnIndex(Number(e.target.value));
+                            update({ nameColumnIndex: Number(e.target.value) });
                           }}
                           style={{ maxWidth: "200px" }}
                         >
@@ -260,7 +254,7 @@ const XlsxToKmz = () => {
                           size="sm"
                           value={xColumnIndex}
                           onChange={(e) => {
-                            setXColumnIndex(Number(e.target.value));
+                            update({ xColumnIndex: Number(e.target.value) });
                           }}
                           style={{ maxWidth: "200px" }}
                         >
@@ -285,7 +279,7 @@ const XlsxToKmz = () => {
                           size="sm"
                           value={yColumnIndex}
                           onChange={(e) => {
-                            setYColumnIndex(Number(e.target.value));
+                            update({ yColumnIndex: Number(e.target.value) });
                           }}
                           style={{ maxWidth: "200px" }}
                         >
@@ -308,7 +302,7 @@ const XlsxToKmz = () => {
                       aria-label="Datum"
                       value={selectedDatum || ""}
                       onChange={(e) =>
-                        setSelectedDatum(e.target.value as DatumType)
+                        update({ selectedDatum: e.target.value as DatumType })
                       }
                     >
                       <option value="">Datum</option>
@@ -324,7 +318,7 @@ const XlsxToKmz = () => {
                       aria-label="Zona UTM"
                       value={selectedZone || ""}
                       onChange={(e) =>
-                        setSelectedZone(e.target.value as ZoneType)
+                        update({ selectedZone: e.target.value as ZoneType })
                       }
                       disabled={!selectedDatum || selectedDatum === "WGS84"}
                     >

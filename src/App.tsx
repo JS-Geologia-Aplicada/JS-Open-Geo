@@ -12,6 +12,7 @@ import AboutPage from "./pages/AboutPage";
 import ChangelogPage from "./pages/ChangelogPage";
 import AppFooter from "./components/AppFooter";
 import { ToolsPage } from "./pages/ToolsPage";
+import { AppProviders } from "./contexts/AppContext";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>("extraction");
@@ -37,58 +38,60 @@ function App() {
   return (
     <div className="app-container">
       <div className="main-content">
-        <Container fluid className="text-center p-0">
-          <ToastContainer
-            position="top-right"
-            autoClose={6000}
-            hideProgressBar={false}
-          />
-          <HelpModal
-            showOnLoad={openHelpOnLoad}
-            onToggleShowOnLoad={toggleShowHelpOnLoad}
-            show={showHelp}
-            setShow={setShowHelp}
-          />
-          <Row className="justify-content-center">
-            <Col className="px-0">
-              <AppHeader />
-            </Col>
-          </Row>
-          <Row className="justify-content-center">
-            <Col className="px-0">
-              <AppNavigation
-                currentPage={currentPage}
-                onChangePage={setCurrentPage}
+        <AppProviders>
+          <Container fluid className="text-center p-0">
+            <ToastContainer
+              position="top-right"
+              autoClose={6000}
+              hideProgressBar={false}
+            />
+            <HelpModal
+              showOnLoad={openHelpOnLoad}
+              onToggleShowOnLoad={toggleShowHelpOnLoad}
+              show={showHelp}
+              setShow={setShowHelp}
+            />
+            <Row className="justify-content-center">
+              <Col className="px-0">
+                <AppHeader />
+              </Col>
+            </Row>
+            <Row className="justify-content-center">
+              <Col className="px-0">
+                <AppNavigation
+                  currentPage={currentPage}
+                  onChangePage={setCurrentPage}
+                />
+              </Col>
+            </Row>
+            {currentPage === "extraction" ? (
+              <DataExtractionPage
+                areas={areas}
+                setAreas={setAreas}
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                extractedTexts={extractedTexts}
+                setExtractedTexts={setExtractedTexts}
+                onShowHelp={handleShowHelp}
               />
-            </Col>
-          </Row>
-          {currentPage === "extraction" ? (
-            <DataExtractionPage
-              areas={areas}
-              setAreas={setAreas}
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-              extractedTexts={extractedTexts}
-              setExtractedTexts={setExtractedTexts}
-              onShowHelp={handleShowHelp}
-            />
-          ) : currentPage === "dxf" ? (
-            <DxfPage
-              areas={areas}
-              extractedTexts={extractedTexts}
-              palitoData={palitoData}
-              setPalitoData={setPalitoData}
-            />
-          ) : currentPage === "about" ? (
-            <AboutPage />
-          ) : currentPage === "changelog" ? (
-            <ChangelogPage />
-          ) : currentPage === "transform" ? (
-            <ToolsPage />
-          ) : (
-            <div>Erro: página não encontrada</div>
-          )}
-        </Container>
+            ) : currentPage === "dxf" ? (
+              <DxfPage
+                areas={areas}
+                extractedTexts={extractedTexts}
+                palitoData={palitoData}
+                setPalitoData={setPalitoData}
+              />
+            ) : currentPage === "about" ? (
+              <AboutPage />
+            ) : currentPage === "changelog" ? (
+              <ChangelogPage />
+            ) : currentPage === "transform" ? (
+              <ToolsPage />
+            ) : (
+              <div>Erro: página não encontrada</div>
+            )}
+          </Container>
+        </AppProviders>
       </div>
       <AppFooter />
     </div>

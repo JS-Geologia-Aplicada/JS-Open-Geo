@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { processXlsxData, readXlsxFile, type XlsxRow } from "@/utils/xlsxUtils";
@@ -8,30 +8,29 @@ import { ToolLayout } from "./ToolLayout";
 import { ToolControlSection } from "./ToolControlSection";
 import { FileDropzone } from "../FileDropzone";
 import { DataTable } from "../DataTable";
+import { useToolState } from "@/hooks/useToolState";
 
 const DEFAULT_Z = 100;
 
 const XlsxToDxfProfile = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [rawData, setRawData] = useState<XlsxRow[]>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [hasHeader, setHasHeader] = useState(false);
-
-  const [nameColumnIndex, setNameColumnIndex] = useState<number>(0);
-  const [distanceColumnIndex, setDistanceColumnIndex] = useState<number>(1);
-  const [zColumnIndex, setZColumnIndex] = useState<number>(2);
-
-  const [textRotation, setTextRotation] = useState<"horizontal" | "vertical">(
-    "horizontal"
-  );
-  const [fontSize, setFontSize] = useState<number>(10);
+  const { state, update } = useToolState("xlsxToDxfProfile");
+  const {
+    selectedFile,
+    hasHeader,
+    nameColumnIndex,
+    distanceColumnIndex,
+    zColumnIndex,
+    textRotation,
+    fontSize,
+    rawData,
+    headers,
+  } = state;
 
   const handleFileChange = async (files: File[]) => {
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    setSelectedFile(file);
-    setHasHeader(false);
+    update({ selectedFile: file, hasHeader: false });
 
     try {
       const dataArray = await readXlsxFile(file);
@@ -42,8 +41,7 @@ const XlsxToDxfProfile = () => {
       }
 
       const processedData = processXlsxData(dataArray, false);
-      setHeaders(processedData.headers);
-      setRawData(processedData.data);
+      update({ headers: processedData.headers, rawData: processedData.data });
     } catch (error) {
       console.error("Erro ao ler arquivo:", error);
       toast.error("Erro ao ler arquivo XLSX");
@@ -51,14 +49,13 @@ const XlsxToDxfProfile = () => {
   };
 
   const handleHeaderToggle = async (checked: boolean) => {
-    setHasHeader(checked);
+    update({ hasHeader: checked });
 
     if (selectedFile) {
       try {
         const dataArray = await readXlsxFile(selectedFile);
         const processed = processXlsxData(dataArray, checked);
-        setHeaders(processed.headers);
-        setRawData(processed.data);
+        update({ headers: processed.headers, rawData: processed.data });
       } catch (error) {
         console.error("Erro ao reprocessar: ", error);
         toast.error("Erro ao reprocessar");
@@ -135,7 +132,9 @@ const XlsxToDxfProfile = () => {
                             size="sm"
                             value={nameColumnIndex}
                             onChange={(e) => {
-                              setNameColumnIndex(Number(e.target.value));
+                              update({
+                                nameColumnIndex: Number(e.target.value),
+                              });
                             }}
                             style={{ maxWidth: "200px" }}
                           >
@@ -160,7 +159,9 @@ const XlsxToDxfProfile = () => {
                             size="sm"
                             value={distanceColumnIndex}
                             onChange={(e) => {
-                              setDistanceColumnIndex(Number(e.target.value));
+                              update({
+                                distanceColumnIndex: Number(e.target.value),
+                              });
                             }}
                             style={{ maxWidth: "200px" }}
                           >
@@ -185,7 +186,7 @@ const XlsxToDxfProfile = () => {
                             size="sm"
                             value={zColumnIndex}
                             onChange={(e) => {
-                              setZColumnIndex(Number(e.target.value));
+                              update({ zColumnIndex: Number(e.target.value) });
                             }}
                             style={{ maxWidth: "200px" }}
                           >
@@ -219,7 +220,9 @@ const XlsxToDxfProfile = () => {
                             label="Horizontal"
                             name="textRotation"
                             checked={textRotation === "horizontal"}
-                            onChange={() => setTextRotation("horizontal")}
+                            onChange={() =>
+                              update({ textRotation: "horizontal" })
+                            }
                           />
                           <Form.Check
                             className="small"
@@ -228,7 +231,9 @@ const XlsxToDxfProfile = () => {
                             label="Vertical"
                             name="textRotation"
                             checked={textRotation === "vertical"}
-                            onChange={() => setTextRotation("vertical")}
+                            onChange={() =>
+                              update({ textRotation: "vertical" })
+                            }
                           />
                         </div>
                       </div>
@@ -246,7 +251,9 @@ const XlsxToDxfProfile = () => {
                           type="number"
                           size="sm"
                           value={fontSize}
-                          onChange={(e) => setFontSize(Number(e.target.value))}
+                          onChange={(e) =>
+                            update({ fontSize: Number(e.target.value) })
+                          }
                           min={1}
                           max={100}
                           style={{ maxWidth: "75px" }}
