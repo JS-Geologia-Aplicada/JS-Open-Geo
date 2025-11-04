@@ -24,7 +24,7 @@ interface ParsedSondagem {
   extraData: Record<string, any>;
 }
 
-const XlsxToKmz = () => {
+const XlsxToKml = () => {
   const { state, update } = useToolState("xlsxToKml");
 
   const {
@@ -375,4 +375,4 @@ const XlsxToKmz = () => {
   );
 };
 
-export default XlsxToKmz;
+export default XlsxToKml;

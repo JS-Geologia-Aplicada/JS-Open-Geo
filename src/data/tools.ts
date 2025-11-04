@@ -1,7 +1,7 @@
 import KmlToXlsx from "@/components/Tools/KmlToXlsx";
 import TransformPage from "@/components/Tools/ExtractDxfTool";
 import type { ComponentType } from "react";
-import XlsxToKmz from "@/components/Tools/XlsxToKmz";
+import XlsxToKml from "@/components/Tools/XlsxToKml";
 import XlsxToDxfProfile from "@/components/Tools/XlsxToDxfProfile";
 import DistanceTool from "@/components/Tools/DistanceTool";
 
@@ -26,7 +26,7 @@ export const TOOLS: Tool[] = [
     id: "xlsx-to-kmz",
     name: "XLSX → KMZ/KML",
     description: "Converter planilha com sondagens para KMZ/KML",
-    component: XlsxToKmz,
+    component: XlsxToKml,
     icon: new URL("@/assets/icons/XlsxToKml.png", import.meta.url).href,
   },
   {
