@@ -43,7 +43,15 @@ const XlsxToKml = () => {
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    update({ selectedFile: file, hasHeader: false });
+    update({
+      selectedFile: file,
+      hasHeader: false,
+      headers: [],
+      rawData: [],
+      nameColumnIndex: 0,
+      xColumnIndex: 1,
+      yColumnIndex: 2,
+    });
 
     try {
       const dataArray = await readXlsxFile(file);
@@ -108,9 +116,9 @@ const XlsxToKml = () => {
     });
   }, [
     rawData,
-    nameColumnIndex,
-    xColumnIndex,
-    yColumnIndex,
+    nameColumnIndex !== undefined,
+    xColumnIndex !== undefined,
+    yColumnIndex !== undefined,
     selectedDatum,
     selectedZone,
     headers,
@@ -180,9 +188,9 @@ const XlsxToKml = () => {
   };
 
   const canExport =
-    nameColumnIndex &&
-    xColumnIndex &&
-    yColumnIndex &&
+    nameColumnIndex !== undefined &&
+    xColumnIndex !== undefined &&
+    yColumnIndex !== undefined &&
     selectedDatum &&
     (selectedDatum === "WGS84" || selectedZone) &&
     processedData.length > 0;
