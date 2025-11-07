@@ -60,6 +60,9 @@ interface DistanceToolState {
   fileText: string;
   inserts: DxfInsert[];
   polylines: DxfPolyline[];
+  dxfData: DxfInsert[];
+  dxfType?: "block" | "multileader";
+  attributeColumns: string[];
   insertLayers: string[];
   polylineLayers: string[];
   selectedInsertLayers: string[];
@@ -142,6 +145,8 @@ const initialDistanceTool: DistanceToolState = {
   fileText: "",
   inserts: [],
   polylines: [],
+  dxfData: [],
+  attributeColumns: [],
   insertLayers: [],
   polylineLayers: [],
   selectedPolylineLayer: "",

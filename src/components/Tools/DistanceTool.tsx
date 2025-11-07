@@ -40,15 +40,16 @@ const DistanceTool = () => {
 
   const {
     selectedFile,
-    fileText,
-    inserts,
     polylines,
+    dxfData,
+    dxfType,
+    attributeColumns,
     insertLayers,
     polylineLayers,
     selectedInsertLayers,
     selectedPolylineLayer,
     selectedDirection,
-    // selectedIdField,
+    selectedIdField,
     distanceResults,
   } = state;
 
@@ -67,22 +68,64 @@ const DistanceTool = () => {
   }, [polylines, selectedPolylineLayer]);
 
   const analyzeFile = (fileText: string) => {
-    // 1. Inserts (sondagens)
+    const parsed = parseDxf(fileText);
+    const dxfType = detectDxfType(fileText);
+
+    // 1. Inserts brutos
     const inserts = getInsertsFromDxf(fileText);
     const insertsByLayer = groupBy(inserts, "layer");
 
-    // 2. Polylines
+    // 2. Polylines brutas
     const polylines = getPolylinesFromDxf(fileText);
     const polylinesByLayer = groupBy(polylines, "layer");
 
-    return {
+    // 3. Processar dados de acordo com tipo de arquivo
+    let dxfData: DxfInsert[] = [];
+    let attributeColumns: string[] = [];
+
+    if (dxfType === "block") {
+      const blocksAtt = getAttributedBlocks(parsed);
+
+      dxfData = inserts.map((insert) => {
+        const matchingBlock = blocksAtt.find(
+          (block) => block.blockName === insert.blockName
+        );
+        return {
+          ...insert,
+          attributes: matchingBlock?.attributes,
+        };
+      });
+
+      const columnsSet = new Set<string>();
+      dxfData.forEach((item) => {
+        item.attributes?.forEach((attr) => {
+          if (attr.tag) columnsSet.add(attr.tag);
+        });
+      });
+      attributeColumns = Array.from(columnsSet);
+    } else if (dxfType === "multileader") {
+      const multileaders = extractMultileaders(parsed);
+
+      dxfData = multileaders.map((ml) => ({
+        x: ml.x,
+        y: ml.y,
+        id: ml.text,
+        layer: ml.layer,
+        blockName: "",
+        attributes: undefined,
+      }));
+    }
+
+    update({
+      fileText,
       inserts,
-      insertsByLayer,
       polylines,
-      polylinesByLayer,
       insertLayers: Object.keys(insertsByLayer),
       polylineLayers: Object.keys(polylinesByLayer),
-    };
+      dxfType,
+      dxfData,
+      attributeColumns,
+    });
   };
 
   const referenceLine = useMemo((): LineString | undefined => {
@@ -130,64 +173,13 @@ const DistanceTool = () => {
       const text = e.target?.result as string;
 
       // Analisar e salvar dados
-      const analysis = analyzeFile(text);
-      update({
-        fileText: text,
-        inserts: analysis.inserts,
-        polylines: analysis.polylines,
-        insertLayers: analysis.insertLayers,
-        polylineLayers: analysis.polylineLayers,
-      });
+      analyzeFile(text);
     };
 
     reader.readAsText(file);
   };
 
   const getPointsDistances = () => {
-    const validInserts = inserts.filter((i) =>
-      selectedInsertLayers.includes(i.layer)
-    );
-    const dxfType = detectDxfType(fileText);
-    let dxfData: DxfInsert[] = [];
-    const parsed = parseDxf(fileText);
-
-    if (dxfType === "block") {
-      const blocksAtt = getAttributedBlocks(parsed);
-      const insertsWithAtt: DxfInsert[] = [];
-      validInserts.forEach((entry) => {
-        const matchingBlock = blocksAtt.find(
-          (block) => block.blockName === entry.blockName
-        );
-        insertsWithAtt.push({
-          ...entry,
-          attributes: matchingBlock?.attributes,
-        });
-      });
-      dxfData = insertsWithAtt;
-    } else {
-      const multileaders = extractMultileaders(parsed);
-      const insertsWithId: DxfInsert[] = [];
-      validInserts.forEach((insert) => {
-        const matchingMultileader = multileaders.find(
-          (m) =>
-            Math.abs(m.x - insert.x) <= 0.8 && Math.abs(m.y - insert.y) <= 0.8 // Tolerância de 0.8
-        );
-        if (
-          !insertsWithId.find(
-            (entry) => entry.x === insert.x && entry.y === insert.y
-          )
-        ) {
-          insertsWithId.push({
-            ...insert,
-            id: matchingMultileader?.text,
-            idIndex: matchingMultileader?.textIndex,
-            layer: matchingMultileader?.layer || insert.layer,
-          });
-        }
-      });
-      dxfData = insertsWithId;
-    }
-
     // Verificar se tem dados necessários
     if (!plAsLineString || plAsLineString.length === 0) {
       console.warn("Nenhuma polyline disponível");
@@ -199,8 +191,34 @@ const DistanceTool = () => {
       return [];
     }
 
+    if (dxfData.length === 0) {
+      console.warn("Nenhum dado de sondagem disponível");
+      return;
+    }
+
+    // Filtrar apenas layers selecionadas
+    const validInserts = dxfData.filter((insert) =>
+      selectedInsertLayers.includes(insert.layer)
+    );
+
+    if (validInserts.length === 0) {
+      console.warn("Nenhuma sondagem nas layers selecionadas");
+      update({ distanceResults: [] });
+      return;
+    }
+
+    // 4. Preparar direção da polyline
+    const direction = directionOptions?.find(
+      (opt) => opt.value === selectedDirection
+    )?.direction;
+
+    const correctedLines =
+      direction === "backward"
+        ? plAsLineString.map((line) => reverseLineString(line))
+        : plAsLineString;
+
     // Processar cada insert
-    const results: DistanceResult[] = dxfData
+    const distanceResults: DistanceResult[] = validInserts
       .filter(
         (insert) =>
           insert.id?.trim() ||
@@ -211,20 +229,14 @@ const DistanceTool = () => {
         const name =
           dxfType === "multileader"
             ? insert.id || "Sem ID"
-            : insert.attributes?.find((a) => a.tag === a.tag)?.value ||
-              "Sem ID";
+            : insert.attributes?.find((a) => a.tag === selectedIdField)
+                ?.value || "Sem ID";
 
         // 2. Ponto do insert
         const point: Point = { x: insert.x, y: insert.y };
 
         // 3. Calcular distância para CADA polyline
-        const direction = directionOptions?.find(
-          (opt) => opt.value === selectedDirection
-        )?.direction;
-        const correctedLines =
-          direction === "backward"
-            ? plAsLineString.map((line) => reverseLineString(line))
-            : plAsLineString;
+
         const distancesPerLine = correctedLines.map((line) => {
           const nearest = nearestPointOnLine(line, point);
           return {
@@ -253,7 +265,7 @@ const DistanceTool = () => {
           side,
         };
       });
-    update({ distanceResults: results });
+    update({ distanceResults });
   };
 
   const handleExport = () => {
@@ -407,6 +419,26 @@ const DistanceTool = () => {
                     </div>
                   </Form.Group>
                 </ToolControlSection>
+                {dxfType === "block" && (
+                  <ToolControlSection
+                    title="Atributo nome da sondagem"
+                    collapsible
+                  >
+                    <Form.Select
+                      value={selectedIdField || ""}
+                      onChange={(e) =>
+                        update({ selectedIdField: e.target.value })
+                      }
+                    >
+                      <option value="">Selecione o campo</option>
+                      {attributeColumns.map((att) => (
+                        <option key={att} value={att}>
+                          {att}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </ToolControlSection>
+                )}
                 <ToolControlSection title="Calcular Distâncias">
                   <div className="d-flex gap-2 mt-2">
                     <Button onClick={getPointsDistances} className="flex-fill">
