@@ -26,10 +26,10 @@ const AboutPage = () => {
           </p>
           <p>
             Os dados aqui tratados estão seguros, pois eles não são salvos após
-            o processamento (leitura do PDF e exportação). Com relação a isso
-            você pode confiar na JS Geologia Aplicada, uma empresa de 8 anos de
-            atuação no mercado de geologia de engenharia, com diversos clientes
-            e projetos relevantes no Brasil e no exterior.
+            o processamento. Com relação a isso você pode confiar na JS Geologia
+            Aplicada, uma empresa de 8 anos de atuação no mercado de geologia de
+            engenharia, com diversos clientes e projetos relevantes no Brasil e
+            no exterior.
           </p>
           <h5>Por que gratuito?</h5>
           <p>
