@@ -375,6 +375,26 @@ const DistanceTool = () => {
                   </Form.Group>
                 </ToolControlSection>
                 <ToolControlSection title="Layers de sondagens" collapsible>
+                  <div className="d-flex gap-2 mb-2">
+                    <Button
+                      size="sm"
+                      variant="outline-primary"
+                      onClick={() =>
+                        update({ selectedInsertLayers: insertLayers })
+                      }
+                      className="flex-fill"
+                    >
+                      Selecionar Todas
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline-secondary"
+                      onClick={() => update({ selectedInsertLayers: [] })}
+                      className="flex-fill"
+                    >
+                      Limpar
+                    </Button>
+                  </div>
                   <Form.Group>
                     <Form.Label className="small">
                       Selecione as layers com sondagens

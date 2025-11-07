@@ -53,6 +53,7 @@ interface ExtractDxfToolState {
   codedDxf?: CodedDxf[];
   renamedFileText?: string;
   fileLayers?: Set<string>;
+  selectedLayers: string[];
 }
 
 interface DistanceToolState {
@@ -138,6 +139,7 @@ const initialExtractDxfTool: ExtractDxfToolState = {
     layerConfigs: {},
   },
   dxfData: [],
+  selectedLayers: [],
 };
 
 const initialDistanceTool: DistanceToolState = {

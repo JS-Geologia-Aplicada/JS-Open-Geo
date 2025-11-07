@@ -52,7 +52,15 @@ const ExtractDxfTool = () => {
     codedDxf,
     renamedFileText,
     fileLayers,
+    selectedLayers,
   } = state;
+
+  const filteredDxfData = useMemo(() => {
+    if (selectedLayers.length === 0) {
+      return [];
+    }
+    return dxfData.filter((item) => selectedLayers.includes(item.layer));
+  }, [dxfData, selectedLayers]);
 
   const layersInitialized = useRef<Set<string>>(new Set());
   const handleFileChange = (files: File[]) => {
@@ -160,8 +168,11 @@ const ExtractDxfTool = () => {
         });
       });
       const insertLayers = new Set(insertsWithAtt.map((data) => data.layer));
-      update({ fileLayers: insertLayers });
-      update({ dxfData: insertsWithAtt });
+      update({
+        fileLayers: insertLayers,
+        dxfData: insertsWithAtt,
+        selectedLayers: Array.from(insertLayers),
+      });
     } else {
       const multileaders = extractMultileaders(parsed);
       const insertsWithId: DxfInsert[] = [];
@@ -184,8 +195,11 @@ const ExtractDxfTool = () => {
         }
       });
       const insertLayers = new Set(insertsWithId.map((data) => data.layer));
-      update({ fileLayers: insertLayers });
-      update({ dxfData: insertsWithId });
+      update({
+        fileLayers: insertLayers,
+        dxfData: insertsWithId,
+        selectedLayers: Array.from(insertLayers),
+      });
     }
   };
 
@@ -203,7 +217,7 @@ const ExtractDxfTool = () => {
   }, [dxfData, dxfType]);
 
   const exportToExcel = () => {
-    const excelData = dxfData
+    const excelData = filteredDxfData
       .filter(
         (insert) =>
           (insert.attributes && insert.attributes.length > 0) || insert.id
@@ -268,7 +282,7 @@ const ExtractDxfTool = () => {
     });
 
     // 2. Converter e adicionar cada ponto
-    dxfData.forEach((item) => {
+    filteredDxfData.forEach((item) => {
       const [lon, lat] = convertGeographicCoordinates([item.x, item.y], {
         datum: selectedDatum,
         zone: selectedZone ? selectedZone : "23S",
@@ -430,7 +444,7 @@ const ExtractDxfTool = () => {
               {dxfType === "block" && (
                 <>
                   <ToolControlSection
-                    title="Atributo nome da sondagem"
+                    title="Atributo nome do ponto"
                     collapsible={true}
                   >
                     <Form.Select
@@ -450,6 +464,61 @@ const ExtractDxfTool = () => {
                     </Form.Select>
                   </ToolControlSection>
                 </>
+              )}
+              {selectedFile && fileLayers && fileLayers.size > 0 && (
+                <ToolControlSection
+                  title="Filtrar camadas analisadas"
+                  collapsible
+                  defaultOpen={false}
+                >
+                  <div className="d-flex flex-column gap-2">
+                    {/* Botões para selecionar/desselecionar todos */}
+                    <div className="d-flex gap-2 mb-2">
+                      <Button
+                        size="sm"
+                        variant="outline-primary"
+                        onClick={() =>
+                          update({ selectedLayers: Array.from(fileLayers) })
+                        }
+                        className="flex-fill"
+                      >
+                        Selecionar Todas
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline-secondary"
+                        onClick={() => update({ selectedLayers: [] })}
+                        className="flex-fill"
+                      >
+                        Limpar
+                      </Button>
+                    </div>
+
+                    {/* Checkboxes para cada layer */}
+                    {Array.from(fileLayers).map((layer) => (
+                      <Form.Check
+                        key={layer}
+                        type="checkbox"
+                        id={`layer-${layer}`}
+                        label={layer}
+                        checked={selectedLayers.includes(layer)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            update({
+                              selectedLayers: [...selectedLayers, layer],
+                            });
+                          } else {
+                            update({
+                              selectedLayers: selectedLayers.filter(
+                                (l) => l !== layer
+                              ),
+                            });
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                </ToolControlSection>
               )}
               <ToolControlSection
                 title="Sistema de coordenadas (para KML/KMZ)"
@@ -493,7 +562,7 @@ const ExtractDxfTool = () => {
                 </>
               </ToolControlSection>
               <ToolControlSection
-                title="Renomear sondagens"
+                title="Renomear pontos"
                 collapsible={true}
                 defaultOpen={false}
               >
@@ -506,9 +575,7 @@ const ExtractDxfTool = () => {
                         onChange={handleToggleRename}
                         disabled={dxfType === "block" && !selectedIdField}
                       />
-                      <Form.Label className="mb-0">
-                        Renomear sondagens
-                      </Form.Label>
+                      <Form.Label className="mb-0">Renomear pontos</Form.Label>
                     </div>
                   </Form.Group>
                   <Form.Group>
@@ -688,7 +755,7 @@ const ExtractDxfTool = () => {
         <>
           {dxfData.length > 0 && (
             <>
-              <h5>Dados extraídos ({dxfData.length} sondagens)</h5>
+              <h5>Dados extraídos ({filteredDxfData.length} pontos)</h5>
 
               {/* Tabela preview */}
 
@@ -788,7 +855,7 @@ const ExtractDxfTool = () => {
                     </tr>
                   </thead>
                   <tbody style={{ maxHeight: "400px", overflowY: "auto" }}>
-                    {dxfData.map((item, idx) => (
+                    {filteredDxfData.map((item, idx) => (
                       <tr key={idx}>
                         {dxfType === "multileader" && <td>{item.id}</td>}
                         <td>{item.x.toFixed(3).replace(".", ",")}</td>
