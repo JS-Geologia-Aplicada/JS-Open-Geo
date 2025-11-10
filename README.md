@@ -1,6 +1,7 @@
 # JS Open Geo
 
 ![Version](https://img.shields.io/badge/version-2.0--beta-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/react-19.1-61dafb)
 ![TypeScript](https://img.shields.io/badge/typescript-5.8-3178c6)
 
@@ -126,6 +127,10 @@ npm run dev
 - **PapaParse** - Processamento de arquivos CSV
 - **React CSV** - Exportação CSV
 - **MathJS** - Operações matemáticas avançadas
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ## Desenvolvimento
 
