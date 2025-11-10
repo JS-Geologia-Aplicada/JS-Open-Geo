@@ -16,10 +16,6 @@
     "@hello-pangea/dnd": "^18.0.1",
     "@popperjs/core": "^2.11.8",
     "@tarikjabiri/dxf": "^2.8.9",
-    "@turf/length": "^7.2.0",
-    "@turf/point-to-line-distance": "^7.2.0",
-    "@turf/turf": "^7.2.0",
-    "@types/geojson": "^7946.0.16",
     "bootstrap": "^5.3.7",
     "bootstrap-icons": "^1.13.1",
     "dxf-parser": "^1.1.2",
@@ -38,7 +34,6 @@
     "react-dropzone": "^14.3.8",
     "react-pdf": "^10.0.1",
     "react-toastify": "^11.0.5",
-    "scribe.js-ocr": "^0.8.0",
     "tesseract.js": "^6.0.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },

@@ -1,20 +1,68 @@
 # JS Open Geo
 
-Uma aplicação web para extrair texto de áreas específicas em documentos PDF, permitindo selecionar uma região em qualquer página e aplicar a mesma área em todas as páginas do documento.
+![Version](https://img.shields.io/badge/version-2.0--beta-blue)
+![React](https://img.shields.io/badge/react-19.1-61dafb)
+![TypeScript](https://img.shields.io/badge/typescript-5.8-3178c6)
+
+Uma aplicação web para para facilitar e agilizar a organização e análise de dados geológico-geotécnico.
 
 ## Links
 
 - **[Demo ao vivo](https://js-geologia-aplicada.github.io/js-open-geo/)**
 - **[Repositório](https://github.com/js-geologia-aplicada/js-open-geo)**
 
-## Como usar
+## Funcionalidades
 
-1. **Faça upload** de um arquivo PDF
-2. **Navegue** pelas páginas usando os controles
-3. **Selecione áreas** clicando e movendo o mouse sobre o texto desejado
-4. **Clique em "Extrair Textos"** para processar todas as páginas
-5. **Visualize os resultados** na tabela lateral
-6. **Exporte** como XLS, CSV ou JSON
+### Extração de Dados PDF
+
+Extraia texto de áreas específicas em documentos PDF de forma automatizada:
+
+- Selecione áreas de interesse em qualquer página
+- Aplique a mesma seleção para todas as páginas do documento
+- Reordene áreas via drag-and-drop
+- Suporte a OCR para PDFs escaneados
+- Exporte para XLSX, CSV ou JSON
+
+### Geração de Palitos DXF
+
+Crie palitos de sondagem a partir de seus dados:
+
+- Utilize os dados extraídos de PDF ou utilize seus próprios dados
+- Gere automaticamente perfis em formato DXF
+- Diferentes modelos de palito disponíveis
+
+### Ferramentas CAD/SIG
+
+#### **Ferramentas DXF**
+
+- Extraia dados de sondagens de arquivos DXF
+- Suporte a blocos atribuídos e multileaders
+- Renomeie sondagens automaticamente por direção
+- Filtre por camadas
+- Exporte para XLSX, KML/KMZ ou DXF modificado
+
+#### **KML/KMZ → Excel**
+
+- Converta arquivos KML/KMZ para planilhas XLSX
+- Preserva coordenadas e dados estendidos
+- Suporte a conversão entre sistemas de coordenadas (WGS84, SIRGAS2000, SAD69)
+
+#### **XLSX → KML/KMZ**
+
+- Gere arquivos KML/KMZ a partir de planilhas XLSX
+- Suporte a conversão entre sistemas de coordenadas (WGS84, SIRGAS2000, SAD69)
+
+#### **XLSX → Perfil DXF**
+
+- Gere perfis em DXF a partir de planilhas Excel
+- Importe dados de sondagem: nome, distância e cota (opcional)
+- Exporte DXF com guias verticais dos pontos ao longo do eixo X
+
+#### **Cálculo de Distâncias**
+
+- Calcule distâncias de sondagens até polylines
+- Identifique lado (esquerda/direita) em relação à linha de referência
+- Exporte resultados para XLSX
 
 ## Executar localmente
 
@@ -43,12 +91,13 @@ npm run dev
 
 ### Core
 
-- **React + TypeScript** - Framework principal
+- **React 19 + TypeScript** - Framework principal
 - **Vite** - Build tool e dev server
 
 ### Interface & UX
 
 - **React Bootstrap** - Componentes React para Bootstrap
+- **Bootstrap 5** - Framework CSS
 - **Lucide React** - Ícones
 - **@hello-pangea/dnd** - Drag and drop
 - **Toastify** - Notificações
@@ -61,19 +110,22 @@ npm run dev
 - **PDF-lib** - Manipulação avançada de PDFs
 - **Tesseract.js** - OCR (Optical Character Recognition)
 
-### Mapas & Coordenadas
+### CAD & Geoespacial
 
+- **@tarikjabiri/dxf** - Geração de DXF
 - **Leaflet** - Mapas interativos
 - **OpenStreetMap** - Camada de mapa base
 - **Esri World Imagery** - Camada de satélite
 - **Proj4** - Transformações de coordenadas
 
-### Export & Dados
+### Processamento de Dados
 
-- **@tarikjabiri/dxf** - Geração de DXF
+- **dxf-parser** - Parser de arquivos DXF
 - **SheetJS (XLSX)** - Exportação Excel
-- **JSZip** - Compactação de arquivos
+- **JSZip** - Compactação e descompactação
+- **PapaParse** - Processamento de arquivos CSV
 - **React CSV** - Exportação CSV
+- **MathJS** - Operações matemáticas avançadas
 
 ## Desenvolvimento
 
