@@ -1,6 +1,38 @@
 {
   "versions": [
     {
+      "version": "2.0.0-beta",
+      "date": "2025-11-10",
+      "title": "OpenGeo beta - Ferramentas CAD/SIG",
+      "summary": "Versão beta das ferramentas CAD/SIG.",
+      "features": [
+        "Processamento de DXF com sondagens em blocos atributáveis ou multileader para exportação dos dados como KML, KMZ ou XLSX",
+        "Renomear pontos de sondagem em arquivos DXF de acordo com camadas do arquivo.",
+        "Transformação de planilhas em XLSX com dados de pontos em arquivos KML ou KMZ",
+        "Extração de dados de KML/KMZ para planilha em XLSX",
+        "Criação de perfil em DXF a partir de planilha em XLSX com distâncias dos pontos de sondagem.",
+        "Medição de distâncias em arquivos DXF de pontos de sondagem (bloco atributável ou multileader) para uma polyline."
+      ],
+      "improvements": [],
+      "bugfixes": [],
+      "known_issues": []
+    },
+    {
+      "version": "2.0.0-alpha",
+      "date": "2025-10-08",
+      "title": "OpenGeo alpha - Ferramentas CAD/SIG",
+      "summary": "Implementação de novas funções para geração de palitos.",
+      "features": [
+        "Processamento de DXF com sondagens em blocos atributáveis ou multileader",
+        "Exportação de dados de sondagem para XSLX",
+        "Exportação de dados de sondagem para KML e KMZ",
+        "Ferramenta de renomear sondagens de acordo com camadas do DXF, seguindo a ordem da direção cardinal escolhida pelo usuáio"
+      ],
+      "improvements": [],
+      "bugfixes": [],
+      "known_issues": []
+    },
+    {
       "version": "1.1.0-beta",
       "date": "2025-10-03",
       "title": "JS OpenGeo beta",

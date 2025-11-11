@@ -9,7 +9,11 @@ const AppHeader = () => {
       <Navbar bg="white" expand="lg" className="border-bottom">
         <Container fluid>
           {/* Logo */}
-          <Navbar.Brand href="https://www.jsgeo.com.br/" target="_blank">
+          <Navbar.Brand
+            href="https://www.jsgeo.com.br/"
+            target="_blank"
+            className="ps-3"
+          >
             <img
               src="js_logo_horizontal.png"
               alt="JS Geologia Aplicada"

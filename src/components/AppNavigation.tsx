@@ -1,5 +1,5 @@
 import { Container, Nav, Navbar } from "react-bootstrap";
-import type { PageType } from "../types";
+import type { PageType } from "@types";
 
 interface AppNavigationProps {
   currentPage: PageType;
@@ -8,16 +8,16 @@ interface AppNavigationProps {
 
 const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
   return (
-    <Navbar className="border-bottom mb-2">
-      <Container fluid className="px-4">
-        <Navbar.Brand className="text-dark fw-bold">
+    <Navbar className="border-bottom">
+      <Container fluid className="px-0">
+        <Navbar.Brand className="text-dark fw-bold ps-3">
           <div className="d-flex align-items-end">
             <img
               src="js_open_geo_logo.png"
               alt="JS OpenGeo"
               style={{ height: "40px" }}
             />
-            <span className="text-muted small mx-1">v1.1.0-beta</span>
+            <span className="text-muted small mx-1">v2.0.0-beta</span>
           </div>
         </Navbar.Brand>
         <Nav className="mx-auto">
@@ -44,6 +44,20 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
             className={`px-4 ${currentPage === "dxf" && "fw-bold"}`}
           >
             Palitos de sondagem
+          </Nav.Link>
+          <Nav.Link
+            active={currentPage === "transform"}
+            onClick={
+              currentPage === "transform"
+                ? undefined
+                : () => onChangePage("transform")
+            }
+            style={{
+              cursor: currentPage === "transform" ? "default" : "pointer",
+            }}
+            className={`px-4 ${currentPage === "transform" && "fw-bold"}`}
+          >
+            Ferramentas CAD/SIG
           </Nav.Link>
           <Nav.Link
             active={currentPage === "about"}

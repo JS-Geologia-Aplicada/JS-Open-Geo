@@ -1,6 +1,6 @@
 const AppFooter = () => {
   return (
-    <footer className="bg-light border-top mt-5 py-3">
+    <footer className="bg-light border-top py-3">
       <div className="text-center text-muted">
         <small>
           JS OpenGeo é desenvolvido por{" "}

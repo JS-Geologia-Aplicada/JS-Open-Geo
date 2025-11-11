@@ -1,4 +1,6 @@
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 
@@ -165,6 +167,17 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+input[type="number"].show-arrow::-webkit-outer-spin-button,
+input[type="number"].show-arrow::-webkit-inner-spin-button {
+  -webkit-appearance: auto;
+  margin: 0;
+}
+
+input[type="number"].show-arrow {
+  appearance: auto;
+  -moz-appearance: number-input;
+}
+
 .navbar-nav .nav-item.dropdown:hover .dropdown-menu {
   display: block;
   margin-top: 0;
@@ -182,4 +195,15 @@ input[type="number"] {
 .navbar-nav .nav-item.dropdown:hover .dropdown-menu {
   opacity: 1;
   pointer-events: auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
