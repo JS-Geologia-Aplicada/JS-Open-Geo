@@ -1,7 +1,6 @@
 import { Col, Container, Row } from "react-bootstrap";
 import changelogData from "@data/changelog.json";
 import type { VersionsData } from "@types";
-import { version } from "jszip";
 
 const ChangelogPage = () => {
   const { versions }: VersionsData = changelogData;
