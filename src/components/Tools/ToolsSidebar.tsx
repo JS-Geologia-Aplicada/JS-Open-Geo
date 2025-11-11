@@ -37,7 +37,16 @@ export const ToolsSidebar = ({
         style={{ borderBottom: "1px solid #dee2e6", height: "60px" }}
       >
         {!collapsed && (
-          <h5 className="mb-0" style={{ whiteSpace: "nowrap" }}>
+          <h5
+            className="mb-0"
+            style={{
+              whiteSpace: "nowrap",
+              opacity: collapsed ? 0 : 1,
+              transition: collapsed
+                ? "opacity 0.1s ease"
+                : "opacity 0.2s ease 0.2s",
+            }}
+          >
             Ferramentas
           </h5>
         )}
@@ -58,7 +67,7 @@ export const ToolsSidebar = ({
             key={tool.id}
             onClick={() => onSelectTool(tool)}
             active={selectedTool.id === tool.id}
-            className="px-3 py-3"
+            className={`px-3 py-${collapsed ? "3" : "2"}`}
             style={{
               cursor: "pointer",
               borderLeft:
@@ -71,20 +80,60 @@ export const ToolsSidebar = ({
             }}
           >
             {collapsed ? (
-              // Apenas primeira letra quando colapsado
               <img
                 src={tool.icon}
                 alt={`Ícone ${tool.name}`}
                 style={{ maxWidth: "40px" }}
               />
             ) : (
-              <div>
-                <div style={{ fontWeight: 500, color: "black" }}>
-                  {tool.name}
+              <div className="d-flex align-items-center gap-3">
+                <img
+                  src={tool.icon}
+                  alt={`Ícone ${tool.name}`}
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    flexShrink: 0,
+                    objectFit: "contain",
+                  }}
+                />
+                <div
+                  className="text-start"
+                  style={{
+                    flex: 1,
+                    opacity: collapsed ? 0 : 1, // ← Esconde durante transição
+                    transition: collapsed
+                      ? "opacity 0.1s ease" // Rápido ao colapsar
+                      : "opacity 0.2s ease 0.8s", // Delay ao expandir
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 500,
+                      color: "black",
+                      marginBottom: "4px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {tool.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#6c757d",
+                      lineHeight: "1.3",
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                    }}
+                    className="text-muted d-block mt-1"
+                  >
+                    {tool.description}
+                  </div>
                 </div>
-                <small className="text-muted d-block mt-1">
-                  {tool.description}
-                </small>
               </div>
             )}
           </Nav.Link>
