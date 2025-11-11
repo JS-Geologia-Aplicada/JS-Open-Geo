@@ -23,18 +23,18 @@ export const TOOLS: Tool[] = [
     icon: new URL("@/assets/icons/DxfTools.png", import.meta.url).href,
   },
   {
+    id: "distance-tool",
+    name: "Medir Distâncias DXF",
+    description: "Calcular distâncias entre sondagens e linha de referência",
+    component: DistanceTool,
+    icon: new URL("@/assets/icons/Distances.png", import.meta.url).href,
+  },
+  {
     id: "xlsx-to-kmz",
     name: "XLSX → KMZ/KML",
     description: "Converter planilha com sondagens para KMZ/KML",
     component: XlsxToKml,
     icon: new URL("@/assets/icons/XlsxToKml.png", import.meta.url).href,
-  },
-  {
-    id: "kml-to-xlsx",
-    name: "KMZ/KML → XLSX",
-    description: "Extrair dados de KMZ para planilha",
-    component: KmlToXlsx,
-    icon: new URL("@/assets/icons/KmlToXlsx.png", import.meta.url).href,
   },
   {
     id: "xlsx-to-dxf-profile",
@@ -44,11 +44,11 @@ export const TOOLS: Tool[] = [
     icon: new URL("@/assets/icons/XlsxToDxf.png", import.meta.url).href,
   },
   {
-    id: "distance-tool",
-    name: "Medir Distâncias DXF",
-    description: "Calcular distâncias entre sondagens e linha de referência",
-    component: DistanceTool,
-    icon: new URL("@/assets/icons/Distances.png", import.meta.url).href,
+    id: "kml-to-xlsx",
+    name: "KMZ/KML → XLSX",
+    description: "Extrair dados de KMZ para planilha",
+    component: KmlToXlsx,
+    icon: new URL("@/assets/icons/KmlToXlsx.png", import.meta.url).href,
   },
 ];
 
