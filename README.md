@@ -2,8 +2,6 @@
 
 ![Version](https://img.shields.io/badge/version-2.0--beta-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![React](https://img.shields.io/badge/react-19.1-61dafb)
-![TypeScript](https://img.shields.io/badge/typescript-5.8-3178c6)
 
 Uma aplicação web para para facilitar e agilizar a organização e análise de dados geológico-geotécnico.
 
@@ -69,23 +67,52 @@ Crie palitos de sondagem a partir de seus dados:
 
 ### Pré-requisitos
 
-- Node.js 16+
-- npm ou yarn
+Você precisará ter instalado em seu computador:
+
+- **[Node.js 18+](https://nodejs.org/)** - Baixe a versão LTS (recomendada)
+- **[Git](https://git-scm.com/)**
 
 ### Instalação
 
+Abra um terminal na pasta que deseja baixar o projeto. Para fazer isso no Windows, é possível clicar com o botão direito do mouse na pasta e selecionar a opção _Abrir no Terminal_.
+
 ```bash
-# Clone o repositório
+# Clone o repositório:
 git clone https://github.com/js-geologia-aplicada/js-open-geo
 
-# Entre na pasta
-cd extrator-dados-dpf
+# Entre na pasta do projeto:
+cd js-open-geo
 
-# Instale as dependências
+# Instale as dependências:
 npm install
 
-# Execute o projeto
+# Execute o projeto:
 npm run dev
+```
+
+O terminal mostrará algo como:
+
+```
+  ➜  Local:   http://localhost:5173/JS-Open-Geo/
+  ➜  Network: use --host to expose
+```
+
+Clique no link segurando a tecla control ou abra o navegador e acesse: **http://localhost:5173/JS-Open-Geo/**
+
+### Mantendo atualizado
+
+Para atualizar sua cópia local com as últimas mudanças:
+
+```bash
+# Verificar se há atualizações disponíveis
+git fetch origin main
+git status # Mostra "Your branch is behind" se houver atualizações
+
+# Baixar atualizações
+git pull origin main
+
+# Reinstalar dependências
+npm install
 ```
 
 ## Tecnologias

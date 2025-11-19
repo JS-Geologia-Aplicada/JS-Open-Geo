@@ -24,6 +24,46 @@ const AboutPage = () => {
             gerando perda de informação e nos piores casos, problemas de
             projeto.
           </p>
+          <h4>Segurança de dados</h4>
+          <p>
+            Seus dados estão seguros ao utilizar o JS OpenGeo, pois o
+            processamento é feito 100% localmente no seu computador. Isso
+            significa que:{" "}
+          </p>
+          <ul>
+            <li>Seus arquivos e dados não são enviados para nenhum servidor</li>
+            <li>Nada é armazenado em nuvem ou bancos de dados</li>
+            <li>Não utilizamos nenhuma ferramenta de rastreamento</li>
+            <li>
+              Após o carregamento inicial da página, é possível utilizar o
+              programa mesmo sem acesso à internet
+            </li>
+          </ul>
+          <p>
+            Além disso, o código completo do JS OpenGeo é aberto, hospedado
+            publicamente no{" "}
+            <a
+              href="https://github.com/JS-Geologia-Aplicada/JS-Open-Geo"
+              target="_blank"
+              title="Repositório JS OpenGeo"
+            >
+              GitHub
+            </a>
+          </p>
+          <p>
+            Caso sua empresa tenha restrições com relação ao uso de ferramentas
+            online, é possível realizar uma cópia do código para o GitHub da
+            própria empresa, ou mesmo baixar e hospedar o programa localmente
+            seguindo as instruções disponíveis{" "}
+            <a
+              href="https://github.com/JS-Geologia-Aplicada/JS-Open-Geo?tab=readme-ov-file#executar-localmente"
+              target="_blank"
+              title="Intruções hospedagem local"
+            >
+              aqui
+            </a>
+            .
+          </p>
           <p>
             Os dados aqui tratados estão seguros, pois eles não são salvos após
             o processamento. Com relação a isso você pode confiar na JS Geologia
