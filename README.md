@@ -99,6 +99,17 @@ O terminal mostrará algo como:
 
 Clique no link segurando a tecla control ou abra o navegador e acesse: **http://localhost:5173/JS-Open-Geo/**
 
+Para **suspender** a execução do projeto:
+
+- Pressione `Ctrl + C` no terminal, **ou**
+- Feche o terminal
+
+Sempre que for utilizar o programa novamente, abra o terminal na pasta do projeto e execute:
+
+```bash
+npm run dev
+```
+
 ### Mantendo atualizado
 
 Para atualizar sua cópia local com as últimas mudanças:
