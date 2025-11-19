@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 import XlsxToKml from "@/components/Tools/XlsxToKml";
 import XlsxToDxfProfile from "@/components/Tools/XlsxToDxfProfile";
 import DistanceTool from "@/components/Tools/DistanceTool";
+import PyodidePlayground from "@/components/Tools/PyodidePlayground";
 
 export interface Tool {
   id: string;
@@ -49,6 +50,13 @@ export const TOOLS: Tool[] = [
     description: "Extrair dados de KMZ para planilha",
     component: KmlToXlsx,
     icon: new URL("@/assets/icons/KmlToXlsx.png", import.meta.url).href,
+  },
+  {
+    id: "pyodide-playground",
+    name: "Playground Pyodide",
+    description: "Testar funções do ezdxf via Pyodide",
+    component: PyodidePlayground,
+    icon: new URL("@/assets/icons/DxfTools.png", import.meta.url).href,
   },
 ];
 
