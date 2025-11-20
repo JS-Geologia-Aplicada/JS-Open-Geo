@@ -81,7 +81,7 @@ Abra um terminal na pasta que deseja baixar o projeto. Para fazer isso no Window
 git clone https://github.com/js-geologia-aplicada/js-open-geo
 
 # Entre na pasta do projeto:
-cd js-open-geo
+cd JS-Open-Geo
 
 # Instale as dependências:
 npm install
