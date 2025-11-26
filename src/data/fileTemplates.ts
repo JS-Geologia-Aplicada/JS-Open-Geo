@@ -14,20 +14,39 @@ export interface TemplateCategory {
 }
 
 const getPublicUrl = (path: string) => {
-  return `${import.meta.env.BASE_URL}${path}`;
+  const base = import.meta.env.BASE_URL || "/";
+  // Remove / do início de path se existir
+  const cleanPath = path.replace(/^\/+/, "");
+  // Remove / do final de base se existir
+  const cleanBase = base.replace(/\/+$/, "");
+  return `${cleanBase}/${cleanPath}`;
 };
 
 export const FILE_TEMPLATES: TemplateCategory[] = [
   {
-    id: "xlsxToDxfProfile",
-    label: "XLSX → Perfil DXF",
+    id: "dxfTools",
+    label: "Ferramentas DXF",
     templates: [
       {
-        id: "xlsxToDxf",
-        name: "XLSX exemplo",
-        description: "Planilha com colunas: Nome, Distância e Cota (opcional)",
-        fileName: "DXF_EixoX.xlsx",
-        fileUrl: getPublicUrl("/templates/DXF_EixoX.xlsx"),
+        id: "dxfTools",
+        name: "DXF exemplo",
+        description: "Arquivo DXF contendo pontos em bloco ou multileader",
+        fileName: "Modelo_JSOpenGeo_sem_numeracao.dxf",
+        fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo_sem_numeracao.dxf"),
+      },
+    ],
+  },
+  {
+    id: "distanceTool",
+    label: "Calcular Distâncias DXF",
+    templates: [
+      {
+        id: "distanceTools",
+        name: "DXF exemplo",
+        description:
+          "Arquivo DXF contendo pontos em bloco ou multileader e uma camada com polylines (uma única ou um conjunto)",
+        fileName: "Modelo_JSOpenGeo_medida_eixo.dxf",
+        fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo_medida_eixo.dxf"),
       },
     ],
   },
@@ -42,6 +61,19 @@ export const FILE_TEMPLATES: TemplateCategory[] = [
           "Planilha com colunas: Nome, X, Y e colunas adicionais de propriedades (opcionais)",
         fileName: "Modelo_JSOpenGeo.xlsx",
         fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo.xlsx"),
+      },
+    ],
+  },
+  {
+    id: "xlsxToDxfProfile",
+    label: "XLSX → Perfil DXF",
+    templates: [
+      {
+        id: "xlsxToDxf",
+        name: "XLSX exemplo",
+        description: "Planilha com colunas: Nome, Distância e Cota (opcional)",
+        fileName: "DXF_EixoX.xlsx",
+        fileUrl: getPublicUrl("/templates/DXF_EixoX.xlsx"),
       },
     ],
   },
@@ -69,33 +101,6 @@ export const FILE_TEMPLATES: TemplateCategory[] = [
         description: "Arquivo KMZ contendo pontos",
         fileName: "Modelo_JSOpenGeo.kmz",
         fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo.kmz"),
-      },
-    ],
-  },
-  {
-    id: "dxfTools",
-    label: "Ferramentas DXF",
-    templates: [
-      {
-        id: "dxfTools",
-        name: "DXF exemplo",
-        description: "Arquivo DXF contendo pontos em bloco ou multileader",
-        fileName: "Modelo_JSOpenGeo_sem_numeracao.dxf",
-        fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo_sem_numeracao.dxf"),
-      },
-    ],
-  },
-  {
-    id: "distanceTool",
-    label: "Calcular Distâncias DXF",
-    templates: [
-      {
-        id: "distanceTools",
-        name: "DXF exemplo",
-        description:
-          "Arquivo DXF contendo pontos em bloco ou multileader e uma camada com polylines (uma única ou um conjunto)",
-        fileName: "Modelo_JSOpenGeo_medida_eixo.dxf",
-        fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo_medida_eixo.dxf"),
       },
     ],
   },
