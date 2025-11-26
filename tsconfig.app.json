@@ -32,7 +32,8 @@
       "@data/*": ["./src/data/*"],
       "@contexts/*": ["./src/contexts/*"],
       "@hooks/*": ["./src/hooks/*"],
-      "@assets/*": ["./src/assets/*"]
+      "@assets/*": ["./src/assets/*"],
+      "@python/*": ["./src/python/*"]
     }
   },
   "include": ["src"]
