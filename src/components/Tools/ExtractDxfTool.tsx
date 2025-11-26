@@ -22,7 +22,7 @@ import {
   type DatumType,
   type ZoneType,
 } from "@utils/mapUtils";
-import { Button, Form, Table } from "react-bootstrap";
+import { Alert, Button, Form, Table } from "react-bootstrap";
 import {
   dxfColorToKml,
   KmlBuilder,
@@ -439,6 +439,9 @@ const ExtractDxfTool = () => {
               "application/dxf": [".dxf"],
             }}
           />
+          <Alert variant="info" className="mt-2 p-2">
+            O arquivo .dxf deve conter pontos em bloco ou multileader.
+          </Alert>
           {selectedFile && (
             <>
               {dxfType === "block" && (
