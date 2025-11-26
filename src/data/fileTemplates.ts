@@ -86,7 +86,7 @@ export const FILE_TEMPLATES: TemplateCategory[] = [
         name: "KML exemplo 1",
         description: "Arquivo KML contendo pontos",
         fileName: "Modelo_JSOpenGeo.kml",
-        fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo.kml"),
+        fileUrl: getPublicUrl("/templates/SondagensExemploJSOpenGeo.kml"),
       },
       {
         id: "kmlToXlsx2",
@@ -100,7 +100,7 @@ export const FILE_TEMPLATES: TemplateCategory[] = [
         name: "KMZ exemplo",
         description: "Arquivo KMZ contendo pontos",
         fileName: "Modelo_JSOpenGeo.kmz",
-        fileUrl: getPublicUrl("/templates/Modelo_JSOpenGeo.kmz"),
+        fileUrl: getPublicUrl("/templates/SondagensExemploJSOpenGeo.kmz"),
       },
     ],
   },
