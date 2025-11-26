@@ -298,6 +298,7 @@ const DistanceTool = () => {
               accept={{
                 "application/dxf": [".dxf"],
               }}
+              templateTab="distanceTool"
             />
             {selectedFile && (
               <>

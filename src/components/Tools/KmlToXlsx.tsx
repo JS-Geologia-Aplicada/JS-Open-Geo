@@ -132,6 +132,7 @@ const KmlToXlsx = () => {
               "application/vnd.google-earth.kml+xml": [".kml"],
               "application/vnd.google-earth.kmz": [".kmz"],
             }}
+            templateTab="kmlToXlsx"
           />
           {selectedFile && (
             <>

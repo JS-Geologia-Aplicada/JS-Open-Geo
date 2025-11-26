@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Sondagens DXF</name>
+    <Style id="G-SPT">
+      <IconStyle>
+        <color>ffffff00</color>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/kml/shapes/target.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Placemark>
+      <name>SP-015</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.698089021257424,-23.701244690015212,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377817.73</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326871.89</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-014</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69794152859852,-23.700781891752072,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377869.16</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326886.32</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-009</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.697831340226074,-23.70011650206002,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377942.98</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326896.68</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-006</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69838826296038,-23.699867407645463,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377969.89</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326839.56</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-010</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69858173070049,-23.700228168708257,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377929.70</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326820.30</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-012</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.6989513925538,-23.70048921664849,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377900.34</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326782.95</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-008</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.697422819259785,-23.699993787629477,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377957.07</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326938.18</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-011</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69709441695786,-23.700422142160186,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377910.03</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326972.23</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-013</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.6968877243969,-23.700729397491635,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377876.25</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326993.71</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-001</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69713532614883,-23.69938054356888,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7378025.33</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326966.69</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-002</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69661793143739,-23.699434539659908,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7378019.98</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=327019.52</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-003</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69609491127487,-23.6994596019073,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7378017.84</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=327072.89</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-004</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69718882124099,-23.699721977850242,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377987.45</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=326961.68</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-005</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69676802108096,-23.69985145802803,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377973.62</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=327004.76</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+    <Placemark>
+      <name>SP-007</name>
+      
+      <styleUrl>#G-SPT</styleUrl>
+      <Point>
+        <coordinates>-46.69626541616021,-23.69997706155752,0</coordinates>
+      </Point>
+      
+      <ExtendedData>
+        <Data name="Y=">
+          <displayName>Y=</displayName>
+          <value>Y=7377960.32</value>
+        </Data>
+<Data name="X=">
+          <displayName>X=</displayName>
+          <value>X=327056.18</value>
+        </Data>
+      </ExtendedData>
+        
+    </Placemark>
+  </Document>
+</kml>

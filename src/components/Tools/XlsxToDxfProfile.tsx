@@ -103,6 +103,7 @@ const XlsxToDxfProfile = () => {
                   [".xlsx"],
                 "application/vnd.ms-excel": [".xls"],
               }}
+              templateTab="xlsxToDxfProfile"
             />
             {selectedFile && (
               <>

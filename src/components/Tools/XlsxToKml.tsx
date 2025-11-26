@@ -245,6 +245,7 @@ const XlsxToKml = () => {
                 [".xlsx"],
               "application/vnd.ms-excel": [".xls"],
             }}
+            templateTab="xlsxToKml"
           />
           {selectedFile && (
             <>
