@@ -17,6 +17,7 @@ interface DataTableProps<T> {
   bordered?: boolean;
   hover?: boolean;
   size?: "sm" | undefined;
+  rowClassName?: (row: T) => string;
 }
 
 export const DataTable = <T extends Record<string, any>>({
@@ -29,6 +30,7 @@ export const DataTable = <T extends Record<string, any>>({
   bordered = true,
   hover = true,
   size = "sm",
+  rowClassName,
 }: DataTableProps<T>) => {
   if (data.length === 0) {
     return (
@@ -77,7 +79,7 @@ export const DataTable = <T extends Record<string, any>>({
           </thead>
           <tbody>
             {data.map((row, index) => (
-              <tr key={index}>
+              <tr key={index} className={rowClassName ? rowClassName(row) : ""}>
                 {columns.map((col) => (
                   <td
                     key={col.key}

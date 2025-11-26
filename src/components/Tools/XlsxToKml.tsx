@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Button, Form } from "react-bootstrap";
+import { Alert, Button, Form } from "react-bootstrap";
 import JSZip from "jszip";
 import { KmlBuilder, type KmlData } from "@/utils/kmlGenerator";
 import {
@@ -70,7 +70,10 @@ const XlsxToKml = () => {
   };
 
   // Processar dados com conversão
-  const processedData = useMemo((): ParsedSondagem[] => {
+  const processedData = useMemo((): {
+    valid: ParsedSondagem[];
+    invalid: { row: XlsxRow; reason: string }[];
+  } => {
     // Se faltar alguma config, retorna vazio
     if (
       nameColumnIndex === undefined ||
@@ -79,41 +82,71 @@ const XlsxToKml = () => {
       !selectedDatum ||
       rawData.length === 0
     ) {
-      return [];
+      return { valid: [], invalid: [] };
     }
 
     const nameCol = headers[nameColumnIndex];
     const xCol = headers[xColumnIndex];
     const yCol = headers[yColumnIndex];
 
-    return rawData.map((row) => {
-      let x = parseFloat(row[xCol]);
-      let y = parseFloat(row[yCol]);
+    const valid: ParsedSondagem[] = [];
+    const invalid: { row: XlsxRow; reason: string }[] = [];
+
+    rawData.forEach((row) => {
+      let xRaw = row[xCol];
+      let yRaw = row[yCol];
       const name = String(row[nameCol] || "Sem nome");
 
-      if (selectedDatum !== "WGS84" && selectedZone) {
-        [x, y] = convertGeographicCoordinates(
-          [x, y],
-          { datum: selectedDatum, zone: selectedZone },
-          { datum: "WGS84", zone: undefined }
-        );
+      const x = parseFloat(xRaw);
+      const y = parseFloat(yRaw);
+
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        invalid.push({
+          row,
+          reason: `Coordenadas inválidas: X=${xRaw}, Y=${yRaw}`,
+        });
+        return;
       }
 
-      const extraData: Record<string, any> = {};
-      headers.forEach((header, index) => {
-        if (
-          index !== nameColumnIndex &&
-          index !== xColumnIndex &&
-          index !== yColumnIndex
-        ) {
-          const value = row[header];
-          if (value !== null && value !== undefined && value !== "") {
-            extraData[header] = value;
-          }
+      try {
+        let lon = x;
+        let lat = y;
+        if (selectedDatum !== "WGS84" && selectedZone) {
+          [lon, lat] = convertGeographicCoordinates(
+            [x, y],
+            { datum: selectedDatum, zone: selectedZone },
+            { datum: "WGS84", zone: undefined }
+          );
         }
-      });
-      return { name, lon: x, lat: y, extraData };
+        if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+          invalid.push({
+            row,
+            reason: `Conversão gerou coordenadas inválidas`,
+          });
+          return;
+        }
+        const extraData: Record<string, any> = {};
+        headers.forEach((header, index) => {
+          if (
+            index !== nameColumnIndex &&
+            index !== xColumnIndex &&
+            index !== yColumnIndex
+          ) {
+            const value = row[header];
+            if (value !== null && value !== undefined && value !== "") {
+              extraData[header] = value;
+            }
+          }
+        });
+        valid.push({ name, lon: x, lat: y, extraData });
+      } catch (e) {
+        invalid.push({
+          row,
+          reason: `Erro na conversão: ${e}`,
+        });
+      }
     });
+    return { valid, invalid };
   }, [
     rawData,
     nameColumnIndex !== undefined,
@@ -125,11 +158,11 @@ const XlsxToKml = () => {
   ]);
 
   const handleExport = async (kmz: boolean) => {
-    if (processedData.length === 0) return;
+    if (processedData.valid.length === 0) return;
 
     const kml = new KmlBuilder("Sondagens XLSX");
 
-    processedData.forEach((sondagem) => {
+    processedData.valid.forEach((sondagem) => {
       const data: KmlData[] = Object.entries(sondagem.extraData)
         .filter(
           ([_, value]) => value !== null && value !== undefined && value !== ""
@@ -193,7 +226,7 @@ const XlsxToKml = () => {
     yColumnIndex !== undefined &&
     selectedDatum &&
     (selectedDatum === "WGS84" || selectedZone) &&
-    processedData.length > 0;
+    processedData.valid.length > 0;
 
   return (
     <ToolLayout
@@ -341,6 +374,13 @@ const XlsxToKml = () => {
                 </>
               </ToolControlSection>
               <ToolControlSection title="Exportar">
+                {processedData.invalid.length > 0 && (
+                  <Alert variant="warning">
+                    {processedData.invalid.length == 1
+                      ? `1 linha da planilha não pôde ser processada e não será exportada.`
+                      : `${processedData.invalid.length} linhas da planilha não puderam ser processadas e não serão exportadas.`}
+                  </Alert>
+                )}
                 <div className="d-flex gap-2">
                   <Button
                     onClick={() => handleExport(false)}
@@ -375,6 +415,13 @@ const XlsxToKml = () => {
               maxHeight="calc(100vh - 400px)"
               emptyMessage="Nenhum dado na planilha"
               title={`Planilha carregada (${rawData.length} linhas)`}
+              rowClassName={(row) => {
+                // Verificar se a linha está na lista de inválidas
+                const isInvalid = processedData.invalid.some(
+                  (inv) => inv.row === row
+                );
+                return isInvalid ? "table-danger" : ""; // ← Bootstrap class
+              }}
             />
           )}
         </>
