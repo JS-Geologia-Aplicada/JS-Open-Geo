@@ -16,6 +16,7 @@ export default defineConfig({
       "@data": path.resolve(__dirname, "./src/data"),
       "@hooks": path.resolve(__dirname, "./src/hooks"),
       "@contexts": path.resolve(__dirname, "./src/contexts"),
+      "@assets": path.resolve(__dirname, "./src/assets"),
     },
   },
   worker: {
