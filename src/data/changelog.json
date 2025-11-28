@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "2.0.1-beta",
+      "date": "2025-11-28",
+      "title": "Patch conversão de XLSX para KML/KMZ",
+      "summary": "Correção de erros na conversão de coordenadas.",
+      "features": [],
+      "improvements": ["Inclusão de arquivos de exemplo para download"],
+      "bugfixes": [
+        "Correção de erro que travava o site na ferramenta de conversão de XLSX para KML/KMZ ao tentar converter valores inválidos. Agora o programa avisa do erro e processa apenas os pontos válidos."
+      ],
+      "known_issues": []
+    },
+    {
       "version": "2.0.0-beta",
       "date": "2025-11-10",
       "title": "OpenGeo beta - Ferramentas CAD/SIG",
