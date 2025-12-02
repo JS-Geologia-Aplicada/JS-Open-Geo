@@ -262,10 +262,6 @@ generate_boreholes_dxf(data)
               </Button>
             </div>
           </ToolControlSection>
-
-          <div className="mt-3 text-start small">
-            <strong>Status:</strong> {status}
-          </div>
         </>
       }
       panel={

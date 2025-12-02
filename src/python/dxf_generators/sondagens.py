@@ -7,7 +7,7 @@ from ezdxf.layouts.layout import Modelspace
 from  ezdxf.entities.mleader import MLeaderStyle
 from io import StringIO
 from ezdxf.math import Vec2
-from ezdxf.render.mleader import HorizontalConnection, VerticalConnection, ConnectionSide
+from ezdxf.render.mleader import HorizontalConnection, VerticalConnection, ConnectionSide, TextAlignment
 
 # Cores ACI disponíveis para usar
 AVAILABLE_COLORS = [2, 3, 4, 5, 6]
@@ -17,8 +17,7 @@ def setup_mleaderstyle(doc: Drawing) -> None:
     
     if "Sondagens" not in doc.mleader_styles:
         style: 'MLeaderStyle' = doc.mleader_styles.duplicate_entry("Standard", "Sondagens")
-        style.dxf.text_attachment_direction = 0        
-        style.dxf.arrow_head_type = 0
+        style.dxf.text_attachment_direction = 0
         style.dxf.has_dogleg = 0
         style.dxf.has_landing = 1
         style.dxf.landing_gap_size = 1.0
@@ -192,13 +191,10 @@ def insert_borehole_block(msp: 'Modelspace', x: float, y: float, layer_name: str
     
 def add_borehole_label(
     msp: Modelspace,
-    doc: Drawing,
     x: float,
     y: float,
     text: str,
     layer_name: str,
-    angle: float = 30.0,
-    segment_length: float = 10.0,
     style_name: str = "Standard"
 ) -> None:
     """
@@ -218,25 +214,23 @@ def add_borehole_label(
     Returns:
         None
     """
-
-    
-    # Target point (centro do alvo da sondagem)
+    insertion = Vec2(x+20, y+15)
     target = Vec2(x, y)
-    
     # Criar multileader builder
     ml_builder = msp.add_multileader_mtext(style=style_name, dxfattribs={'layer': layer_name})
-    ml_builder.set_content(text, style="Arial")
-    ml_builder.set_arrow_properties(name="None")
-    ml_builder.set_connection_types(left=HorizontalConnection.by_style, right=HorizontalConnection.by_style, top=VerticalConnection.by_style, bottom=VerticalConnection.by_style)
-    ml_builder.add_leader_line(side=ConnectionSide.left, vertices=[target])
 
-    # Usar quick_leader para geometria automática
-    ml_builder.quick_leader(
-        text,
-        target=target,
-        segment1=Vec2.from_deg_angle(angle, segment_length),
-        connection_type=HorizontalConnection.bottom_of_bottom_line_underline
-    )
+    # Definir configurações
+    ml_builder.set_content(text, style="Arial")
+    ml_builder.add_leader_line(ConnectionSide.left, [target])
+    ml_builder.set_arrow_properties(name="None")
+    ml_builder.set_connection_types(
+        left=HorizontalConnection.bottom_of_bottom_line_underline,
+        right=HorizontalConnection.bottom_of_bottom_line_underline
+        )
+    ml_builder.set_connection_properties(dogleg_length=1)
+
+    # Build nas coordenadas (x, y)
+    ml_builder.build(insert=insertion)
 
 
 
@@ -270,10 +264,7 @@ def add_borehole_complete(
     
     # Adicionar identificação (multileader)
     add_borehole_label(
-        msp, doc, x, y, hole_id, layer_name,
-        angle=label_angle,
-        segment_length=label_segment_length,
-        style_name=style_name
+        msp, x, y, hole_id, layer_name
     )
 
 
