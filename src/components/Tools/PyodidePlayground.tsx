@@ -32,7 +32,6 @@ const PyodidePlayground = () => {
   const [loading, setLoading] = useState(false);
   const [pyodide, setPyodide] = useState<PyodideInterface | null>(null);
   const [ezdxfInstalled, setEzdxfInstalled] = useState(false);
-  const [testResult, setTestResult] = useState<string>("");
   const [modulesLoaded, setModulesLoaded] = useState(false);
 
   const handleInitPyodide = async () => {
@@ -77,9 +76,9 @@ const PyodidePlayground = () => {
     `);
 
       setModulesLoaded(true);
-      setStatus("Módulos Python carregados com sucesso!");
+      setStatus("Scripts carregados!");
     } catch (error) {
-      setStatus(`Erro ao carregar módulos: ${error}`);
+      setStatus(`Erro ao carregar scripts: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -99,33 +98,9 @@ const PyodidePlayground = () => {
       `);
 
       setEzdxfInstalled(true);
-      setStatus("ezdxf instalado com sucesso!");
+      setStatus("Lib ezdxf instalada!");
     } catch (error) {
       setStatus(`Erro ao instalar ezdxf: ${error}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTestEzdxf = async () => {
-    if (!pyodide || !ezdxfInstalled || !modulesLoaded) return;
-
-    setLoading(true);
-    setStatus("Testando módulos...");
-
-    try {
-      const result = await pyodide.runPythonAsync(`
-        import ezdxf
-        from dxf_generators.simple_shapes import generate_line_dxf
-        
-        f"ezdxf versão: {ezdxf.version}\\nMódulos importados com sucesso!"
-      `);
-
-      setTestResult(result);
-      setStatus("Teste concluído!");
-    } catch (error) {
-      setStatus(`Erro no teste: ${error}`);
-      setTestResult("");
     } finally {
       setLoading(false);
     }
@@ -135,7 +110,7 @@ const PyodidePlayground = () => {
     if (!pyodide || !ezdxfInstalled) return;
 
     setLoading(true);
-    setStatus("Recarregando módulos Python...");
+    setStatus("Recarregando scripts Python...");
 
     try {
       // Remover módulo do cache Python
@@ -150,9 +125,9 @@ const PyodidePlayground = () => {
       // Sobrescrever arquivos
       pyodide.FS.writeFile("/python/dxf_generators/sondagens.py", sondagensPy);
 
-      setStatus("Módulos recarregados com sucesso!");
+      setStatus("Scripts recarregados com sucesso!");
     } catch (error) {
-      setStatus(`Erro ao recarregar módulos: ${error}`);
+      setStatus(`Erro ao recarregar scripts: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -181,7 +156,7 @@ generate_boreholes_dxf(data)
       link.click();
       URL.revokeObjectURL(url);
 
-      setStatus("Teste de alvos gerado com sucesso!");
+      setStatus("Teste gerados!");
     } catch (error) {
       setStatus(`Erro ao gerar teste: ${error}`);
     } finally {
@@ -201,7 +176,7 @@ generate_boreholes_dxf(data)
                 onClick={handleInitPyodide}
                 disabled={loading || !!pyodide}
               >
-                {pyodide ? "✓ Pyodide Carregado" : "1. Inicializar Pyodide"}
+                {pyodide ? "✓ Pyodide carregado" : "1. Inicializar Pyodide"}
               </Button>
 
               <Button
@@ -209,7 +184,7 @@ generate_boreholes_dxf(data)
                 onClick={handleInstallEzdxf}
                 disabled={loading || !pyodide || ezdxfInstalled}
               >
-                {ezdxfInstalled ? "✓ ezdxf Instalado" : "2. Instalar ezdxf"}
+                {ezdxfInstalled ? "✓ ezdxf instalado" : "2. Instalar ezdxf"}
               </Button>
 
               <Button
@@ -218,8 +193,8 @@ generate_boreholes_dxf(data)
                 disabled={loading || !ezdxfInstalled || modulesLoaded}
               >
                 {modulesLoaded
-                  ? "✓ Módulos Carregados"
-                  : "3. Carregar Módulos Python"}
+                  ? "✓ Scripts carregados"
+                  : "3. Carregar scripts python"}
               </Button>
 
               <Button
@@ -227,27 +202,12 @@ generate_boreholes_dxf(data)
                 onClick={handleReloadModules}
                 disabled={loading || !modulesLoaded}
               >
-                Recarregar Móduloss
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={handleTestEzdxf}
-                disabled={loading || !modulesLoaded}
-              >
-                Testar Importação
+                Recarregar Scripts
               </Button>
 
               <div className="alert alert-info mb-0">
                 <strong>Status:</strong> {status}
               </div>
-
-              {testResult && (
-                <div className="alert alert-success mb-0">
-                  <strong>Resultado do Teste:</strong>
-                  <pre className="mb-0 mt-2">{testResult}</pre>
-                </div>
-              )}
             </div>
           </ToolControlSection>
 
@@ -264,16 +224,7 @@ generate_boreholes_dxf(data)
           </ToolControlSection>
         </>
       }
-      panel={
-        <div className="p-3">
-          {testResult && (
-            <div className="alert alert-success">
-              <strong>Resultado do teste:</strong>
-              <pre className="mb-0 mt-2">{testResult}</pre>
-            </div>
-          )}
-        </div>
-      }
+      panel={<div className="p-3"></div>}
     />
   );
 };
