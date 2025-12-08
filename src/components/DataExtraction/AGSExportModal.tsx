@@ -41,10 +41,10 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
   });
 
   const [tranInput, setTranInput] = useState({
-    TRAN_PROD: "JS OpenGeo",
+    TRAN_PROD: "",
     TRAN_RECV: "",
     TRAN_DESC: "",
-    TRAN_STAT: "Final",
+    TRAN_STAT: "",
   });
 
   const [abbreviations, setAbbreviations] = useState<AGSAbbreviation[]>([]);
@@ -231,7 +231,7 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
             </Form.Label>
             <Form.Control
               type="text"
-              placeholder="Ex: JS OpenGeo"
+              placeholder="Ex: GEOSon"
               value={tranInput.TRAN_PROD}
               onChange={(e) => handleTranChange("TRAN_PROD", e.target.value)}
             />
