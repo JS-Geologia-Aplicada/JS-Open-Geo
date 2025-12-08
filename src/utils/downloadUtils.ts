@@ -67,6 +67,18 @@ export const convertToPalitoData = (
       palitoEntry.z = z;
     }
 
+    // X (coordenada Leste)
+    const x = parseNumber(getSingleValueFromEntry(entry, typeToAreaName, "x"));
+    if (x !== -1) {
+      palitoEntry.x = x;
+    }
+
+    // Y (coordenada Norte)
+    const y = parseNumber(getSingleValueFromEntry(entry, typeToAreaName, "y"));
+    if (y !== -1) {
+      palitoEntry.y = y;
+    }
+
     // Water level (opcional)
     const waterLevel = getSingleValueFromEntry(
       entry,
