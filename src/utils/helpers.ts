@@ -50,7 +50,7 @@ export const filterTextContent = (
 export const nsptToString = (items: TextItem[]) => {
   const validNspts = items.filter((item) => {
     const trimmed = item.str.trim();
-    return /^(>|PM|PH|P|\d+)(\/\d+)?(\*+)?$|^-$/.test(trimmed);
+    return /^(>\d+|PM|PH|P|\d+)(\/\d+)?(\*+)?$|^-$/.test(trimmed);
   });
 
   if (validNspts.length === 0) {
