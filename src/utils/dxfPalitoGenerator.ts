@@ -75,7 +75,7 @@ export const generateDxfJs = async (
       },
       nspt: {
         x: 0.5744,
-        y: -1.1253,
+        y: -0.1253,
         height: 0.35,
         verticalAlignment: TextVerticalAlignment.Top,
         horizontalAlignment: TextHorizontalAlignment.Left,
@@ -245,7 +245,7 @@ export const generateDxfJs = async (
       },
       nspt: {
         x: 0.5745,
-        y: -1.1253,
+        y: -0.1253,
         height: 0.2,
         verticalAlignment: TextVerticalAlignment.Top,
         horizontalAlignment: TextHorizontalAlignment.Left,
