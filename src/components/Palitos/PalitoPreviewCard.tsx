@@ -416,7 +416,7 @@ const PalitoPreviewCard = ({
                         size="sm"
                         style={{ width: "60px" }}
                         value={
-                          editedPalito?.nspt.start_depth ||
+                          editedPalito?.nspt.start_depth ??
                           currentPalito.nspt.start_depth
                         }
                         onChange={(e) => {
@@ -474,7 +474,7 @@ const PalitoPreviewCard = ({
                           type="text"
                           size="sm"
                           style={{ width: "60px" }}
-                          value={editedPalito?.nspt.values[index] || nsptValue}
+                          value={editedPalito?.nspt.values[index] ?? nsptValue}
                           onChange={(e) => {
                             setEditedPalito((prev) => {
                               if (!prev) return null;
