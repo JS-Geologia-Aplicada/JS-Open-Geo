@@ -310,6 +310,7 @@ export interface AGSAbbreviation {
   code: string;
   description: string;
   isUserDefined?: boolean;
+  ignored?: boolean;
 }
 
 export interface AGSValidation {

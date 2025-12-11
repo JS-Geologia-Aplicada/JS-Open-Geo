@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Form, Modal, Alert } from "react-bootstrap";
+import { Button, Form, Modal, Alert, Table } from "react-bootstrap";
 import type { AGSProjectData, AGSAbbreviation, PalitoData } from "@/types";
 import {
   detectAbbreviations,
@@ -77,22 +77,11 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
     setTranInput((prev) => ({ ...prev, [field]: value }));
   };
 
-  //   const handleAbbreviationChange = (index: number, description: string) => {
-  //     setAbbreviations((prev) =>
-  //       prev.map((abbr, i) => (i === index ? { ...abbr, description } : abbr))
-  //     );
-  //   };
-
-  //   const handleAddAbbreviation = () => {
-  //     setAbbreviations((prev) => [
-  //       ...prev,
-  //       { code: "", description: "", isUserDefined: true },
-  //     ]);
-  //   };
-
-  //   const handleRemoveAbbreviation = (index: number) => {
-  //     setAbbreviations((prev) => prev.filter((_, i) => i !== index));
-  //   };
+  const handleAbbreviationChange = (index: number, description: string) => {
+    setAbbreviations((prev) =>
+      prev.map((abbr, i) => (i === index ? { ...abbr, description } : abbr))
+    );
+  };
 
   const handleExport = () => {
     // Validações
@@ -106,15 +95,18 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
     }
 
     // Valida abreviações
-    if (!validateAbbreviations(abbreviations)) {
+    const activeAbbreviations = abbreviations.filter((abbr) => !abbr.ignored);
+
+    // Valida abreviações
+    if (!validateAbbreviations(activeAbbreviations)) {
       setValidationError(
-        "Todas as abreviações precisam ter descrição. Preencha as descrições vazias ou remova as abreviações."
+        "Todas as abreviações ativas precisam ter descrição. Preencha as descrições vazias ou marque para ignorar."
       );
       return;
     }
 
     setValidationError("");
-    onExport(projectData, tranInput, abbreviations);
+    onExport(projectData, tranInput, activeAbbreviations);
   };
 
   return (
@@ -274,39 +266,33 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
         <hr />
 
         {/* Seção: Abreviações */}
-        {/* <h5 className="mb-3">Abreviações Detectadas (GEOL_GEOL)</h5>
+        <h5 className="mb-3">Abreviações Detectadas (GEOL_GEOL)</h5>
         {abbreviations.length === 0 ? (
           <Alert variant="info">
             Nenhuma abreviação detectada nos dados de interpretação geológica.
           </Alert>
         ) : (
           <>
+            <Alert variant="warning" className="small">
+              <strong>Atenção:</strong> Verifique as abreviações detectadas. Se
+              alguma não deveria estar aqui, marque "Ignorar" para excluí-la do
+              arquivo AGS.
+            </Alert>
             <Table striped bordered hover size="sm">
               <thead>
                 <tr>
-                  <th style={{ width: "20%" }}>Código</th>
-                  <th style={{ width: "70%" }}>Descrição</th>
-                  <th style={{ width: "10%" }}>Ações</th>
+                  <th style={{ width: "15%" }}>Código</th>
+                  <th style={{ width: "65%" }}>Descrição</th>
+                  <th style={{ width: "20%" }} className="text-center">
+                    Ignorar
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {abbreviations.map((abbr, index) => (
-                  <tr key={index}>
+                  <tr key={index} className={abbr.ignored ? "text-muted" : ""}>
                     <td>
-                      {abbr.isUserDefined ? (
-                        <Form.Control
-                          type="text"
-                          size="sm"
-                          value={abbr.code}
-                          onChange={(e) => {
-                            const newAbbrs = [...abbreviations];
-                            newAbbrs[index].code = e.target.value;
-                            setAbbreviations(newAbbrs);
-                          }}
-                        />
-                      ) : (
-                        <strong>{abbr.code}</strong>
-                      )}
+                      <strong>{abbr.code}</strong>
                     </td>
                     <td>
                       <Form.Control
@@ -316,37 +302,35 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
                         onChange={(e) =>
                           handleAbbreviationChange(index, e.target.value)
                         }
+                        disabled={abbr.ignored}
                         className={
-                          !abbr.description.trim() ? "border-danger" : ""
+                          !abbr.description.trim() && !abbr.ignored
+                            ? "border-danger"
+                            : ""
                         }
                       />
                     </td>
                     <td className="text-center">
-                      {abbr.isUserDefined && (
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="text-danger p-0"
-                          onClick={() => handleRemoveAbbreviation(index)}
-                        >
-                          <X size={16} />
-                        </Button>
-                      )}
+                      <Form.Check
+                        type="checkbox"
+                        checked={abbr.ignored || false}
+                        onChange={(e) => {
+                          setAbbreviations((prev) =>
+                            prev.map((a, i) =>
+                              i === index
+                                ? { ...a, ignored: e.target.checked }
+                                : a
+                            )
+                          );
+                        }}
+                      />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
-            <Button
-              variant="outline-secondary"
-              size="sm"
-              onClick={handleAddAbbreviation}
-            >
-              + Adicionar Abreviação
-            </Button>
-          </> 
+          </>
         )}
-          */}
       </Modal.Body>
 
       <Modal.Footer>
