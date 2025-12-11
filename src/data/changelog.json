@@ -7,10 +7,12 @@
       "summary": "Melhorias na geração de palitos e na extração de NSPT.",
       "features": [],
       "improvements": [
-        "Processamento de NSPTs na extração de dados do PDF agora aceita o caractere '>' e as expressões 'PM' e 'PH'"
+        "Processamento de NSPTs na extração de dados do PDF agora aceita o caractere '>' e as expressões 'PM' e 'PH'",
+        "Melhorias na edição de NSPT na página de geração de palitos de sondagem"
       ],
       "bugfixes": [
-        "Correção de alinhamento nos cabeçalhos nos palitos gerados nos modelos JS."
+        "Correção de alinhamento nos cabeçalhos nos palitos de sondagem gerados nos modelos JS",
+        "Correção no posicionamento NSPT na geração de palitos de sondagem"
       ],
       "known_issues": []
     },
