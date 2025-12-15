@@ -84,23 +84,30 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
   };
 
   const handleExport = () => {
-    // Validações
-    if (!projectData.PROJ_ID.trim()) {
-      setValidationError("ID do Projeto é obrigatório");
-      return;
-    }
-    if (!projectData.PROJ_NAME.trim()) {
-      setValidationError("Nome do Projeto é obrigatório");
+    // Validações PROJ e TRAN
+    const missingFields: Array<string> = [];
+    if (!projectData.PROJ_ID.trim()) missingFields.push("ID do projeto");
+    if (!projectData.PROJ_NAME.trim()) missingFields.push("Nome do projeto");
+    if (!tranInput.TRAN_PROD.trim())
+      missingFields.push("Fornecedor do arquivo de dados");
+    if (!tranInput.TRAN_RECV.trim())
+      missingFields.push("Receptor do arquivo de dados");
+    if (missingFields.length > 0) {
+      setValidationError(
+        `Informações incompletas para gerar arquivo AGS. ${
+          missingFields.length === 1
+            ? "1 campo ausente"
+            : `${missingFields.length} campos ausentes`
+        }: ${missingFields.join(", ")}.`
+      );
       return;
     }
 
     // Valida abreviações
     const activeAbbreviations = abbreviations.filter((abbr) => !abbr.ignored);
-
-    // Valida abreviações
     if (!validateAbbreviations(activeAbbreviations)) {
       setValidationError(
-        "Todas as abreviações ativas precisam ter descrição. Preencha as descrições vazias ou marque para ignorar."
+        "Todas as abreviações utilizadas precisam ter descrição. Preencha as descrições vazias ou marque para ignorar."
       );
       return;
     }
@@ -266,7 +273,9 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
         <hr />
 
         {/* Seção: Abreviações */}
-        <h5 className="mb-3">Abreviações Detectadas (GEOL_GEOL)</h5>
+        <h5 className="mb-3">
+          Abreviações detectadas (interpretação geológica)
+        </h5>
         {abbreviations.length === 0 ? (
           <Alert variant="info">
             Nenhuma abreviação detectada nos dados de interpretação geológica.
@@ -275,8 +284,8 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
           <>
             <Alert variant="warning" className="small">
               <strong>Atenção:</strong> Verifique as abreviações detectadas. Se
-              alguma não deveria estar aqui, marque "Ignorar" para excluí-la do
-              arquivo AGS.
+              alguma não deveria estar aqui, marque "Ignorar" para não incluí-la
+              no arquivo AGS.
             </Alert>
             <Table striped bordered hover size="sm">
               <thead>
@@ -339,8 +348,8 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
         </Button>
         <Button variant="success" onClick={handleExport}>
           <Download size={16} className="me-1" />
-          Exportar AGS ({palitoData.length} sondagem
-          {palitoData.length !== 1 ? "ns" : ""})
+          Exportar AGS ({palitoData.length} sondage
+          {palitoData.length !== 1 ? "ns" : "m"})
         </Button>
       </Modal.Footer>
     </Modal>
