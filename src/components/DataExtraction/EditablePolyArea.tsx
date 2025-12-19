@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Area, SelectionArea } from "@types";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface EditablePolyAreaProps {
   area: Area;
@@ -9,7 +10,6 @@ interface EditablePolyAreaProps {
   onConfirmNewCoords: (newCoords: SelectionArea, areaId: string) => void;
   onTempCoordsChange: (areaId: string, coords: SelectionArea) => void;
   zoomScale: number;
-  isSelectionActive: boolean;
 }
 
 const getResizeHandles = (coords: SelectionArea, zoomScale: number) => {
@@ -60,8 +60,10 @@ const EditablePolyArea = ({
   onConfirmNewCoords: onChangeCoords,
   onTempCoordsChange,
   zoomScale,
-  isSelectionActive,
 }: EditablePolyAreaProps) => {
+  const {
+    extractionState: { isSelectionActive },
+  } = useExtractionContext();
   const [tempCoords, setTempCoords] = useState<SelectionArea | null>(
     area.coordinates
   );

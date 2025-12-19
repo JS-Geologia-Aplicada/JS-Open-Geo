@@ -1,22 +1,18 @@
 import { Download, Play, Save, Trash2, X } from "lucide-react";
-import type { Area, AreaPreset } from "@types";
+import type { AreaPreset } from "@types";
 import { useEffect, useState } from "react";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface PresetManagerProps {
   isOpen: boolean;
   onClose: () => void;
-  currentAreas: Area[];
-  onLoadPreset: (areas: Area[]) => void;
 }
 
 const STORAGE_KEY = "extrator-dados-pdf-presets";
 
-const PresetManager: React.FC<PresetManagerProps> = ({
-  isOpen,
-  onClose,
-  currentAreas,
-  onLoadPreset,
-}) => {
+const PresetManager: React.FC<PresetManagerProps> = ({ isOpen, onClose }) => {
+  const { extractionState, updateExtractionState } = useExtractionContext();
+  const { areas } = extractionState;
   const [presetName, setPresetName] = useState<string>("");
   const [savedPresets, setSavedPresets] = useState<AreaPreset[]>([]);
 
@@ -47,14 +43,14 @@ const PresetManager: React.FC<PresetManagerProps> = ({
     if (!presetName.trim()) {
       return;
     }
-    if (currentAreas.length <= 0) {
+    if (areas.length <= 0) {
       alert("Não é possível salvar um preset sem áreas");
       return;
     }
 
     const newPreset: AreaPreset = {
       name: presetName.trim(),
-      areas: currentAreas,
+      areas: areas,
     };
 
     const updatedPresets = [...savedPresets, newPreset];
@@ -66,7 +62,7 @@ const PresetManager: React.FC<PresetManagerProps> = ({
   const handleLoadPreset = (preset: AreaPreset) => {
     if (!confirm("Isso vai substituir todas as áreas atuais. Continuar?"))
       return;
-    onLoadPreset(preset.areas);
+    updateExtractionState({ areas: preset.areas });
     onClose();
   };
 
@@ -167,18 +163,18 @@ const PresetManager: React.FC<PresetManagerProps> = ({
             <button
               className="btn btn-success"
               onClick={handleSavePreset}
-              disabled={!presetName.trim() || currentAreas.length === 0}
+              disabled={!presetName.trim() || areas.length === 0}
             >
               <Save size={16} className="me-1" />
               Salvar
             </button>
           </div>
           <small className="text-muted">
-            {currentAreas.length === 0
+            {areas.length === 0
               ? "Nenhuma área para salvar"
-              : currentAreas.length === 1
+              : areas.length === 1
               ? "1 área será salva"
-              : `${currentAreas.length} áreas serão salvas`}
+              : `${areas.length} áreas serão salvas`}
           </small>
         </div>
 

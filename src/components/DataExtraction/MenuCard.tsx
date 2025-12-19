@@ -1,17 +1,15 @@
 import React from "react";
-import type { Area } from "@types";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface MenuCardProps {
-  areas: Area[];
   areasMenu: React.ReactNode;
   extractMenu: React.ReactNode;
 }
 
-const MenuCard: React.FC<MenuCardProps> = ({
-  areasMenu,
-  extractMenu,
-  areas,
-}) => {
+const MenuCard: React.FC<MenuCardProps> = ({ areasMenu, extractMenu }) => {
+  const {
+    extractionState: { areas },
+  } = useExtractionContext();
   return (
     <div className="card mt-2">
       <div className="card-header">

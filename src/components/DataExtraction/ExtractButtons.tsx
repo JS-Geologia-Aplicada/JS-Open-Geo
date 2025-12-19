@@ -3,7 +3,6 @@ import {
   DATA_TYPE_LABELS,
   LEAPFROG_LABELS,
   LEAPFROG_TYPES,
-  type Area,
   type ExtractionProgress,
   type PageTextData,
 } from "@types";
@@ -21,32 +20,26 @@ import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { millisecondsToTimerFormat } from "@utils/helpers";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import MapModal from "./MapModal";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface ExtractButtonProps {
-  areas: Area[];
-  extractedTexts: PageTextData[];
-  hasFile: boolean;
-  isExtracting: boolean;
   extractionProgress: ExtractionProgress | null;
   extractionStartTime: number;
-  fileName: string | undefined;
   onPreview: () => void;
   onExtractTexts: () => Promise<PageTextData[]>;
   onCancelExtraction: () => void;
 }
 
 const ExtractButtons: React.FC<ExtractButtonProps> = ({
-  areas,
-  extractedTexts,
-  hasFile,
-  isExtracting,
   extractionProgress,
   extractionStartTime,
-  fileName,
   onPreview,
   onExtractTexts,
   onCancelExtraction,
 }) => {
+  const { extractionState } = useExtractionContext();
+  const { areas, extractedTexts, selectedFile, isExtracting } = extractionState;
+
   const [validationData, setValidationData] = useState<any>(
     downloadAllValidation(areas)
   );
@@ -160,9 +153,9 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
     <>
       <div className="d-flex align-items-center justify-content-between p-1">
         <div className="d-flex flex-column text-start">
-          {fileName && (
+          {selectedFile?.name && (
             <small className="text-muted">
-              Extraindo dados do arquivo <strong>{fileName}</strong>
+              Extraindo dados do arquivo <strong>{selectedFile.name}</strong>
             </small>
           )}
           <small className="text-muted">
@@ -207,7 +200,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                   disabled={
                     !(
                       areas.length > 0 &&
-                      hasFile &&
+                      !!selectedFile &&
                       areas.some((area) => area.coordinates)
                     )
                   }

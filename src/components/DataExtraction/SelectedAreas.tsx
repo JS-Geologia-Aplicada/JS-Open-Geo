@@ -1,22 +1,22 @@
 import { useState } from "react";
-import type { Area, SelectionArea } from "@types";
+import type { SelectionArea } from "@types";
 import EditablePolyArea from "./EditablePolyArea";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface SelectedAreasProps {
-  areas: Area[];
   zoomScale: number;
   activeAreaId: string | null;
   onChangeCoords: (newCoords: SelectionArea, areaId: string) => void;
-  isSelectionActive: boolean;
 }
 
 const SelectedAreas: React.FC<SelectedAreasProps> = ({
-  areas,
   zoomScale,
   activeAreaId,
   onChangeCoords: onConfirmNewCoords,
-  isSelectionActive,
 }) => {
+  const {
+    extractionState: { areas },
+  } = useExtractionContext();
   const [editingAreaId, setEditingAreaId] = useState<string | null>(null);
   const [latestTempCoords, setLatestTempCoords] =
     useState<SelectionArea | null>(null);
@@ -55,7 +55,6 @@ const SelectedAreas: React.FC<SelectedAreasProps> = ({
             onFinishEdit={handleFinishEdit}
             onConfirmNewCoords={onConfirmNewCoords}
             onTempCoordsChange={handleTempCoordsChange}
-            isSelectionActive={isSelectionActive}
           />
         );
       })}

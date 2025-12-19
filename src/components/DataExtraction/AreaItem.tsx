@@ -3,42 +3,30 @@ import { Check, Eraser, TextSelect, Trash, X } from "lucide-react";
 import {
   DATA_TYPE_LABELS,
   DATA_TYPES,
+  MANDATORY_TYPES,
+  REPEATING_TYPES,
   UNIQUE_TYPES,
   type Area,
   type DataType,
-  type ExtractionType,
 } from "@types";
 import { Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
+import {
+  clearArea,
+  deleteArea,
+  getUniqueName,
+  renameArea,
+  shouldRename,
+} from "@/utils/areaUtils";
 
 interface AreaItemProps {
-  hasFile: boolean;
   area: Area;
-  areas: Area[];
-  extractionMode: ExtractionType;
-  onStartSelection: (areaId: string) => void;
-  onClearArea: (areaId: string) => void;
-  onDeleteArea: (areaId: string) => void;
-  onRenameArea: (areaId: string, newName: string) => void;
-  onToggleMandatory: (areaId: string, mandatory: boolean) => void;
-  onToggleRepeat: (areaId: string, repeat: boolean) => void;
-  onToggleAreaOCR: (areaId: string, ocr: boolean) => void;
-  onChangeAreaType: (areaId: string, newType: DataType) => void;
 }
 
-const AreaItem: React.FC<AreaItemProps> = ({
-  hasFile,
-  area,
-  areas,
-  extractionMode,
-  onStartSelection,
-  onClearArea,
-  onDeleteArea,
-  onRenameArea,
-  onToggleMandatory,
-  onToggleRepeat,
-  onToggleAreaOCR,
-  onChangeAreaType,
-}) => {
+const AreaItem: React.FC<AreaItemProps> = ({ area }) => {
+  const { extractionState, updateExtractionState, updateArea } =
+    useExtractionContext();
+  const { areas, selectedFile, extractionMode } = extractionState;
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [editName, setEditName] = useState(area.name);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,13 +38,13 @@ const AreaItem: React.FC<AreaItemProps> = ({
   }, [isEditingName]);
 
   const handleStartSelection = () => {
-    onStartSelection(area.id);
+    updateExtractionState({ activeAreaId: area.id, isSelectionActive: true });
   };
   const handleDeleteArea = () => {
-    onDeleteArea(area.id);
+    updateExtractionState({ areas: deleteArea(areas, area.id) });
   };
   const handleClearArea = () => {
-    onClearArea(area.id);
+    updateExtractionState({ areas: clearArea(areas, area.id) });
   };
 
   const handleRename = () => {
@@ -74,7 +62,8 @@ const AreaItem: React.FC<AreaItemProps> = ({
   };
   const handleConfirmRename = () => {
     if (editName.trim() && editName.trim() !== area.name) {
-      onRenameArea(area.id, editName.trim());
+      const newName = editName.trim();
+      updateExtractionState({ areas: renameArea(areas, area.id, newName) });
       setIsEditingName(false);
     } else {
       handleCancelRename();
@@ -84,6 +73,32 @@ const AreaItem: React.FC<AreaItemProps> = ({
   const handleCancelRename = () => {
     setEditName(area.name);
     setIsEditingName(false);
+  };
+
+  const handleToggleMandatory = (isMandatory: boolean) => {
+    updateArea(area.id, { isMandatory });
+  };
+
+  const handleToggleRepeat = (repeatInPages: boolean) => {
+    updateArea(area.id, { repeatInPages });
+  };
+
+  const handleToggleAreaOCR = (ocr: boolean) => {
+    updateArea(area.id, { ocr });
+  };
+
+  const handleChangeAreaType = (dataType: DataType) => {
+    const repeatInPages = REPEATING_TYPES.includes(dataType);
+    const isMandatory = MANDATORY_TYPES.includes(dataType);
+
+    const name =
+      shouldRename(area.name) && dataType === "default"
+        ? getUniqueName("Nova Área", areas)
+        : shouldRename(area.name)
+        ? getUniqueName(DATA_TYPE_LABELS[dataType], areas)
+        : area.name;
+
+    updateArea(area.id, { dataType, repeatInPages, isMandatory, name });
   };
 
   return (
@@ -160,7 +175,7 @@ const AreaItem: React.FC<AreaItemProps> = ({
                 <Button
                   variant="menu"
                   className="btn-menu-cta"
-                  disabled={!hasFile}
+                  disabled={!selectedFile}
                   onClick={handleStartSelection}
                 >
                   <TextSelect size={16} />
@@ -206,9 +221,7 @@ const AreaItem: React.FC<AreaItemProps> = ({
             <select
               className="form-select form-select-sm w-100"
               value={area.dataType || ""}
-              onChange={(e) =>
-                onChangeAreaType(area.id, e.target.value as DataType)
-              }
+              onChange={(e) => handleChangeAreaType(e.target.value as DataType)}
             >
               <option value="default">Tipo padrão</option>
               {DATA_TYPES.filter(
@@ -237,7 +250,7 @@ const AreaItem: React.FC<AreaItemProps> = ({
                 id={`ocr-${area.id}`}
                 disabled={extractionMode !== "both"}
                 checked={area.ocr}
-                onChange={(e) => onToggleAreaOCR(area.id, e.target.checked)}
+                onChange={(e) => handleToggleAreaOCR(e.target.checked)}
               />
             </Form>
           </OverlayTrigger>
@@ -255,7 +268,7 @@ const AreaItem: React.FC<AreaItemProps> = ({
                 label="Obrig."
                 id={`mandatory-${area.id}`}
                 checked={area.isMandatory}
-                onChange={(e) => onToggleMandatory(area.id, e.target.checked)}
+                onChange={(e) => handleToggleMandatory(e.target.checked)}
               />
             </Form>
           </OverlayTrigger>
@@ -275,7 +288,7 @@ const AreaItem: React.FC<AreaItemProps> = ({
                 label="Único"
                 id={`repeat-${area.id}`}
                 checked={area.repeatInPages}
-                onChange={(e) => onToggleRepeat(area.id, e.target.checked)}
+                onChange={(e) => handleToggleRepeat(e.target.checked)}
                 disabled={!areas.find((a) => a.dataType === "hole_id")}
               />
             </Form>

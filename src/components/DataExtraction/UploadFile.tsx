@@ -1,11 +1,9 @@
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 import { PDFDocument } from "pdf-lib";
 import { useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "react-toastify";
 
-interface UploadFileProps {
-  onFileSelect: (file: File) => void;
-}
 // Limite de 100MB
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
@@ -19,12 +17,15 @@ const mergeFiles = async (files: File[]): Promise<File> => {
   }
 
   const mergedPdfSave = await mergedPdf.save();
-  const mergedBlob = new Blob([mergedPdfSave], { type: "application/pdf" });
-
+  const mergedBlob = new Blob([new Uint8Array(mergedPdfSave)], {
+    type: "application/pdf",
+  });
   return new File([mergedBlob], "PDFs-Unidos.pdf", { type: "application/pdf" });
 };
 
-const UploadFile = ({ onFileSelect }: UploadFileProps) => {
+const UploadFile = () => {
+  const { updateExtractionState } = useExtractionContext();
+
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isMerging, setIsMerging] = useState(false);
 
@@ -81,7 +82,7 @@ const UploadFile = ({ onFileSelect }: UploadFileProps) => {
       }
 
       setUploadedFile(file);
-      onFileSelect(file);
+      updateExtractionState({ selectedFile: file });
     }
   };
 
