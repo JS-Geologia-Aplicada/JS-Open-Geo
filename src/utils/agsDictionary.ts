@@ -61,14 +61,3 @@ export const detectAbbreviations = (
 
   return abbreviations.sort((a, b) => a.code.localeCompare(b.code));
 };
-
-/**
- * Valida se todas as abreviações têm definição
- * @param abbreviations Lista de abreviações
- * @returns true se todas têm definição, false caso contrário
- */
-export const validateAbbreviations = (
-  abbreviations: AGSAbbreviation[]
-): boolean => {
-  return abbreviations.every((abbr) => abbr.description.trim() !== "");
-};

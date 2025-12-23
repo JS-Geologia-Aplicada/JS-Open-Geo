@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Button, Form, Modal, Alert, Table } from "react-bootstrap";
-import type { AGSProjectData, AGSAbbreviation, PalitoData } from "@/types";
-import {
-  detectAbbreviations,
-  validateAbbreviations,
-} from "@/utils/agsDictionary";
-import { Download, X } from "lucide-react";
+import type {
+  AGSProjectData,
+  AGSAbbreviation,
+  PalitoData,
+  AGSTransmissionData,
+} from "@/types";
+import { detectAbbreviations } from "@/utils/agsDictionary";
+import { Download } from "lucide-react";
 
 interface AGSExportModalProps {
   show: boolean;
@@ -48,7 +50,6 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
   });
 
   const [abbreviations, setAbbreviations] = useState<AGSAbbreviation[]>([]);
-  const [validationError, setValidationError] = useState<string>("");
 
   // Detecta abreviações quando o modal abre ou palitoData muda
   useEffect(() => {
@@ -92,53 +93,118 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
       missingFields.push("Fornecedor do arquivo de dados");
     if (!tranInput.TRAN_RECV.trim())
       missingFields.push("Receptor do arquivo de dados");
-    if (missingFields.length > 0) {
-      setValidationError(
-        `Informações incompletas para gerar arquivo AGS. ${
-          missingFields.length === 1
-            ? "1 campo ausente"
-            : `${missingFields.length} campos ausentes`
-        }: ${missingFields.join(", ")}.`
-      );
-      return;
-    }
 
     // Valida abreviações
     const activeAbbreviations = abbreviations.filter((abbr) => !abbr.ignored);
-    if (!validateAbbreviations(activeAbbreviations)) {
-      setValidationError(
-        "Todas as abreviações utilizadas precisam ter descrição. Preencha as descrições vazias ou marque para ignorar."
-      );
-      return;
+    const abbrWithoutDesc = activeAbbreviations.filter(
+      (abbr) => !abbr.description.trim()
+    );
+
+    if (missingFields.length > 0 || abbrWithoutDesc.length > 0) {
+      let message = "Informações incompletas para gerar AGS.\n\n";
+      if (missingFields.length > 0) {
+        message +=
+          "Campos obrigatórios ausentes:\n- " +
+          missingFields.join("\n- ") +
+          "\n\n";
+        message += "Se continuar, valores padrões serão utilizados.\n\n";
+      }
+      if (abbrWithoutDesc.length > 0) {
+        message += `${abbrWithoutDesc.length} abreviações sem descrição.\n`;
+        message +=
+          "Se continuar, essas abreviações não serão incluídas no arquivo\n\n";
+      }
+      message += "Deseja continuar?";
+      if (!confirm(message)) return;
     }
 
-    setValidationError("");
-    onExport(projectData, tranInput, activeAbbreviations);
+    // Aplica valores padrão onde necessário
+    const finalProjectData: AGSProjectData = {
+      PROJ_ID: projectData.PROJ_ID.trim() || "01",
+      PROJ_NAME: projectData.PROJ_NAME.trim() || "Projeto",
+      PROJ_LOC: projectData.PROJ_LOC,
+      PROJ_CLNT: projectData.PROJ_CLNT,
+      PROJ_CONT: projectData.PROJ_CONT,
+      PROJ_ENG: projectData.PROJ_ENG,
+      PROJ_MEMO: projectData.PROJ_MEMO,
+    };
+
+    const finalTranData: AGSTransmissionData = {
+      ...tranInput,
+      TRAN_PROD: tranInput.TRAN_PROD.trim() || "Empresa",
+      TRAN_RECV: tranInput.TRAN_RECV.trim() || "Empresa",
+    };
+
+    // Filtra apenas abreviações com descrição
+    const finalAbbreviations = activeAbbreviations.filter(
+      (abbr) => abbr.description.trim() !== ""
+    );
+
+    onExport(finalProjectData, finalTranData, finalAbbreviations);
   };
 
   return (
     <Modal show={show} onHide={onClose} size="xl" centered>
-      <Modal.Header>
-        <Modal.Title>Exportar AGS</Modal.Title>
-        <Button
-          variant="link"
-          onClick={onClose}
-          className="text-dark p-0 border-0"
-        >
-          <X size={24} />
-        </Button>
+      <Modal.Header closeButton>
+        <Modal.Title>EXPORTAR - AGS4_BR (ABGE 301, 2024)</Modal.Title>
       </Modal.Header>
 
       <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
-        {validationError && (
-          <Alert
-            variant="danger"
-            dismissible
-            onClose={() => setValidationError("")}
-          >
-            {validationError}
-          </Alert>
-        )}
+        <Alert variant="info">
+          <h6>Sobre o formato AGS4_BR</h6>
+          <ul>
+            <li>
+              O arquivo AGS gerado aqui segue o padrão AGS4_BR da{" "}
+              <a
+                href="https://www.abge.org.br/arquivos/DTP_NormaABGE_301.pdf"
+                target="_blank"
+              >
+                DIRETRIZ NORMATIVA ABGE 301/2024.
+              </a>
+            </li>
+            <li>
+              O gerador de arquivo padrão AGS do JS OpenGeo está em caráter
+              experimental, veja abaixo as informações que você deve checar. O
+              arquivo gerado aqui passa no teste do{" "}
+              <a
+                href="www.ags.org.uk/data-format/ags-validator/"
+                target="_blank"
+              >
+                validador AGS
+              </a>
+              , mas muitas das informações são padrão, veja abaixo.
+            </li>
+            <li>
+              Verifique os campos obrigatórios e opcionais do AGS abaixo, e
+              preencha caso você tenha os dados. Caso não tenha os dados, o JS
+              OpenGeo exportará o arquivo com valores padrão nos campos
+              obrigatórios.
+            </li>
+            <li>
+              Verifique a lista de abreviaturas utilizadas no campo GEOL_GEOL
+              (Classificação/Código da Geologia). O JS OpenGeo insere no arquivo
+              AGS a lista da{" "}
+              <a
+                href="https://www.abge.org.br/arquivos/DTP_NormaABGE_301.pdf"
+                target="_blank"
+              >
+                DIRETRIZ NORMATIVA ABGE 301/2024.
+              </a>
+              .
+            </li>
+            <li>
+              Os campos GEOL_DESC e DETL_DESC contém a mesma informação,
+              extraída do perfil de sondagem.
+            </li>
+            <li>
+              No padrão AGS, o campo para o valor final de NSPT (ISPT_NVAL), é
+              um campo de número inteiro, portanto não permite frações (comuns
+              nos valores de NSPT lidos em campo). Por este motivo, apresentamos
+              o valor final de NSPT no campo ISPT_REP, que permite valores em
+              formato texto.
+            </li>
+          </ul>
+        </Alert>
 
         {/* Seção: Informações do Projeto */}
         <h5 className="mb-3">Informações do projeto</h5>

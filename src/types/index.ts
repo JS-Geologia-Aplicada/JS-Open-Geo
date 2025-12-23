@@ -295,15 +295,15 @@ export interface AGSProjectData {
 }
 
 export interface AGSTransmissionData {
-  TRAN_ISNO: string;
-  TRAN_DATE: string;
+  TRAN_ISNO?: string;
+  TRAN_DATE?: string;
   TRAN_PROD: string;
-  TRAN_STAT: string;
-  TRAN_AGS: string;
+  TRAN_STAT?: string;
+  TRAN_AGS?: string;
   TRAN_RECV: string;
   TRAN_DESC?: string;
-  TRAN_DLIM: string;
-  TRAN_RCON: string;
+  TRAN_DLIM?: string;
+  TRAN_RCON?: string;
 }
 
 export interface AGSAbbreviation {
