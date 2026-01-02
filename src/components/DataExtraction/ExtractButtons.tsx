@@ -21,6 +21,7 @@ import { millisecondsToTimerFormat } from "@utils/helpers";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import MapModal from "./MapModal";
 import { useExtractionContext } from "@/contexts/ExtractionContext";
+import PageExclusionModal from "./PageExclusion/PageExclusionModal";
 
 interface ExtractButtonProps {
   extractionProgress: ExtractionProgress | null;
@@ -49,6 +50,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
   const [decimalSeparator, setDecimalSeparator] = useState<"comma" | "dot">(
     "comma"
   );
+  const [showPageExclusionModal, setShowPageExclusionModal] = useState(false);
   useEffect(() => {
     setValidationData(downloadAllValidation(areas));
   }, [areas, advancedDownload]);
@@ -184,7 +186,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
           Ações
         </h6>
         <div className="d-flex justify-content-center">
-          {/* Botão de pré-visualizar */}
           <div className="d-flex gap-1">
             <div>
               <OverlayTrigger
@@ -211,6 +212,22 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
             </div>
             <div>
               <MapModal extractedTexts={extractedTexts} areas={areas} />
+            </div>
+            <div>
+              <OverlayTrigger
+                overlay={
+                  <Tooltip id="json-tooltip">
+                    Selecionar páginas para excluir
+                  </Tooltip>
+                }
+              >
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setShowPageExclusionModal(true)}
+                >
+                  Excluir páginas
+                </Button>
+              </OverlayTrigger>
             </div>
           </div>
         </div>
@@ -462,6 +479,11 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
           </div>
         </div>
       )}
+      {/* Modal */}
+      <PageExclusionModal
+        show={showPageExclusionModal}
+        onClose={() => setShowPageExclusionModal(false)}
+      />
     </>
   );
 };

@@ -12,16 +12,12 @@ interface ExtractionState {
   selectedFile: File | null;
   extractedTexts: PageTextData[];
   palitoData: PalitoData[];
-
-  excludedPages?: Set<number>; // páginas que não devem ser processadas
-
-  // Estados de UI/processo
   isExtracting: boolean;
   extractionProgress: ExtractionProgress | null;
-
   extractionMode: ExtractionType;
   isSelectionActive: boolean;
   activeAreaId: string | null;
+  excludedPages: Set<number>;
 }
 
 const ExtractionContext = createContext<ExtractionContextType | undefined>(
@@ -38,6 +34,7 @@ const initialState: ExtractionState = {
   extractionMode: "text",
   isSelectionActive: false,
   activeAreaId: null,
+  excludedPages: new Set<number>(),
 };
 
 interface ExtractionContextType {
@@ -45,6 +42,7 @@ interface ExtractionContextType {
   updateExtractionState: (updates: Partial<ExtractionState>) => void;
   resetExtractionState: () => void;
   updateArea: (areaId: string, updates: Partial<Area>) => void;
+  handleFileChange: (file: File) => void;
 }
 
 export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
@@ -68,6 +66,13 @@ export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
+  const handleFileChange = (file: File) => {
+    updateExtractionState({
+      selectedFile: file,
+      excludedPages: new Set<number>(), // 👈 Limpa ao trocar
+    });
+  };
+
   return (
     <ExtractionContext.Provider
       value={{
@@ -75,6 +80,7 @@ export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
         updateExtractionState,
         resetExtractionState,
         updateArea,
+        handleFileChange,
       }}
     >
       {children}
