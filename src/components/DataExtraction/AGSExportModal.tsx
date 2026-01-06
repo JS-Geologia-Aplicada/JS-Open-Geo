@@ -6,7 +6,7 @@ import type {
   PalitoData,
   AGSTransmissionData,
 } from "@/types";
-import { detectAbbreviations } from "@/utils/agsDictionary";
+import { DEFAULT_GEOLOGY_ABBREVIATIONS } from "@/utils/agsDictionary";
 import { Download } from "lucide-react";
 
 interface AGSExportModalProps {
@@ -49,21 +49,36 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
     TRAN_STAT: "",
   });
 
-  const [abbreviations, setAbbreviations] = useState<AGSAbbreviation[]>([]);
+  const [userAbbreviations, setUserAbbreviations] = useState<AGSAbbreviation[]>(
+    []
+  );
 
-  // Detecta abreviações quando o modal abre ou palitoData muda
   useEffect(() => {
     if (show && palitoData.length > 0) {
-      // Coleta todos os valores de interp de todas as sondagens
-      const allInterpValues: string[] = [];
-      palitoData.forEach((palito) => {
-        if (palito.interp) {
-          allInterpValues.push(...palito.interp);
-        }
+      const usedCodes = new Set<string>();
+      palitoData.forEach((sondagem) => {
+        if (!sondagem.interp) return;
+        sondagem.interp.forEach((interpValue) => {
+          if (!interpValue || interpValue.trim() === "") return;
+          const abbrs = interpValue
+            .split("+")
+            .map((abbr) => abbr.trim())
+            .filter((abbr) => abbr !== "");
+          abbrs.forEach((abbr) => usedCodes.add(abbr));
+        });
       });
+      const customCodes = Array.from(usedCodes).filter(
+        (code) => !DEFAULT_GEOLOGY_ABBREVIATIONS[code]
+      );
 
-      const detected = detectAbbreviations(allInterpValues);
-      setAbbreviations(detected);
+      const custom = customCodes.map((code) => ({
+        code,
+        description: "",
+        isUserDefined: true,
+        ignored: false,
+      }));
+
+      setUserAbbreviations(custom);
     }
   }, [show, palitoData]);
 
@@ -79,7 +94,7 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
   };
 
   const handleAbbreviationChange = (index: number, description: string) => {
-    setAbbreviations((prev) =>
+    setUserAbbreviations((prev) =>
       prev.map((abbr, i) => (i === index ? { ...abbr, description } : abbr))
     );
   };
@@ -95,7 +110,9 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
       missingFields.push("Receptor do arquivo de dados");
 
     // Valida abreviações
-    const activeAbbreviations = abbreviations.filter((abbr) => !abbr.ignored);
+    const activeAbbreviations = userAbbreviations.filter(
+      (abbr) => !abbr.ignored
+    );
     const abbrWithoutDesc = activeAbbreviations.filter(
       (abbr) => !abbr.description.trim()
     );
@@ -135,10 +152,18 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
       TRAN_RECV: tranInput.TRAN_RECV.trim() || "Empresa",
     };
 
-    // Filtra apenas abreviações com descrição
-    const finalAbbreviations = activeAbbreviations.filter(
-      (abbr) => abbr.description.trim() !== ""
-    );
+    const standardAbbreviations = Object.entries(
+      DEFAULT_GEOLOGY_ABBREVIATIONS
+    ).map(([code, description]) => ({
+      code,
+      description,
+      isUserDefined: false,
+    }));
+
+    const finalAbbreviations = [
+      ...standardAbbreviations, // TODAS as padrão
+      ...activeAbbreviations.filter((abbr) => abbr.description.trim() !== ""), // Só custom com descrição
+    ];
 
     onExport(finalProjectData, finalTranData, finalAbbreviations);
   };
@@ -175,33 +200,60 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
               , mas muitas das informações são padrão, veja abaixo.
             </li>
             <li>
-              Verifique os campos obrigatórios e opcionais do AGS abaixo, e
-              preencha caso você tenha os dados. Caso não tenha os dados, o JS
-              OpenGeo exportará o arquivo com valores padrão nos campos
-              obrigatórios.
+              Alguns validadores de AGS podem dar avisos sobre a presença de
+              caracteres acentuados. Esse aviso é esperado e não invalida o
+              arquivo AGS.
             </li>
             <li>
-              Verifique a lista de abreviaturas utilizadas no campo GEOL_GEOL
-              (Classificação/Código da Geologia). O JS OpenGeo insere no arquivo
-              AGS a lista da{" "}
+              Um arquivo AGS é tem seus dados organizados em diversos grupos,
+              sendo alguns obrigatórios e outros, opcionais. Cada campo possui
+              um ou mais cabeçalhos, associados a um tipo de dado, e também
+              podem ser obrigatórios ou opcionais.
+            </li>
+            <li>
+              Os grupos TYPE (definição dos tipos dos dados) e UNIT (definições
+              das unidades) são obrigatórios e gerados automaticamente pelo JS
+              OpenGeo, de acordo com as diretrizes da AGS4_BR
+            </li>
+            <li>
+              Os grupos PROJ (informações sobre o projeto), TRAN (informação
+              sobre a transmissão de dados / status dos dados) são obrigatórios,
+              e gerados a partir dos dados inseridos abaixo. Caso os dados
+              obrigatórios, marcados com asterísco, não sejam preenchidos, o JS
+              OpenGeo exportará o arquivo com valores padrão.
+            </li>
+            <li>
+              O grupo LOCA (detalhes da locação), presente em todos os arquivos
+              gerados pelo JS OpenGeo, é gerado com os dados extraídos do PDF.
+              Já os grupos GEOL (descrições geológicas de campo), DETL (detalhe
+              das descrições dos estratos), ISPT (resultados do ensaio de
+              penetração padrão) e WSTG (nível d’água – geral) são gerados de
+              acordo com a presença desses dados no PDF.
+            </li>
+            <li>
+              O campo grupo (abreviações) é obrigatório, e, no caso dos arquivos
+              gerados pelo JS OpenGeo, descreve as abreviações utilizadas no
+              cabeçalho GEOL_GEOL (interpretação geológica). O JS OpenGeo inclui
+              automaticamente as abreviações presentes na página 197 da{" "}
               <a
                 href="https://www.abge.org.br/arquivos/DTP_NormaABGE_301.pdf"
                 target="_blank"
               >
-                DIRETRIZ NORMATIVA ABGE 301/2024.
+                DIRETRIZ NORMATIVA ABGE 301/2024
               </a>
-              .
+              . Se seu arquivo possuir abreviações adicionais, poderá preencher
+              seus significados abaixo.
             </li>
             <li>
-              Os campos GEOL_DESC e DETL_DESC contém a mesma informação,
+              Os cabeçalhos GEOL_DESC e DETL_DESC contém a mesma informação,
               extraída do perfil de sondagem.
             </li>
             <li>
-              No padrão AGS, o campo para o valor final de NSPT (ISPT_NVAL), é
-              um campo de número inteiro, portanto não permite frações (comuns
+              No padrão AGS, o cabeçalho para o valor final de NSPT (ISPT_NVAL),
+              é um campo de número inteiro, portanto não permite frações (comuns
               nos valores de NSPT lidos em campo). Por este motivo, apresentamos
-              o valor final de NSPT no campo ISPT_REP, que permite valores em
-              formato texto.
+              o valor final de NSPT no cabeçalho ISPT_REP, que permite valores
+              em formato texto.
             </li>
           </ul>
         </Alert>
@@ -339,19 +391,15 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
         <hr />
 
         {/* Seção: Abreviações */}
-        <h5 className="mb-3">
-          Abreviações detectadas (interpretação geológica)
-        </h5>
-        {abbreviations.length === 0 ? (
-          <Alert variant="info">
-            Nenhuma abreviação detectada nos dados de interpretação geológica.
-          </Alert>
-        ) : (
+        {userAbbreviations.length > 0 && (
           <>
+            <h5 className="mb-3">
+              Abreviações adicionais (interpretação geológica)
+            </h5>
             <Alert variant="warning" className="small">
-              <strong>Atenção:</strong> Verifique as abreviações detectadas. Se
-              alguma não deveria estar aqui, marque "Ignorar" para não incluí-la
-              no arquivo AGS.
+              <strong>Atenção:</strong> As abreviações abaixo não constam na
+              diretriz normativa ABGE 301/2024. Forneça descrições ou marque
+              "Ignorar" para excluí-las
             </Alert>
             <Table striped bordered hover size="sm">
               <thead>
@@ -364,7 +412,7 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {abbreviations.map((abbr, index) => (
+                {userAbbreviations.map((abbr, index) => (
                   <tr key={index} className={abbr.ignored ? "text-muted" : ""}>
                     <td>
                       <strong>{abbr.code}</strong>
@@ -390,7 +438,7 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
                         type="checkbox"
                         checked={abbr.ignored || false}
                         onChange={(e) => {
-                          setAbbreviations((prev) =>
+                          setUserAbbreviations((prev) =>
                             prev.map((a, i) =>
                               i === index
                                 ? { ...a, ignored: e.target.checked }

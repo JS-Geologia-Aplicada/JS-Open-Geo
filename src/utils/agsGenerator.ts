@@ -178,7 +178,7 @@ export const createDefaultTRANData = (userInput: {
     TRAN_DATE: formattedDate,
     TRAN_PROD: userInput.TRAN_PROD || "",
     TRAN_STAT: userInput.TRAN_STAT || "Final",
-    TRAN_AGS: "AGS_BR",
+    TRAN_AGS: "4.1.1",
     TRAN_RECV: userInput.TRAN_RECV || "",
     TRAN_DESC: userInput.TRAN_DESC,
     TRAN_DLIM: "|",
