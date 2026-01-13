@@ -17,7 +17,7 @@ const AppNavigation = ({ currentPage, onChangePage }: AppNavigationProps) => {
               alt="JS OpenGeo"
               style={{ height: "40px" }}
             />
-            <span className="text-muted small mx-1">v2.0.2-beta</span>
+            <span className="text-muted small mx-1">v2.1.0-alpha</span>
           </div>
         </Navbar.Brand>
         <Nav className="mx-auto">

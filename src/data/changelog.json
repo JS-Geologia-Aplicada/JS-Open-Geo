@@ -1,6 +1,19 @@
 {
   "versions": [
     {
+      "version": "2.1.0-alpha",
+      "date": "2026-01-13",
+      "title": "Exportação AGS e Ignorar páginas",
+      "summary": "Exportação AGS e Ignorar páginas",
+      "features": [
+        "Exportação no formato AGS",
+        "Modal de selecionar páginas para serem excluídas"
+      ],
+      "improvements": [],
+      "bugfixes": [],
+      "known_issues": []
+    },
+    {
       "version": "2.0.2-beta",
       "date": "2025-12-10",
       "title": "Patch de correções",
