@@ -8,6 +8,7 @@ import {
   type PageTextData,
 } from "@types";
 import {
+  convertToPalitoData,
   downloadAllValidation,
   downloadSingleCSV,
   downloadZip,
@@ -21,6 +22,9 @@ import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { millisecondsToTimerFormat } from "@utils/helpers";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import MapModal from "./MapModal";
+import JSZip from "jszip";
+import { generateMultipleAGSFiles } from "@/utils/agsGenerator";
+import AGSExportModal from "./AGSExportModal";
 
 interface ExtractButtonProps {
   areas: Area[];
@@ -56,6 +60,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
   const [decimalSeparator, setDecimalSeparator] = useState<"comma" | "dot">(
     "comma"
   );
+  const [showAGSModal, setShowAGSModal] = useState<boolean>(false);
   useEffect(() => {
     setValidationData(downloadAllValidation(areas));
   }, [areas, advancedDownload]);
@@ -139,6 +144,63 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         return;
       }
       console.error("Download cancelado:", error);
+    }
+  };
+
+  const handleExportAGS = async (
+    projectData: any,
+    tranInput: any,
+    abbreviations: any
+  ) => {
+    try {
+      const extractedTexts = await onExtractTexts();
+      const palitoData = convertToPalitoData(areas, extractedTexts);
+
+      // Gera os arquivos AGS
+      const agsFiles = generateMultipleAGSFiles(
+        palitoData,
+        projectData,
+        tranInput,
+        abbreviations
+      );
+
+      // Se for apenas 1 arquivo, baixa direto
+      if (agsFiles.length === 1) {
+        const file = agsFiles[0];
+        const blob = new Blob([file.content], {
+          type: "text/plain;charset=utf-8",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = file.filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // Múltiplos arquivos - cria ZIP
+        const zip = new JSZip();
+        agsFiles.forEach((file) => {
+          zip.file(file.filename, file.content);
+        });
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "sondagens-ags.zip";
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      setShowAGSModal(false);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Extração cancelada pelo usuário"
+      ) {
+        return;
+      }
+      console.error("Erro ao exportar AGS:", error);
     }
   };
 
@@ -291,6 +353,17 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 </li>
               </ul>
             </div>
+
+            {/* Botão AGS */}
+            <OverlayTrigger
+              overlay={
+                <Tooltip id="ags-tooltip">Exportar no formato AGS4</Tooltip>
+              }
+            >
+              <Button variant="secondary" onClick={() => setShowAGSModal(true)}>
+                AGS
+              </Button>
+            </OverlayTrigger>
 
             {/* Dropdown de export Leapfrog */}
             <div className="d-flex flex-column align-items-start">
@@ -469,6 +542,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
           </div>
         </div>
       )}
+      {/* Modal Exportação AGS */}
+      <AGSExportModal
+        show={showAGSModal}
+        onClose={() => setShowAGSModal(false)}
+        palitoData={convertToPalitoData(areas, extractedTexts)}
+        onExport={handleExportAGS}
+      />
     </>
   );
 };

@@ -208,6 +208,8 @@ export const EXPORT_REQUIREMENTS: Record<LeapfrogType, string[]> = {
 export interface PalitoData {
   hole_id: string;
   max_depth?: number;
+  x?: number;
+  y?: number;
   z?: number;
   water_level?: number;
   depths: number[];
@@ -280,4 +282,40 @@ export interface ProfileSondagem {
   name: string;
   distance: number;
   z: number;
+}
+
+export interface AGSProjectData {
+  PROJ_ID: string;
+  PROJ_NAME: string;
+  PROJ_LOC?: string;
+  PROJ_CLNT?: string;
+  PROJ_CONT?: string;
+  PROJ_ENG?: string;
+  PROJ_MEMO?: string;
+}
+
+export interface AGSTransmissionData {
+  TRAN_ISNO?: string;
+  TRAN_DATE?: string;
+  TRAN_PROD: string;
+  TRAN_STAT?: string;
+  TRAN_AGS?: string;
+  TRAN_RECV: string;
+  TRAN_DESC?: string;
+  TRAN_DLIM?: string;
+  TRAN_RCON?: string;
+}
+
+export interface AGSAbbreviation {
+  code: string;
+  description: string;
+  isUserDefined?: boolean;
+  ignored?: boolean;
+}
+
+export interface AGSValidation {
+  isValid: boolean;
+  missingFields: string[];
+  detectedAbbreviations: AGSAbbreviation[];
+  errorMessage?: string;
 }
