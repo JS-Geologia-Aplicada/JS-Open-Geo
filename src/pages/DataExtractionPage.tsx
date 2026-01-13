@@ -26,8 +26,13 @@ interface DataExtractionPageProps {
 
 function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
   const { extractionState, updateExtractionState } = useExtractionContext();
-  const { areas, selectedFile, isSelectionActive, activeAreaId } =
-    extractionState;
+  const {
+    areas,
+    selectedFile,
+    isSelectionActive,
+    activeAreaId,
+    excludedPages,
+  } = extractionState;
   // ref do pdfviewer para poder chamar função
   const pdfViewerRef = useRef<PdfViewerRef>(null);
 
@@ -123,6 +128,7 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
       const extracted = await extractText(
         areas,
         pdfDocument,
+        excludedPages,
         controller.signal,
         setExtractionProgress
       );

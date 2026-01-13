@@ -42,7 +42,7 @@ interface ExtractionContextType {
   updateExtractionState: (updates: Partial<ExtractionState>) => void;
   resetExtractionState: () => void;
   updateArea: (areaId: string, updates: Partial<Area>) => void;
-  handleFileChange: (file: File) => void;
+  handleSelectedFileChange: (file: File) => void;
 }
 
 export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
@@ -66,7 +66,7 @@ export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const handleFileChange = (file: File) => {
+  const handleSelectedFileChange = (file: File) => {
     updateExtractionState({
       selectedFile: file,
       excludedPages: new Set<number>(), // 👈 Limpa ao trocar
@@ -80,7 +80,7 @@ export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
         updateExtractionState,
         resetExtractionState,
         updateArea,
-        handleFileChange,
+        handleSelectedFileChange,
       }}
     >
       {children}

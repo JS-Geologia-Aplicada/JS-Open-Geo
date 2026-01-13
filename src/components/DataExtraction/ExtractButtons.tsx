@@ -224,8 +224,9 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 <Button
                   variant={"secondary"}
                   onClick={() => setShowPageExclusionModal(true)}
+                  disabled={!selectedFile}
                 >
-                  Excluir páginas
+                  Ignorar páginas
                 </Button>
               </OverlayTrigger>
             </div>
@@ -251,7 +252,17 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 </Tooltip>
               }
             >
-              <Button variant="secondary" onClick={handleDownloadJSON}>
+              <Button
+                variant="secondary"
+                onClick={handleDownloadJSON}
+                disabled={
+                  !(
+                    areas.length > 0 &&
+                    !!selectedFile &&
+                    areas.some((area) => area.coordinates)
+                  )
+                }
+              >
                 JSON
               </Button>
             </OverlayTrigger>
@@ -267,6 +278,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                   variant="secondary"
                   type="button"
                   onClick={handleDownloadExcel}
+                  disabled={
+                    !(
+                      areas.length > 0 &&
+                      !!selectedFile &&
+                      areas.some((area) => area.coordinates)
+                    )
+                  }
                 >
                   Planilha
                 </Button>
@@ -277,6 +295,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 data-bs-toggle="dropdown"
                 aria-haspopup="true"
                 aria-expanded="false"
+                disabled={
+                  !(
+                    areas.length > 0 &&
+                    !!selectedFile &&
+                    areas.some((area) => area.coordinates)
+                  )
+                }
               >
                 <span className="visually-hidden">Mais opções</span>
               </button>

@@ -24,7 +24,7 @@ const mergeFiles = async (files: File[]): Promise<File> => {
 };
 
 const UploadFile = () => {
-  const { updateExtractionState } = useExtractionContext();
+  const { handleSelectedFileChange } = useExtractionContext();
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isMerging, setIsMerging] = useState(false);
@@ -82,7 +82,7 @@ const UploadFile = () => {
       }
 
       setUploadedFile(file);
-      updateExtractionState({ selectedFile: file });
+      handleSelectedFileChange(file);
     }
   };
 
