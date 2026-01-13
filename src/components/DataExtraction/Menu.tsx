@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import {
   DATA_TYPE_LABELS,
   EASY_ADD_TYPES,
-  type Area,
   type DataType,
   type ExtractionType,
 } from "@types";
@@ -20,50 +19,18 @@ import {
   OverlayTrigger,
   Tooltip,
 } from "react-bootstrap";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
+import { addNewArea } from "@/utils/areaUtils";
 
 interface MenuProps {
-  onFileSelect: (file: File) => void;
-  onStartAreaSelection: (areaID: string) => void;
-  onDeleteArea: (areaId: string) => void;
-  onDeleteAllAreas: () => void;
-  onRenameArea: (areaId: string, newName: string) => void;
-  onClearArea: (areaId: string) => void;
-  onAddNewArea: (type?: DataType) => void;
-  onCreateMissingAreas: () => void;
-  onLoadPreset: (areas: Area[]) => void;
   onDragEnd: (result: any) => void;
-  onToggleMandatory: (areaId: string, mandatory: boolean) => void;
-  onToggleRepeat: (areaId: string, repeat: boolean) => void;
-  onChangeAreaType: (areaId: string, newType: DataType) => void;
-  onToggleAreaOCR: (areaId: string, ocr: boolean) => void;
-  areas: Area[];
-  hasFile: boolean;
-  extractionMode: ExtractionType;
-  onChangeExtractionMode: (mode: ExtractionType) => void;
   onShowHelp: () => void;
 }
 
-function Menu({
-  onFileSelect,
-  onStartAreaSelection,
-  onDeleteArea,
-  onDeleteAllAreas,
-  onRenameArea,
-  onClearArea,
-  onAddNewArea,
-  onCreateMissingAreas,
-  onLoadPreset,
-  onDragEnd,
-  onToggleMandatory,
-  onToggleRepeat,
-  onChangeAreaType,
-  onToggleAreaOCR,
-  areas,
-  hasFile,
-  extractionMode,
-  onChangeExtractionMode: setExtractionMode,
-  onShowHelp,
-}: MenuProps) {
+function Menu({ onDragEnd, onShowHelp }: MenuProps) {
+  const { extractionState, updateExtractionState } = useExtractionContext();
+  const { areas, extractionMode } = extractionState;
+
   const [isPresetManagerOpen, setIsPresetManagerOpen] =
     useState<boolean>(false);
   const openPresetManager = () => {
@@ -72,7 +39,44 @@ function Menu({
 
   const clearAllAreas = () => {
     if (confirm("Deseja remover todas as áreas?")) {
-      onDeleteAllAreas();
+      updateExtractionState({ areas: [] });
+    }
+  };
+
+  const handleAddNewArea = (type?: DataType) => {
+    if (areas.length >= 15) {
+      alert("Limite de 15 áreas atingido");
+      return;
+    }
+    const isOCR = extractionMode === "ocr";
+    updateExtractionState({ areas: addNewArea(areas, isOCR, type) });
+  };
+
+  const handleCreateMissingAreas = () => {
+    const typesToAdd = EASY_ADD_TYPES.filter(
+      (type) => !areas.find((area) => area.dataType === type)
+    );
+
+    if (areas.length + typesToAdd.length > 15) {
+      alert("Não é possível adicionar todas - excederia o limite de 15 áreas");
+      return;
+    }
+
+    let currentAreas = [...areas];
+    const isOCR = extractionMode === "ocr";
+    typesToAdd.forEach((type) => {
+      currentAreas = addNewArea(currentAreas, isOCR, type);
+    });
+    // Adiciona todas de uma vez
+    updateExtractionState({ areas: currentAreas });
+  };
+
+  const handleChangeExtractionMode = (mode: ExtractionType) => {
+    updateExtractionState({ extractionMode: mode });
+    if (mode !== "both") {
+      const isOCR = mode === "ocr";
+      const updatedAreas = areas.map((area) => ({ ...area, ocr: isOCR }));
+      updateExtractionState({ areas: updatedAreas });
     }
   };
 
@@ -82,12 +86,14 @@ function Menu({
 
   return (
     <>
-      <UploadFile onFileSelect={onFileSelect} />
+      <UploadFile />
       <div className="d-flex justify-content-end gap-2 my-3">
         <Form.Select
           className="form-select form-select-sm"
           defaultValue={"text"}
-          onChange={(e) => setExtractionMode(e.target.value as ExtractionType)}
+          onChange={(e) =>
+            handleChangeExtractionMode(e.target.value as ExtractionType)
+          }
         >
           <option value="text">Extração de texto</option>
           <option value="ocr">Extração OCR</option>
@@ -138,7 +144,11 @@ function Menu({
               <Tooltip style={{ position: "fixed" }}>Adicionar área</Tooltip>
             }
           >
-            <Button type="button" variant="menu" onClick={() => onAddNewArea()}>
+            <Button
+              type="button"
+              variant="menu"
+              onClick={() => handleAddNewArea()}
+            >
               <Plus size={24} />
             </Button>
           </OverlayTrigger>
@@ -162,7 +172,7 @@ function Menu({
               return (
                 <Dropdown.Item
                   key={`list-item${index}`}
-                  onClick={() => onAddNewArea(type)}
+                  onClick={() => handleAddNewArea(type)}
                 >
                   {DATA_TYPE_LABELS[type]}
                 </Dropdown.Item>
@@ -171,7 +181,7 @@ function Menu({
             <Dropdown.Divider />
 
             <Dropdown.Item
-              onClick={onCreateMissingAreas}
+              onClick={handleCreateMissingAreas}
               disabled={EASY_ADD_TYPES.every((type) =>
                 areas.find((area) => area.dataType === type)
               )}
@@ -201,21 +211,7 @@ function Menu({
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                     >
-                      <AreaItem
-                        key={area.id}
-                        area={area}
-                        areas={areas}
-                        hasFile={hasFile}
-                        extractionMode={extractionMode}
-                        onStartSelection={onStartAreaSelection}
-                        onClearArea={onClearArea}
-                        onDeleteArea={onDeleteArea}
-                        onRenameArea={onRenameArea}
-                        onToggleMandatory={onToggleMandatory}
-                        onToggleRepeat={onToggleRepeat}
-                        onChangeAreaType={onChangeAreaType}
-                        onToggleAreaOCR={onToggleAreaOCR}
-                      />
+                      <AreaItem key={area.id} area={area} />
                     </div>
                   )}
                 </Draggable>
@@ -229,8 +225,6 @@ function Menu({
       <PresetManager
         isOpen={isPresetManagerOpen}
         onClose={() => setIsPresetManagerOpen(false)}
-        currentAreas={areas}
-        onLoadPreset={onLoadPreset}
       />
     </>
   );

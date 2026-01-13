@@ -5,25 +5,12 @@ import PdfViewer, {
 } from "@components/DataExtraction/PdfViewer";
 import Menu from "@components/DataExtraction/Menu";
 import {
-  DATA_TYPE_LABELS,
-  EASY_ADD_TYPES,
-  MANDATORY_TYPES,
-  REPEATING_TYPES,
-  type Area,
-  type DataType,
   type ExtractionProgress,
-  type ExtractionType,
   type PageTextData,
   type SelectionArea,
 } from "@types";
 import {
-  addNewArea,
-  clearArea,
-  deleteArea,
   generateAreasFingerprint,
-  getUniqueName,
-  renameArea,
-  shouldRename,
   updateAreaCoordinates,
 } from "@utils/areaUtils";
 import MenuCard from "@components/DataExtraction/MenuCard";
@@ -31,92 +18,32 @@ import { extractText } from "@utils/textExtractor";
 import ExtractedDataPanel from "@components/DataExtraction/ExtractedDataPanel";
 import ExtractButtons from "@/components/DataExtraction/ExtractButtons";
 import { Col, Row } from "react-bootstrap";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface DataExtractionPageProps {
-  areas: Area[];
-  setAreas: (areas: Area[]) => void;
-  selectedFile: File | null;
-  setSelectedFile: (file: File | null) => void;
-  extractedTexts: PageTextData[];
-  setExtractedTexts: (texts: PageTextData[]) => void;
   onShowHelp: () => void;
 }
 
-function DataExtractionPage({
-  areas,
-  setAreas,
-  selectedFile,
-  setSelectedFile,
-  extractedTexts,
-  setExtractedTexts,
-  onShowHelp,
-}: DataExtractionPageProps) {
+function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
+  const { extractionState, updateExtractionState } = useExtractionContext();
+  const {
+    areas,
+    selectedFile,
+    isSelectionActive,
+    activeAreaId,
+    excludedPages,
+  } = extractionState;
   // ref do pdfviewer para poder chamar função
   const pdfViewerRef = useRef<PdfViewerRef>(null);
 
   // state da extração de texto
-  const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [extractionProgress, setExtractionProgress] =
     useState<ExtractionProgress | null>(null);
   const [extractionStartTime, setExtractionStartTime] = useState<number>(0);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
 
-  // modo da extração de texto
-  const [extractionMode, setExtractionMode] = useState<ExtractionType>("text");
-
-  // state para áreas selecionadas
-  const [isSelectionActive, setIsSelectionActive] = useState(false);
-  const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
-
-  // criar nova área
-  const onAddNewArea = (type?: DataType) => {
-    if (areas.length >= 15) {
-      alert("Limite de 15 áreas atingido");
-      return;
-    }
-    const isOCR = extractionMode === "ocr";
-    setAreas(addNewArea(areas, isOCR, type));
-  };
-
-  // funções de manipulação das áreas
-  const onDeleteArea = (areaId: string) => {
-    setAreas(deleteArea(areas, areaId));
-  };
-  const handleDeleteAllAreas = () => {
-    setAreas([]);
-  };
-  const handleCreateMissingAreas = () => {
-    const typesToAdd = EASY_ADD_TYPES.filter(
-      (type) => !areas.find((area) => area.dataType === type)
-    );
-
-    if (areas.length + typesToAdd.length > 15) {
-      alert("Não é possível adicionar todas - excederia o limite de 15 áreas");
-      return;
-    }
-
-    let currentAreas = [...areas];
-    const isOCR = extractionMode === "ocr";
-    typesToAdd.forEach((type) => {
-      currentAreas = addNewArea(currentAreas, isOCR, type);
-    });
-    // Adiciona todas de uma vez
-    setAreas(currentAreas);
-  };
-
-  const onRenameArea = (areaId: string, newName: string) => {
-    setAreas(renameArea(areas, areaId, newName));
-  };
-  const onClearArea = (areaId: string) => {
-    setAreas(clearArea(areas, areaId));
-  };
-
   // funções de seleção de área
-  const startAreaSelection = (areaId: string) => {
-    setActiveAreaId(areaId);
-    setIsSelectionActive(true);
-  };
   const finishAreaSelection = (
     coords: SelectionArea,
     resizedAreaId?: string
@@ -127,12 +54,15 @@ function DataExtractionPage({
       ? activeAreaId
       : null;
     if (areaId) {
-      setAreas(updateAreaCoordinates(areas, areaId, coords));
+      updateExtractionState({
+        areas: updateAreaCoordinates(areas, areaId, coords),
+      });
     }
 
-    setActiveAreaId(null);
+    updateExtractionState({ activeAreaId: null });
+
     setTimeout(() => {
-      setIsSelectionActive(false);
+      updateExtractionState({ isSelectionActive: false });
     }, 10);
   };
 
@@ -159,7 +89,7 @@ function DataExtractionPage({
 
     const controller = new AbortController();
     setAbortController(controller);
-    setIsExtracting(true);
+    updateExtractionState({ isExtracting: true });
     setExtractionStartTime(Date.now());
 
     try {
@@ -198,11 +128,12 @@ function DataExtractionPage({
       const extracted = await extractText(
         areas,
         pdfDocument,
+        excludedPages,
         controller.signal,
         setExtractionProgress
       );
 
-      setExtractedTexts(extracted);
+      updateExtractionState({ extractedTexts: extracted });
       setCachedExtractedTexts(extracted);
       setLastExtractedFingerprint(
         generateAreasFingerprint(areas, selectedFile)
@@ -212,7 +143,7 @@ function DataExtractionPage({
     } catch (error) {
       throw error;
     } finally {
-      setIsExtracting(false);
+      updateExtractionState({ isExtracting: false });
       setExtractionProgress(null);
       setAbortController(null);
     }
@@ -220,24 +151,18 @@ function DataExtractionPage({
 
   const handlePreview = async () => {
     try {
-      setIsExtracting(true);
+      updateExtractionState({ isExtracting: true });
       await handleExtraxtTexts();
     } catch (error) {
       console.error("Erro na extração: ", error);
     } finally {
-      setIsExtracting(false);
+      updateExtractionState({ isExtracting: false });
     }
-  };
-
-  // função carregar presets
-  const onLoadPreset = (areas: Area[]) => {
-    setAreas(areas);
   };
 
   // Cancelar seleção
   const cancelSelection = () => {
-    setIsSelectionActive(false);
-    setActiveAreaId(null);
+    updateExtractionState({ isSelectionActive: false, activeAreaId: null });
   };
 
   useEffect(() => {
@@ -280,61 +205,7 @@ function DataExtractionPage({
       order: index + 1,
     }));
 
-    setAreas(updatedAreas);
-  };
-
-  const handleToggleMandatory = (areaId: string, mandatory: boolean) => {
-    setAreas(
-      areas.map((area) =>
-        area.id === areaId ? { ...area, isMandatory: mandatory } : area
-      )
-    );
-  };
-
-  const handleToggleRepeat = (areaId: string, repeat: boolean) => {
-    setAreas(
-      areas.map((area) =>
-        area.id === areaId ? { ...area, repeatInPages: repeat } : area
-      )
-    );
-  };
-
-  const handleToggleAreaOCR = (areaId: string, ocr: boolean) => {
-    setAreas(
-      areas.map((area) => (area.id === areaId ? { ...area, ocr: ocr } : area))
-    );
-  };
-
-  const handleChangeExtractionMode = (mode: ExtractionType) => {
-    setExtractionMode(mode);
-    if (mode !== "both") {
-      const isOCR = mode === "ocr";
-      setAreas(areas.map((area) => ({ ...area, ocr: isOCR })));
-    }
-  };
-
-  const handleChangeAreaType = (areaId: string, newType: DataType) => {
-    const repeat = REPEATING_TYPES.includes(newType);
-    const mandatory = MANDATORY_TYPES.includes(newType);
-
-    setAreas(
-      areas.map((area) =>
-        area.id === areaId
-          ? {
-              ...area,
-              dataType: newType,
-              repeatInPages: repeat,
-              isMandatory: mandatory,
-              name:
-                shouldRename(area.name) && newType === "default"
-                  ? getUniqueName("Nova Área", areas)
-                  : shouldRename(area.name)
-                  ? getUniqueName(DATA_TYPE_LABELS[newType], areas)
-                  : area.name,
-            }
-          : area
-      )
-    );
+    updateExtractionState({ areas: updatedAreas });
   };
 
   const handleCancelExtraction = () => {
@@ -355,42 +226,16 @@ function DataExtractionPage({
           style={{ maxWidth: "450px", minWidth: "300px" }}
         >
           <MenuCard
-            areas={areas}
             areasMenu={
-              <Menu
-                onFileSelect={setSelectedFile}
-                onStartAreaSelection={startAreaSelection}
-                onClearArea={onClearArea}
-                onDeleteArea={onDeleteArea}
-                onDeleteAllAreas={handleDeleteAllAreas}
-                onRenameArea={onRenameArea}
-                onAddNewArea={onAddNewArea}
-                onCreateMissingAreas={handleCreateMissingAreas}
-                onLoadPreset={onLoadPreset}
-                onDragEnd={handleDragEnd}
-                onToggleMandatory={handleToggleMandatory}
-                onToggleRepeat={handleToggleRepeat}
-                onChangeAreaType={handleChangeAreaType}
-                onToggleAreaOCR={handleToggleAreaOCR}
-                areas={areas}
-                hasFile={!!selectedFile}
-                extractionMode={extractionMode}
-                onChangeExtractionMode={handleChangeExtractionMode}
-                onShowHelp={onShowHelp}
-              />
+              <Menu onDragEnd={handleDragEnd} onShowHelp={onShowHelp} />
             }
             extractMenu={
               <ExtractButtons
                 onPreview={handlePreview}
                 onExtractTexts={handleExtraxtTexts}
                 onCancelExtraction={handleCancelExtraction}
-                areas={areas}
-                hasFile={!!selectedFile}
-                isExtracting={isExtracting}
                 extractionProgress={extractionProgress}
                 extractionStartTime={extractionStartTime}
-                fileName={selectedFile?.name}
-                extractedTexts={extractedTexts}
               />
             }
           ></MenuCard>
@@ -398,19 +243,11 @@ function DataExtractionPage({
         <Col xs={12} lg={6} xxl={5} xxxl={4}>
           <PdfViewer
             ref={pdfViewerRef}
-            file={selectedFile}
-            isSelectionActive={isSelectionActive}
-            activeAreaId={activeAreaId}
             onFinishSelection={finishAreaSelection}
-            areas={areas}
           />
         </Col>
         <Col xs={12} lg={6} xxl={3} xxxl={4}>
-          <ExtractedDataPanel
-            extractedTexts={extractedTexts}
-            isExtracting={isExtracting}
-            fileName={selectedFile?.name || undefined}
-          />
+          <ExtractedDataPanel />
         </Col>
       </Row>
     </>

@@ -16,17 +16,14 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 import { Document, Page } from "react-pdf";
 
-import type { Area, SelectionArea } from "@types";
+import type { SelectionArea } from "@types";
 import { clamp } from "@utils/helpers";
 import SelectedAreas from "./SelectedAreas";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface PdfViewerProps {
-  file: File | null;
-  isSelectionActive: boolean;
-  activeAreaId: string | null;
   onFinishSelection: (coords: SelectionArea, resizedAreaId?: string) => void;
-  areas: Area[];
 }
 
 // Referências para chamar funções a partir de outros componentes
@@ -38,11 +35,10 @@ const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 3;
 
 const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
-  (
-    { file, isSelectionActive, activeAreaId, onFinishSelection, areas },
-    ref
-  ) => {
+  ({ onFinishSelection }, ref) => {
     const documentRef = useRef<any>(null);
+    const { extractionState } = useExtractionContext();
+    const { activeAreaId, isSelectionActive, selectedFile } = extractionState;
 
     // constantes para virar páginas
     const [numPages, setNumPages] = useState<number>();
@@ -280,7 +276,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     }, []);
 
     useEffect(() => {
-      if (!file) return;
+      if (!selectedFile) return;
 
       const containerElement = document.querySelector(
         ".pdf-container"
@@ -325,7 +321,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       return () => {
         containerElement.removeEventListener("wheel", handleWheel);
       };
-    }, [file, zoomScale]);
+    }, [selectedFile, zoomScale]);
 
     useEffect(() => {
       if (pendingPan) {
@@ -350,7 +346,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             marginBottom: "15px",
           }}
         >
-          {!file ? (
+          {!selectedFile ? (
             <div className="mt-3">
               <p className="text-muted">
                 Carregue um pdf para ser exibido aqui
@@ -377,7 +373,7 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
               >
                 {/* Documento */}
                 <Document
-                  file={file}
+                  file={selectedFile}
                   onLoadSuccess={(pdfDoc) => {
                     setNumPages(pdfDoc.numPages);
                     setPageNumber(1);
@@ -394,10 +390,8 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
                 </Document>
                 {/* Div para exibir área de seleção concluída */}
                 <SelectedAreas
-                  areas={areas}
                   zoomScale={zoomScale}
                   activeAreaId={activeAreaId}
-                  isSelectionActive={isSelectionActive}
                   onChangeCoords={onFinishSelection}
                 />
                 {/* Div para exibir área sendo selecionada */}

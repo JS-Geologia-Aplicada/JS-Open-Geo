@@ -8,9 +8,12 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./custom.scss";
 import "bootstrap";
 import App from "./App.tsx";
+import { AppProviders } from "./contexts/AppContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <AppProviders>
+      <App />
+    </AppProviders>
   </StrictMode>
 );

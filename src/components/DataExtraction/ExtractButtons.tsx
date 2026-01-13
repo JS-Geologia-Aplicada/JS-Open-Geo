@@ -3,7 +3,6 @@ import {
   DATA_TYPE_LABELS,
   LEAPFROG_LABELS,
   LEAPFROG_TYPES,
-  type Area,
   type ExtractionProgress,
   type PageTextData,
 } from "@types";
@@ -22,35 +21,30 @@ import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { millisecondsToTimerFormat } from "@utils/helpers";
 import { Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import MapModal from "./MapModal";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
+import PageExclusionModal from "./PageExclusion/PageExclusionModal";
 import JSZip from "jszip";
 import { generateMultipleAGSFiles } from "@/utils/agsGenerator";
 import AGSExportModal from "./AGSExportModal";
 
 interface ExtractButtonProps {
-  areas: Area[];
-  extractedTexts: PageTextData[];
-  hasFile: boolean;
-  isExtracting: boolean;
   extractionProgress: ExtractionProgress | null;
   extractionStartTime: number;
-  fileName: string | undefined;
   onPreview: () => void;
   onExtractTexts: () => Promise<PageTextData[]>;
   onCancelExtraction: () => void;
 }
 
 const ExtractButtons: React.FC<ExtractButtonProps> = ({
-  areas,
-  extractedTexts,
-  hasFile,
-  isExtracting,
   extractionProgress,
   extractionStartTime,
-  fileName,
   onPreview,
   onExtractTexts,
   onCancelExtraction,
 }) => {
+  const { extractionState } = useExtractionContext();
+  const { areas, extractedTexts, selectedFile, isExtracting } = extractionState;
+
   const [validationData, setValidationData] = useState<any>(
     downloadAllValidation(areas)
   );
@@ -60,6 +54,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
   const [decimalSeparator, setDecimalSeparator] = useState<"comma" | "dot">(
     "comma"
   );
+  const [showPageExclusionModal, setShowPageExclusionModal] = useState(false);
   const [showAGSModal, setShowAGSModal] = useState<boolean>(false);
   useEffect(() => {
     setValidationData(downloadAllValidation(areas));
@@ -222,9 +217,9 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
     <>
       <div className="d-flex align-items-center justify-content-between p-1">
         <div className="d-flex flex-column text-start">
-          {fileName && (
+          {selectedFile?.name && (
             <small className="text-muted">
-              Extraindo dados do arquivo <strong>{fileName}</strong>
+              Extraindo dados do arquivo <strong>{selectedFile.name}</strong>
             </small>
           )}
           <small className="text-muted">
@@ -253,7 +248,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
           Ações
         </h6>
         <div className="d-flex justify-content-center">
-          {/* Botão de pré-visualizar */}
           <div className="d-flex gap-1">
             <div>
               <OverlayTrigger
@@ -269,7 +263,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                   disabled={
                     !(
                       areas.length > 0 &&
-                      hasFile &&
+                      !!selectedFile &&
                       areas.some((area) => area.coordinates)
                     )
                   }
@@ -280,6 +274,23 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
             </div>
             <div>
               <MapModal extractedTexts={extractedTexts} areas={areas} />
+            </div>
+            <div>
+              <OverlayTrigger
+                overlay={
+                  <Tooltip id="json-tooltip">
+                    Selecionar páginas para excluir
+                  </Tooltip>
+                }
+              >
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setShowPageExclusionModal(true)}
+                  disabled={!selectedFile}
+                >
+                  Ignorar páginas
+                </Button>
+              </OverlayTrigger>
             </div>
           </div>
         </div>
@@ -303,7 +314,17 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 </Tooltip>
               }
             >
-              <Button variant="secondary" onClick={handleDownloadJSON}>
+              <Button
+                variant="secondary"
+                onClick={handleDownloadJSON}
+                disabled={
+                  !(
+                    areas.length > 0 &&
+                    !!selectedFile &&
+                    areas.some((area) => area.coordinates)
+                  )
+                }
+              >
                 JSON
               </Button>
             </OverlayTrigger>
@@ -319,6 +340,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                   variant="secondary"
                   type="button"
                   onClick={handleDownloadExcel}
+                  disabled={
+                    !(
+                      areas.length > 0 &&
+                      !!selectedFile &&
+                      areas.some((area) => area.coordinates)
+                    )
+                  }
                 >
                   Planilha
                 </Button>
@@ -329,6 +357,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 data-bs-toggle="dropdown"
                 aria-haspopup="true"
                 aria-expanded="false"
+                disabled={
+                  !(
+                    areas.length > 0 &&
+                    !!selectedFile &&
+                    areas.some((area) => area.coordinates)
+                  )
+                }
               >
                 <span className="visually-hidden">Mais opções</span>
               </button>
@@ -360,7 +395,17 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 <Tooltip id="ags-tooltip">Exportar no formato AGS4</Tooltip>
               }
             >
-              <Button variant="secondary" onClick={() => setShowAGSModal(true)}>
+              <Button
+                variant="secondary"
+                onClick={() => setShowAGSModal(true)}
+                disabled={
+                  !(
+                    areas.length > 0 &&
+                    !!selectedFile &&
+                    areas.some((area) => area.coordinates)
+                  )
+                }
+              >
                 AGS
               </Button>
             </OverlayTrigger>
@@ -542,6 +587,11 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
           </div>
         </div>
       )}
+      {/* Modal */}
+      <PageExclusionModal
+        show={showPageExclusionModal}
+        onClose={() => setShowPageExclusionModal(false)}
+      />
       {/* Modal Exportação AGS */}
       <AGSExportModal
         show={showAGSModal}

@@ -23,6 +23,7 @@ import {
 export const extractText = async (
   areas: Area[],
   pdfDocument: any,
+  excludedPages: Set<number>,
   abortSignal?: AbortSignal,
   onProgress?: (progress: ExtractionProgress) => void
 ): Promise<PageTextData[]> => {
@@ -115,6 +116,7 @@ export const extractText = async (
 
     const validPages: number[] = [];
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      if (excludedPages.has(pageNum)) continue;
       checkAborted();
       onProgress?.({
         stage: "validating",

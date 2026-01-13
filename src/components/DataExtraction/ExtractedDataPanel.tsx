@@ -1,18 +1,10 @@
 import { Table } from "react-bootstrap";
-import { type PageTextData } from "@types";
 import { formatPageNumbers } from "@utils/helpers";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
-interface ExtractedDataPanelProps {
-  extractedTexts: PageTextData[];
-  isExtracting: boolean;
-  fileName: string | undefined;
-}
-
-const ExtractedDataPanel = ({
-  extractedTexts,
-  isExtracting,
-  fileName,
-}: ExtractedDataPanelProps) => {
+const ExtractedDataPanel = () => {
+  const { extractionState } = useExtractionContext();
+  const { extractedTexts, isExtracting, selectedFile } = extractionState;
   const areaNames =
     extractedTexts.length > 0
       ? Object.keys(extractedTexts[0]).filter((key) => key !== "pageNumber")
@@ -22,7 +14,9 @@ const ExtractedDataPanel = ({
       {isExtracting ? (
         <>
           <span className="spinner-border spinner-border-sm me-1" />
-          {fileName ? `Extraindo dados do arquivo ${fileName}` : "Extraindo..."}
+          {selectedFile?.name
+            ? `Extraindo dados do arquivo ${selectedFile.name}`
+            : "Extraindo..."}
         </>
       ) : !extractedTexts || extractedTexts.length <= 0 ? (
         <div className="mt-3">

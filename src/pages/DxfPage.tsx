@@ -9,25 +9,16 @@ import {
 } from "react-bootstrap";
 import { generateDxfJs, generateDXFMetro } from "../utils/dxfPalitoGenerator";
 import { useState } from "react";
-import type { Area, PageTextData, PalitoData } from "../types";
+import type { PalitoData } from "../types";
 import { convertToPalitoData } from "../utils/downloadUtils";
 import PalitoPreviewCard from "@/components/Palitos/PalitoPreviewCard";
 import { toast } from "react-toastify";
 import LeapfrogToJsonModal from "@/components/Palitos/LeapfrogToJsonModal";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
 
-interface DxfPageProps {
-  areas: Area[];
-  extractedTexts: PageTextData[];
-  palitoData: PalitoData[];
-  setPalitoData: (palitoData: PalitoData[]) => void;
-}
-
-const DxfPage = ({
-  areas,
-  extractedTexts,
-  palitoData,
-  setPalitoData,
-}: DxfPageProps) => {
+const DxfPage = () => {
+  const { extractionState, updateExtractionState } = useExtractionContext();
+  const { areas, extractedTexts, palitoData } = extractionState;
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error" | "warning";
@@ -43,7 +34,7 @@ const DxfPage = ({
       if (data.length === 0) {
         toast.error("Não foram encontrados dados extraídos");
       } else {
-        setPalitoData(data);
+        updateExtractionState({ palitoData: data });
         toast.success("Dados extraídos carregados com sucesso!");
       }
     } catch (error) {
@@ -63,7 +54,7 @@ const DxfPage = ({
     reader.onload = (e) => {
       try {
         const jsonData = JSON.parse(e.target?.result as string);
-        setPalitoData(jsonData);
+        updateExtractionState({ palitoData: jsonData });
         toast.success("Arquivo JSON carregado com sucesso!");
       } catch (error) {
         toast.error("Erro ao processar arquivo JSON");
@@ -121,7 +112,7 @@ const DxfPage = ({
       return;
     }
 
-    setPalitoData(data);
+    updateExtractionState({ palitoData: data });
     toast.success(
       `${data.length} palito${data.length !== 1 ? "s" : ""} importado${
         data.length !== 1 ? "s" : ""
@@ -132,23 +123,23 @@ const DxfPage = ({
   // Atualizar palito específico
   const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
     console.log(`Atualizando palito ${index}:`, updatedPalito);
-    setPalitoData(
-      palitoData.map((palito, i) => (index === i ? updatedPalito : palito))
+    const newData = palitoData.map((palito, i) =>
+      index === i ? updatedPalito : palito
     );
+    updateExtractionState({ palitoData: newData });
   };
 
   const handleUpdateAllNspt = (newValue: number) => {
-    setPalitoData(
-      palitoData.map((palito) => {
-        return {
-          ...palito,
-          nspt: {
-            ...palito.nspt,
-            start_depth: newValue,
-          },
-        };
-      })
-    );
+    const newData = palitoData.map((palito) => {
+      return {
+        ...palito,
+        nspt: {
+          ...palito.nspt,
+          start_depth: newValue,
+        },
+      };
+    });
+    updateExtractionState({ palitoData: newData });
   };
 
   return (
