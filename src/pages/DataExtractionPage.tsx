@@ -74,10 +74,20 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
 
   // Função para verificar se precisa extrair novamente
   const needsReExtraction = (): boolean => {
-    const currentFingerprint = generateAreasFingerprint(areas, selectedFile);
+    const currentFingerprint = generateAreasFingerprint(
+      areas,
+      selectedFile,
+      excludedPages
+    );
+
+    console.log("🔍 Current fingerprint:", currentFingerprint);
+    console.log("🔍 Last fingerprint:", lastExtractedFingerprint);
+    console.log("🔍 ExcludedPages:", Array.from(extractionState.excludedPages));
     const needs =
       currentFingerprint !== lastExtractedFingerprint ||
       cachedExtractedTexts.length === 0;
+
+    console.log("🔍 Needs re-extraction?", needs);
     return needs;
   };
 
@@ -136,7 +146,7 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
       updateExtractionState({ extractedTexts: extracted });
       setCachedExtractedTexts(extracted);
       setLastExtractedFingerprint(
-        generateAreasFingerprint(areas, selectedFile)
+        generateAreasFingerprint(areas, selectedFile, excludedPages)
       );
 
       return extracted;

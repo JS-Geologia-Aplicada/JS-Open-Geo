@@ -372,7 +372,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                   <button
                     className="dropdown-item"
                     type="button"
-                    onClick={handleDownloadCSV}
+                    onClick={handleDownloadExcel}
                   >
                     XLS (Excel)
                   </button>
@@ -463,6 +463,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                       return (
                         <OverlayTrigger
                           placement="left"
+                          key={type}
                           overlay={
                             <Tooltip id="leapfrog-tooltip">
                               {validation.isValid

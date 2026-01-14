@@ -118,7 +118,8 @@ const getUnusedDefaultColor = (areas: Area[]): string => {
 
 export const generateAreasFingerprint = (
   areas: Area[],
-  file: File | null
+  file: File | null,
+  excludedPages: Set<number>
 ): string => {
   const areasData = areas.map((area) => ({
     id: area.id,
@@ -139,5 +140,11 @@ export const generateAreasFingerprint = (
       }
     : null;
 
-  return JSON.stringify({ areas: areasData, file: fileData });
+  const excludedPagesArr = Array.from(excludedPages);
+
+  return JSON.stringify({
+    areas: areasData,
+    file: fileData,
+    excludedPages: excludedPagesArr,
+  });
 };
