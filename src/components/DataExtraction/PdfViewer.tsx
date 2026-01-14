@@ -19,7 +19,14 @@ import { Document, Page } from "react-pdf";
 import type { SelectionArea } from "@types";
 import { clamp } from "@utils/helpers";
 import SelectedAreas from "./SelectedAreas";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import { useExtractionContext } from "@/contexts/ExtractionContext";
 
 interface PdfViewerProps {
@@ -37,8 +44,9 @@ const MAX_ZOOM = 3;
 const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
   ({ onFinishSelection }, ref) => {
     const documentRef = useRef<any>(null);
-    const { extractionState } = useExtractionContext();
-    const { activeAreaId, isSelectionActive, selectedFile } = extractionState;
+    const { extractionState, updateExtractionState } = useExtractionContext();
+    const { activeAreaId, isSelectionActive, selectedFile, excludedPages } =
+      extractionState;
 
     // constantes para virar páginas
     const [numPages, setNumPages] = useState<number>();
@@ -334,6 +342,18 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       getDocument: () => documentRef.current,
     }));
 
+    const toggleExcludePage = () => {
+      const newExcludedPages = new Set(excludedPages);
+
+      if (newExcludedPages.has(pageNumber)) {
+        newExcludedPages.delete(pageNumber);
+      } else {
+        newExcludedPages.add(pageNumber);
+      }
+
+      updateExtractionState({ excludedPages: newExcludedPages });
+    };
+
     return (
       <>
         <div
@@ -387,6 +407,22 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
                     renderAnnotationLayer={false}
                     scale={zoomScale}
                   />
+                  {/* Adicionar overlay se página estiver excluída */}
+                  {excludedPages.has(pageNumber) && (
+                    <div
+                      className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                      style={{
+                        backgroundColor: "rgba(220, 53, 69, 0.7)",
+                        color: "white",
+                        pointerEvents: "none", // 👈 Não bloqueia interação
+                        zIndex: 5,
+                      }}
+                    >
+                      <div className="text-center">
+                        <div className="h4 fw-bold">PÁGINA IGNORADA</div>
+                      </div>
+                    </div>
+                  )}
                 </Document>
                 {/* Div para exibir área de seleção concluída */}
                 <SelectedAreas
@@ -488,6 +524,29 @@ const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
                     disabled={zoomScale >= MAX_ZOOM}
                   >
                     <ZoomIn size={24} color="#d0d0d0" />
+                  </button>
+
+                  <button
+                    className="pdf-nav-button"
+                    onClick={zoomIn}
+                    disabled={zoomScale >= MAX_ZOOM}
+                  >
+                    <ZoomIn size={24} color="#d0d0d0" />
+                  </button>
+                  <button
+                    className="pdf-nav-button"
+                    onClick={toggleExcludePage}
+                    title={
+                      excludedPages.has(pageNumber)
+                        ? "Incluir página"
+                        : "Ignorar página"
+                    }
+                  >
+                    {excludedPages.has(pageNumber) ? (
+                      <EyeOff size={24} color="#d0d0d0" />
+                    ) : (
+                      <Eye size={24} color="#d0d0d0" />
+                    )}
                   </button>
                 </div>
               </div>

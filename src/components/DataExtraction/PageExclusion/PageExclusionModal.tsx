@@ -16,7 +16,7 @@ interface PageExclusionModalProps {
 
 const PageExclusionModal = ({ show, onClose }: PageExclusionModalProps) => {
   const { extractionState, updateExtractionState } = useExtractionContext();
-  const { excludedPages, selectedFile } = extractionState;
+  const { excludedPages, selectedFile, thumbnailsCache } = extractionState;
 
   const [originalExcludedPages, setOriginalExcludedPages] = useState<
     Set<number>
@@ -41,7 +41,17 @@ const PageExclusionModal = ({ show, onClose }: PageExclusionModalProps) => {
 
   // Gerar thumbnails quando modal abre
   useEffect(() => {
-    if (show && selectedFile && thumbnails.length === 0) {
+    if (!show || !selectedFile) return;
+
+    const cacheKey = getCacheKey(selectedFile);
+    const cached = thumbnailsCache.get(cacheKey);
+
+    if (cached) {
+      // Usar cache
+      setThumbnails(cached);
+      setIsLoading(false);
+    } else {
+      // Gerar e cachear
       setIsLoading(true);
 
       generateAllThumbnails(selectedFile, 400, (current, total) => {
@@ -49,6 +59,12 @@ const PageExclusionModal = ({ show, onClose }: PageExclusionModalProps) => {
       })
         .then((generatedThumbnails) => {
           setThumbnails(generatedThumbnails);
+
+          // Salvar no cache
+          const newCache = new Map(thumbnailsCache);
+          newCache.set(cacheKey, generatedThumbnails);
+          updateExtractionState({ thumbnailsCache: newCache });
+
           setIsLoading(false);
         })
         .catch((error) => {
@@ -57,6 +73,11 @@ const PageExclusionModal = ({ show, onClose }: PageExclusionModalProps) => {
         });
     }
   }, [show, selectedFile]);
+
+  // Gera chave única baseada no arquivo
+  const getCacheKey = (file: File) => {
+    return `${file.name}-${file.size}-${file.lastModified}`;
+  };
 
   // Sincronizar inputValue com excludedPages
   useEffect(() => {
@@ -70,6 +91,8 @@ const PageExclusionModal = ({ show, onClose }: PageExclusionModalProps) => {
   useEffect(() => {
     setThumbnails([]);
     setInputValue("");
+    setIsLoading(false);
+    setLoadingProgress({ current: 0, total: 0 });
   }, [selectedFile]);
 
   const hasChanges = () => {
@@ -98,8 +121,6 @@ const PageExclusionModal = ({ show, onClose }: PageExclusionModalProps) => {
   };
 
   const handleApply = () => {
-    // TODO: Parsear inputValue e atualizar excludedPages
-    console.log("Aplicar:", inputValue);
     onClose();
   };
 
@@ -212,12 +233,16 @@ const PageExclusionModal = ({ show, onClose }: PageExclusionModalProps) => {
                 </div>
                 <div className="mb-2">
                   Gerando miniaturas: {loadingProgress.current} /{" "}
-                  {loadingProgress.total}
+                  {loadingProgress.total} ({progressPercentage.toFixed(1)}%)
                 </div>
                 <ProgressBar
                   now={progressPercentage}
-                  label={`${Math.round(progressPercentage)}%`}
-                  style={{ maxWidth: "400px", margin: "0 auto" }}
+                  animated={false}
+                  style={{
+                    width: "400px",
+                    margin: "0 auto",
+                    transition: "none",
+                  }}
                 />
               </div>
             ) : (

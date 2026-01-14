@@ -5,6 +5,7 @@ import type {
   PageTextData,
   PalitoData,
 } from "@/types";
+import type { ThumbnailData } from "@/utils/pageThumbnails";
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface ExtractionState {
@@ -18,6 +19,7 @@ interface ExtractionState {
   isSelectionActive: boolean;
   activeAreaId: string | null;
   excludedPages: Set<number>;
+  thumbnailsCache: Map<string, ThumbnailData[]>;
 }
 
 const ExtractionContext = createContext<ExtractionContextType | undefined>(
@@ -35,6 +37,7 @@ const initialState: ExtractionState = {
   isSelectionActive: false,
   activeAreaId: null,
   excludedPages: new Set<number>(),
+  thumbnailsCache: new Map<string, ThumbnailData[]>(),
 };
 
 interface ExtractionContextType {

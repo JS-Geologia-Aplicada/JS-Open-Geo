@@ -68,7 +68,6 @@ const PalitoPreviewCard = ({
 
   const handleConfirmMassEdit = () => {
     const newStartDepth = parseFloat(massEditValue) || 1;
-    console.log("newStartDepth: ", newStartDepth);
 
     onUpdateAllNspt(newStartDepth);
 
