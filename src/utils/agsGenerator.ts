@@ -370,6 +370,47 @@ export const generateGEOLGroup = (palito: PalitoData): string => {
 };
 
 /**
+ * Gera o grupo DETL (Detalhes dos estratos)
+ */
+export const generateDETLGroup = (palito: PalitoData): string => {
+  const hasGeology = palito.geology.length > 0;
+  const hasDepths = palito.depths.length > 0;
+
+  if (!hasGeology || !hasDepths) {
+    return ""; // Precisa de geology e depths no mínimo
+  }
+
+  let result = "";
+  result += generateAGSLine("GROUP", ["DETL"]);
+
+  const headings = ["LOCA_ID", "DETL_TOP", "DETL_BASE", "DETL_DESC"];
+  result += generateAGSLine("HEADING", headings);
+
+  const units = ["", "m", "m", ""];
+  result += generateAGSLine("UNIT", units);
+
+  const types = ["ID", "2DP", "2DP", "X"];
+  result += generateAGSLine("TYPE", types);
+
+  // DATA lines
+  if (palito.depths.length < 2) return result + "\r\n";
+
+  for (let i = 0; i < palito.depths.length - 1; i++) {
+    const dataValues: (string | number)[] = [
+      palito.hole_id,
+      palito.depths[i],
+      palito.depths[i + 1],
+      palito.geology[i] || "",
+    ];
+
+    result += generateAGSLine("DATA", dataValues, types);
+  }
+
+  result += "\r\n";
+  return result;
+};
+
+/**
  * Gera o grupo ISPT
  */
 export const generateISPTGroup = (palito: PalitoData): string => {
@@ -465,6 +506,9 @@ export const generateAGSFile = (
 
   const geolGroup = generateGEOLGroup(palito);
   if (geolGroup) agsContent += geolGroup;
+
+  const detlGroup = generateDETLGroup(palito);
+  if (detlGroup) agsContent += detlGroup;
 
   const isptGroup = generateISPTGroup(palito);
   if (isptGroup) agsContent += isptGroup;

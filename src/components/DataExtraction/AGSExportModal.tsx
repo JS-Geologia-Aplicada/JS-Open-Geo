@@ -31,6 +31,7 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
   palitoData,
   onExport,
 }) => {
+  const [showInfo, setShowInfo] = useState(false);
   // Estados dos formulários
   const [projectData, setProjectData] = useState<AGSProjectData>({
     PROJ_ID: "",
@@ -177,7 +178,7 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
       <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
         <Alert variant="info">
           <h6>Sobre o formato AGS4_BR</h6>
-          <ul>
+          <ul style={{ marginBottom: "8px" }}>
             <li>
               O arquivo AGS gerado aqui segue o padrão AGS4_BR da{" "}
               <a
@@ -189,8 +190,7 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
             </li>
             <li>
               O gerador de arquivo padrão AGS do JS OpenGeo está em caráter
-              experimental, veja abaixo as informações que você deve checar. O
-              arquivo gerado aqui passa no teste do{" "}
+              experimental. O arquivo gerado aqui passa no teste do{" "}
               <a
                 href="www.ags.org.uk/data-format/ags-validator/"
                 target="_blank"
@@ -199,63 +199,89 @@ const AGSExportModal: React.FC<AGSExportModalProps> = ({
               </a>
               , mas muitas das informações são padrão, veja abaixo.
             </li>
-            <li>
-              Alguns validadores de AGS podem dar avisos sobre a presença de
-              caracteres acentuados. Esse aviso é esperado e não invalida o
-              arquivo AGS.
-            </li>
-            <li>
-              Um arquivo AGS é tem seus dados organizados em diversos grupos,
-              sendo alguns obrigatórios e outros, opcionais. Cada campo possui
-              um ou mais cabeçalhos, associados a um tipo de dado, e também
-              podem ser obrigatórios ou opcionais.
-            </li>
-            <li>
-              Os grupos TYPE (definição dos tipos dos dados) e UNIT (definições
-              das unidades) são obrigatórios e gerados automaticamente pelo JS
-              OpenGeo, de acordo com as diretrizes da AGS4_BR
-            </li>
-            <li>
-              Os grupos PROJ (informações sobre o projeto), TRAN (informação
-              sobre a transmissão de dados / status dos dados) são obrigatórios,
-              e gerados a partir dos dados inseridos abaixo. Caso os dados
-              obrigatórios, marcados com asterísco, não sejam preenchidos, o JS
-              OpenGeo exportará o arquivo com valores padrão.
-            </li>
-            <li>
-              O grupo LOCA (detalhes da locação), presente em todos os arquivos
-              gerados pelo JS OpenGeo, é gerado com os dados extraídos do PDF.
-              Já os grupos GEOL (descrições geológicas de campo), DETL (detalhe
-              das descrições dos estratos), ISPT (resultados do ensaio de
-              penetração padrão) e WSTG (nível d’água – geral) são gerados de
-              acordo com a presença desses dados no PDF.
-            </li>
-            <li>
-              O campo grupo (abreviações) é obrigatório, e, no caso dos arquivos
-              gerados pelo JS OpenGeo, descreve as abreviações utilizadas no
-              cabeçalho GEOL_GEOL (interpretação geológica). O JS OpenGeo inclui
-              automaticamente as abreviações presentes na página 197 da{" "}
-              <a
-                href="https://www.abge.org.br/arquivos/DTP_NormaABGE_301.pdf"
-                target="_blank"
-              >
-                DIRETRIZ NORMATIVA ABGE 301/2024
-              </a>
-              . Se seu arquivo possuir abreviações adicionais, poderá preencher
-              seus significados abaixo.
-            </li>
-            <li>
-              Os cabeçalhos GEOL_DESC e DETL_DESC contém a mesma informação,
-              extraída do perfil de sondagem.
-            </li>
-            <li>
-              No padrão AGS, o cabeçalho para o valor final de NSPT (ISPT_NVAL),
-              é um campo de número inteiro, portanto não permite frações (comuns
-              nos valores de NSPT lidos em campo). Por este motivo, apresentamos
-              o valor final de NSPT no cabeçalho ISPT_REP, que permite valores
-              em formato texto.
-            </li>
+            {showInfo && (
+              <>
+                <li>
+                  Alguns validadores de AGS podem dar avisos sobre a presença de
+                  caracteres acentuados. Esse aviso é esperado e não invalida o
+                  arquivo AGS.
+                </li>
+                <li>
+                  Um arquivo AGS tem seus dados organizados em diversos grupos,
+                  sendo alguns obrigatórios e outros, opcionais. Cada campo
+                  possui um ou mais cabeçalhos, associados a um tipo de dado, e
+                  também podem ser obrigatórios ou opcionais.
+                </li>
+                <li>
+                  Os grupos{" "}
+                  <strong>TYPE (definição dos tipos dos dados)</strong> e{" "}
+                  <strong>UNIT (definições das unidades)</strong> são
+                  obrigatórios e gerados automaticamente pelo JS OpenGeo, de
+                  acordo com as diretrizes da AGS4_BR
+                </li>
+                <li>
+                  Os grupos <strong>PROJ (informações sobre o projeto)</strong>{" "}
+                  e{" "}
+                  <strong>
+                    TRAN (informação sobre a transmissão de dados / status dos
+                    dados)
+                  </strong>{" "}
+                  são obrigatórios, e gerados a partir dos dados inseridos
+                  abaixo. Caso os dados obrigatórios, marcados com asterísco,
+                  não sejam preenchidos, o JS OpenGeo exportará o arquivo com
+                  valores padrão.
+                </li>
+                <li>
+                  O grupo <strong>LOCA (detalhes da locação)</strong>, presente
+                  em todos os arquivos gerados pelo JS OpenGeo, é gerado com os
+                  dados extraídos do PDF. Já os grupos{" "}
+                  <strong>GEOL (descrições geológicas de campo)</strong>,{" "}
+                  <strong>DETL (detalhe das descrições dos estratos)</strong>,{" "}
+                  <strong>
+                    ISPT (resultados do ensaio de penetração padrão)
+                  </strong>{" "}
+                  e <strong>WSTG (nível d’água – geral)</strong> são gerados de
+                  acordo com a presença desses dados no PDF.
+                </li>
+                <li>
+                  O grupo <strong>ABBR (abreviações)</strong> é obrigatório, e,
+                  no caso dos arquivos gerados pelo JS OpenGeo, descreve as
+                  abreviações utilizadas no cabeçalho <strong>GEOL_GEOL</strong>{" "}
+                  (interpretação geológica). O JS OpenGeo inclui automaticamente
+                  as abreviações presentes na página 197 da{" "}
+                  <a
+                    href="https://www.abge.org.br/arquivos/DTP_NormaABGE_301.pdf"
+                    target="_blank"
+                  >
+                    DIRETRIZ NORMATIVA ABGE 301/2024
+                  </a>
+                  . Se seu arquivo possuir abreviações adicionais, você poderá
+                  preencher seus significados abaixo.
+                </li>
+                <li>
+                  Os cabeçalhos <strong>GEOL_DESC</strong> e{" "}
+                  <strong>DETL_DESC</strong> dos arquivos AGS gerados pelo JS
+                  OpenGeo são iguais e contém a mesma informação, extraída do
+                  perfil de sondagem.
+                </li>
+                <li>
+                  No padrão AGS, o cabeçalho para o valor final de NSPT (
+                  <strong>ISPT_NVAL</strong>), é um campo de número inteiro,
+                  portanto não permite frações (comuns nos valores de NSPT lidos
+                  em campo). Por este motivo, apresentamos o valor final de NSPT
+                  no cabeçalho <strong>ISPT_REP</strong>, que permite valores em
+                  formato texto.
+                </li>
+              </>
+            )}
           </ul>
+          <Button
+            onClick={() => setShowInfo((prev) => !prev)}
+            size="sm"
+            variant="info"
+          >
+            {showInfo ? "Ver menos" : "Ver mais"}
+          </Button>
         </Alert>
 
         {/* Seção: Informações do Projeto */}
