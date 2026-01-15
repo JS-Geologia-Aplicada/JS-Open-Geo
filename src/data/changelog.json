@@ -1,6 +1,19 @@
 {
   "versions": [
     {
+      "version": "2.1.0-beta",
+      "date": "2026-01-15",
+      "title": "Novas funções para dados de sondagens",
+      "summary": "Exportação AGS e Ignorar páginas",
+      "features": [
+        "Exportação de dados no formato AGS.",
+        "Seleção de páginas do PDF para serem ignoradas na extração de dados."
+      ],
+      "improvements": [],
+      "bugfixes": [],
+      "known_issues": []
+    },
+    {
       "version": "2.1.0-alpha",
       "date": "2026-01-13",
       "title": "Exportação AGS e Ignorar páginas",

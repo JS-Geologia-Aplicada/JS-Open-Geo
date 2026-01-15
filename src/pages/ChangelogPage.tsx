@@ -35,7 +35,7 @@ const ChangelogPage = () => {
       </div>
 
       {versions
-        .filter((version) => !version.title.includes("alpha"))
+        .filter((version) => !version.version.includes("alpha"))
         .map((version) => (
           <Row key={version.version} className="justify-content-center">
             <Col xs={10} lg={8} xl={6} className="mb-4 text-start">
