@@ -26,6 +26,8 @@ import PageExclusionModal from "./PageExclusion/PageExclusionModal";
 import JSZip from "jszip";
 import { generateMultipleAGSFiles } from "@/utils/agsGenerator";
 import AGSExportModal from "./AGSExportModal";
+import { analytics } from "@/utils/analyticsUtils";
+import type { AnalyticsCounters } from "@/types/analyticsTypes";
 
 interface ExtractButtonProps {
   extractionProgress: ExtractionProgress | null;
@@ -46,13 +48,13 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
   const { areas, extractedTexts, selectedFile, isExtracting } = extractionState;
 
   const [validationData, setValidationData] = useState<any>(
-    downloadAllValidation(areas)
+    downloadAllValidation(areas),
   );
   const [advancedDownload, setAdvancedDownload] = useState<boolean>(false);
   const [elapsedTimeString, setElapsedTimeString] = useState<string>("");
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [decimalSeparator, setDecimalSeparator] = useState<"comma" | "dot">(
-    "comma"
+    "comma",
   );
   const [showPageExclusionModal, setShowPageExclusionModal] = useState(false);
   const [showAGSModal, setShowAGSModal] = useState<boolean>(false);
@@ -64,6 +66,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
     try {
       const extractedTexts = await onExtractTexts();
       exportExcel(areas, extractedTexts);
+      analytics.track("export_excel");
     } catch (error) {
       if (
         error instanceof Error &&
@@ -79,6 +82,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
     try {
       const extractedTexts = await onExtractTexts();
       exportCSV(areas, extractedTexts, decimalSeparator === "comma");
+      analytics.track("export_csv");
     } catch (error) {
       if (
         error instanceof Error &&
@@ -93,6 +97,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
     try {
       const extractedTexts = await onExtractTexts();
       exportJSON(areas, extractedTexts);
+      analytics.track("export_json");
     } catch (error) {
       if (
         error instanceof Error &&
@@ -110,8 +115,9 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         areas,
         extractedTexts,
         advancedDownload,
-        decimalSeparator === "comma"
+        decimalSeparator === "comma",
       );
+      analytics.track("export_leapfrog_zip");
     } catch (error) {
       if (
         error instanceof Error &&
@@ -129,8 +135,14 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         areas,
         extractedTexts,
         type,
-        decimalSeparator === "comma"
+        decimalSeparator === "comma",
       );
+      const event = ["collar", "nspt", "na", "geology", "interp"].includes(type)
+        ? "export_leapfrog_" + type
+        : undefined;
+      if (event) {
+        analytics.track(event as keyof AnalyticsCounters);
+      }
     } catch (error) {
       if (
         error instanceof Error &&
@@ -145,7 +157,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
   const handleExportAGS = async (
     projectData: any,
     tranInput: any,
-    abbreviations: any
+    abbreviations: any,
   ) => {
     try {
       const extractedTexts = await onExtractTexts();
@@ -156,7 +168,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
         palitoData,
         projectData,
         tranInput,
-        abbreviations
+        abbreviations,
       );
 
       // Se for apenas 1 arquivo, baixa direto
@@ -188,6 +200,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       }
 
       setShowAGSModal(false);
+      analytics.track("export_ags");
     } catch (error) {
       if (
         error instanceof Error &&
@@ -420,16 +433,16 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                         {validationData.allValid
                           ? `Exportar todos os arquivos`
                           : advancedDownload && validationData.someValid
-                          ? `Exportar ${validationData.validExports.join(
-                              ", "
-                            )} completo(s) e ${validationData.nonValidExports.join(
-                              ", "
-                            )} incompleto(s)`
-                          : advancedDownload
-                          ? "Exportar todos incompletos"
-                          : validationData.someValid
-                          ? `Exportar ${validationData.validExports.join(", ")}`
-                          : "Dados insuficientes para gerar arquivos"}
+                            ? `Exportar ${validationData.validExports.join(
+                                ", ",
+                              )} completo(s) e ${validationData.nonValidExports.join(
+                                ", ",
+                              )} incompleto(s)`
+                            : advancedDownload
+                              ? "Exportar todos incompletos"
+                              : validationData.someValid
+                                ? `Exportar ${validationData.validExports.join(", ")}`
+                                : "Dados insuficientes para gerar arquivos"}
                       </Tooltip>
                     }
                   >
@@ -458,7 +471,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                     {LEAPFROG_TYPES.map((type) => {
                       const validation = validateExportRequirements(
                         areas,
-                        type
+                        type,
                       );
                       return (
                         <OverlayTrigger
@@ -469,20 +482,20 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                               {validation.isValid
                                 ? `Exportar ${type}.csv`
                                 : advancedDownload
-                                ? `Exportar ${type}.csv incompleto (dados ausentes: ${validation.missingFields
-                                    .map((t) => {
-                                      return t === "depth"
-                                        ? "Profundidades ou Profundidade Total"
-                                        : DATA_TYPE_LABELS[t];
-                                    })
-                                    .join(", ")})`
-                                : `Campos faltantes: ${validation.missingFields
-                                    .map((t) => {
-                                      return t === "depth"
-                                        ? "Profundidades ou Profundidade Total"
-                                        : DATA_TYPE_LABELS[t];
-                                    })
-                                    .join(", ")}`}
+                                  ? `Exportar ${type}.csv incompleto (dados ausentes: ${validation.missingFields
+                                      .map((t) => {
+                                        return t === "depth"
+                                          ? "Profundidades ou Profundidade Total"
+                                          : DATA_TYPE_LABELS[t];
+                                      })
+                                      .join(", ")})`
+                                  : `Campos faltantes: ${validation.missingFields
+                                      .map((t) => {
+                                        return t === "depth"
+                                          ? "Profundidades ou Profundidade Total"
+                                          : DATA_TYPE_LABELS[t];
+                                      })
+                                      .join(", ")}`}
                             </Tooltip>
                           }
                         >
@@ -491,7 +504,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                               className={getDropdownItemClass(
                                 areas,
                                 type,
-                                advancedDownload
+                                advancedDownload,
                               )}
                               onClick={() => handleDownloadSingleCSV(type)}
                             >

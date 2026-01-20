@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DataExtractionPage from "./pages/DataExtractionPage";
 import AppHeader from "./components/AppHeader";
 import DxfPage from "./pages/DxfPage";
@@ -12,6 +12,7 @@ import AboutPage from "./pages/AboutPage";
 import ChangelogPage from "./pages/ChangelogPage";
 import AppFooter from "./components/AppFooter";
 import { ToolsPage } from "./pages/ToolsPage";
+import { analytics } from "./utils/analyticsUtils";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>("extraction");
@@ -29,6 +30,31 @@ function App() {
     setOpenHelpOnLoad(show);
     localStorage.setItem("showHelpOnLoad", show.toString());
   };
+
+  useEffect(() => {
+    // 1. Envia dados órfãos de sessão anterior (se houver)
+    const pending = analytics.getPendingData();
+    if (pending) {
+      console.log("📊 Enviando dados pendentes:", pending);
+      analytics.flush();
+    }
+
+    // 2. Registra pageview
+    analytics.track("pageview");
+    console.log("Pageview registrado");
+
+    // 3. Setup do beforeunload
+    const handleUnload = () => {
+      console.log("Enviando dados antes de fechar...");
+      analytics.flushSync();
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
 
   return (
     <div className="app-container">

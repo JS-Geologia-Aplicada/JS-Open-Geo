@@ -19,6 +19,7 @@ import ExtractedDataPanel from "@components/DataExtraction/ExtractedDataPanel";
 import ExtractButtons from "@/components/DataExtraction/ExtractButtons";
 import { Col, Row } from "react-bootstrap";
 import { useExtractionContext } from "@/contexts/ExtractionContext";
+import { analytics } from "@/utils/analyticsUtils";
 
 interface DataExtractionPageProps {
   onShowHelp: () => void;
@@ -46,13 +47,13 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
   // funções de seleção de área
   const finishAreaSelection = (
     coords: SelectionArea,
-    resizedAreaId?: string
+    resizedAreaId?: string,
   ) => {
     const areaId = resizedAreaId
       ? resizedAreaId
       : activeAreaId
-      ? activeAreaId
-      : null;
+        ? activeAreaId
+        : null;
     if (areaId) {
       updateExtractionState({
         areas: updateAreaCoordinates(areas, areaId, coords),
@@ -77,7 +78,7 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
     const currentFingerprint = generateAreasFingerprint(
       areas,
       selectedFile,
-      excludedPages
+      excludedPages,
     );
     const needs =
       currentFingerprint !== lastExtractedFingerprint ||
@@ -110,7 +111,7 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
           "A(s) seguinte(s) área(s) não possue(m) coordenadas:\n" +
             areasWithoutCoords.join(", ") +
             "\n" +
-            "Deseja continuar mesmo assim?"
+            "Deseja continuar mesmo assim?",
         );
         if (!proceed) {
           throw new Error("Extração cancelada pelo usuário");
@@ -119,7 +120,7 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
       if (!holeId && hasRepeatAreas) {
         const proceed = confirm(
           "Algumas áreas estão configuradas como 'Único' mas não há uma área de ID da Sondagem. " +
-            "A função não vai funcionar corretamente. Deseja continuar mesmo assim?"
+            "A função não vai funcionar corretamente. Deseja continuar mesmo assim?",
         );
         if (!proceed) {
           throw new Error("Extração cancelada pelo usuário");
@@ -135,13 +136,13 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
         pdfDocument,
         excludedPages,
         controller.signal,
-        setExtractionProgress
+        setExtractionProgress,
       );
 
       updateExtractionState({ extractedTexts: extracted });
       setCachedExtractedTexts(extracted);
       setLastExtractedFingerprint(
-        generateAreasFingerprint(areas, selectedFile, excludedPages)
+        generateAreasFingerprint(areas, selectedFile, excludedPages),
       );
 
       return extracted;
@@ -158,6 +159,10 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
     try {
       updateExtractionState({ isExtracting: true });
       await handleExtraxtTexts();
+
+      // Analytics
+      analytics.track("extract_preview");
+      console.log("📊 Preview rastreado");
     } catch (error) {
       console.error("Erro na extração: ", error);
     } finally {
