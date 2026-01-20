@@ -20,11 +20,6 @@ class AnalyticsService {
   private flushTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
-    console.log("🔧 ENV Variables:", {
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-      databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    });
     // Detecta ambiente
     this.environment = this.getEnvironment();
 
