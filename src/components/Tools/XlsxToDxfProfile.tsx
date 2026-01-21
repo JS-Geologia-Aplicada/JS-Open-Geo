@@ -9,6 +9,7 @@ import { ToolControlSection } from "./ToolControlSection";
 import { FileDropzone } from "../FileDropzone";
 import { DataTable } from "../DataTable";
 import { useToolState } from "@/hooks/useToolState";
+import { analytics } from "@/utils/analyticsUtils";
 
 const DEFAULT_Z = 100;
 
@@ -86,6 +87,7 @@ const XlsxToDxfProfile = () => {
 
   const handleExportDxf = () => {
     generateDxfProfile(sondagens, fontSize, textRotation);
+    analytics.track("xlsx_to_dxf_profile");
   };
 
   return (

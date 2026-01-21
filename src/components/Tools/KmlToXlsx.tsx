@@ -15,6 +15,7 @@ import { ToolControlSection } from "./ToolControlSection";
 import { FileDropzone } from "../FileDropzone";
 import { DataTable } from "../DataTable";
 import { useToolState } from "@/hooks/useToolState";
+import { analytics } from "@/utils/analyticsUtils";
 
 const KmlToXlsx = () => {
   const { state, update } = useToolState("kmlToXlsx");
@@ -52,7 +53,7 @@ const KmlToXlsx = () => {
         [x, y] = convertGeographicCoordinates(
           [s.coordinates.lon, s.coordinates.lat],
           { datum: "WGS84", zone: undefined },
-          { datum: selectedDatum, zone: selectedZone }
+          { datum: selectedDatum, zone: selectedZone },
         );
         xLabel = "X (UTM)";
         yLabel = "Y (UTM)";
@@ -78,7 +79,7 @@ const KmlToXlsx = () => {
         const zip = new JSZip();
         const zipContent = await zip.loadAsync(file);
         const kmlFile = Object.keys(zipContent.files).find((name) =>
-          name.endsWith(".kml")
+          name.endsWith(".kml"),
         );
 
         if (!kmlFile) {
@@ -113,10 +114,11 @@ const KmlToXlsx = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sondagens");
     XLSX.writeFile(wb, "sondagens-kml.xlsx");
+    analytics.track("kml_to_xlsx");
   };
 
   const extendedDataColumns = Array.from(
-    new Set(sondagens.flatMap((s) => Object.keys(s.extendedData)))
+    new Set(sondagens.flatMap((s) => Object.keys(s.extendedData))),
   );
 
   return (

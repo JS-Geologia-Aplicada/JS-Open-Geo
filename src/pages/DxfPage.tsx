@@ -15,6 +15,7 @@ import PalitoPreviewCard from "@/components/Palitos/PalitoPreviewCard";
 import { toast } from "react-toastify";
 import LeapfrogToJsonModal from "@/components/Palitos/LeapfrogToJsonModal";
 import { useExtractionContext } from "@/contexts/ExtractionContext";
+import { analytics } from "@/utils/analyticsUtils";
 
 const DxfPage = () => {
   const { extractionState, updateExtractionState } = useExtractionContext();
@@ -93,11 +94,13 @@ const DxfPage = () => {
         toast.warn(
           `DXF gerado! ${result.successCount}/${
             result.totalProcessed
-          } palitos processados. Falhas: ${result.processErrorNames.join(", ")}`
+          } palitos processados. Falhas: ${result.processErrorNames.join(", ")}`,
         );
       } else {
         toast.success("DXF gerado com sucesso!");
       }
+      analytics.track("generate_dxf_count");
+      analytics.track("generate_dxf_sondagens", palitoData.length);
     } catch (error) {
       toast.error("Erro ao gerar DXF");
       console.error("Erro:", error);
@@ -116,7 +119,7 @@ const DxfPage = () => {
     toast.success(
       `${data.length} palito${data.length !== 1 ? "s" : ""} importado${
         data.length !== 1 ? "s" : ""
-      } com sucesso!`
+      } com sucesso!`,
     );
   };
 
@@ -124,7 +127,7 @@ const DxfPage = () => {
   const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
     console.log(`Atualizando palito ${index}:`, updatedPalito);
     const newData = palitoData.map((palito, i) =>
-      index === i ? updatedPalito : palito
+      index === i ? updatedPalito : palito,
     );
     updateExtractionState({ palitoData: newData });
   };
@@ -158,8 +161,8 @@ const DxfPage = () => {
                     message.type === "success"
                       ? "success"
                       : message.type === "warning"
-                      ? "warning"
-                      : "danger"
+                        ? "warning"
+                        : "danger"
                   }
                   onClose={() => setMessage(null)}
                   dismissible

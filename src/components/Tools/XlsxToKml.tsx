@@ -16,6 +16,7 @@ import { FileDropzone } from "../FileDropzone";
 import { ToolControlSection } from "./ToolControlSection";
 import { DataTable } from "../DataTable";
 import { useToolState } from "@/hooks/useToolState";
+import { analytics } from "@/utils/analyticsUtils";
 
 interface ParsedSondagem {
   name: string;
@@ -115,7 +116,7 @@ const XlsxToKml = () => {
           [lon, lat] = convertGeographicCoordinates(
             [x, y],
             { datum: selectedDatum, zone: selectedZone },
-            { datum: "WGS84", zone: undefined }
+            { datum: "WGS84", zone: undefined },
           );
         }
         if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
@@ -169,7 +170,7 @@ const XlsxToKml = () => {
     processedData.valid.forEach((sondagem) => {
       const data: KmlData[] = Object.entries(sondagem.extraData)
         .filter(
-          ([_, value]) => value !== null && value !== undefined && value !== ""
+          ([_, value]) => value !== null && value !== undefined && value !== "",
         )
         .map(([key, value]) => ({
           displayName: hasHeader ? key : `Coluna ${key}`,
@@ -179,7 +180,7 @@ const XlsxToKml = () => {
       kml.addPlacemark(
         sondagem.name,
         kml.createPoint(sondagem.lon, sondagem.lat),
-        { data: data.length > 0 ? data : undefined }
+        { data: data.length > 0 ? data : undefined },
       );
     });
 
@@ -206,6 +207,7 @@ const XlsxToKml = () => {
       link.click();
       URL.revokeObjectURL(url);
     }
+    analytics.track("xlsx_to_kml");
   };
 
   // Recarregar quando mudar hasHeader
@@ -423,7 +425,7 @@ const XlsxToKml = () => {
               rowClassName={(row) => {
                 // Verificar se a linha está na lista de inválidas
                 const isInvalid = processedData.invalid.some(
-                  (inv) => inv.row === row
+                  (inv) => inv.row === row,
                 );
                 return isInvalid ? "table-danger" : ""; // ← Bootstrap class
               }}
