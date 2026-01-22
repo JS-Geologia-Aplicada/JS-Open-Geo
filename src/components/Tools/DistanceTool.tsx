@@ -28,6 +28,7 @@ import { FileDropzone } from "../FileDropzone";
 import { ToolControlSection } from "./ToolControlSection";
 import { DataTable } from "../DataTable";
 import { useToolState } from "@/hooks/useToolState";
+import { analytics } from "@/utils/analyticsUtils";
 
 interface DirectionOption {
   label: string;
@@ -55,7 +56,7 @@ const DistanceTool = () => {
 
   const plAsLineString = useMemo((): LineString[] | undefined => {
     const eligiblePolylines = polylines.filter(
-      (pl) => pl.layer === selectedPolylineLayer && pl.vertices.length > 0
+      (pl) => pl.layer === selectedPolylineLayer && pl.vertices.length > 0,
     );
 
     if (eligiblePolylines.length === 0) return undefined;
@@ -88,7 +89,7 @@ const DistanceTool = () => {
 
       dxfData = inserts.map((insert) => {
         const matchingBlock = blocksAtt.find(
-          (block) => block.blockName === insert.blockName
+          (block) => block.blockName === insert.blockName,
         );
         return {
           ...insert,
@@ -132,7 +133,7 @@ const DistanceTool = () => {
     if (!plAsLineString || plAsLineString.length === 0) return undefined;
 
     return plAsLineString.reduce((longest, current) =>
-      getLineLength(current) > getLineLength(longest) ? current : longest
+      getLineLength(current) > getLineLength(longest) ? current : longest,
     );
   }, [plAsLineString]);
 
@@ -198,7 +199,7 @@ const DistanceTool = () => {
 
     // Filtrar apenas layers selecionadas
     const validInserts = dxfData.filter((insert) =>
-      selectedInsertLayers.includes(insert.layer)
+      selectedInsertLayers.includes(insert.layer),
     );
 
     if (validInserts.length === 0) {
@@ -209,7 +210,7 @@ const DistanceTool = () => {
 
     // 4. Preparar direção da polyline
     const direction = directionOptions?.find(
-      (opt) => opt.value === selectedDirection
+      (opt) => opt.value === selectedDirection,
     )?.direction;
 
     const correctedLines =
@@ -222,7 +223,7 @@ const DistanceTool = () => {
       .filter(
         (insert) =>
           insert.id?.trim() ||
-          (insert.attributes && insert.attributes.length > 0)
+          (insert.attributes && insert.attributes.length > 0),
       )
       .map((insert) => {
         // 1. Extrair nome/ID
@@ -249,7 +250,7 @@ const DistanceTool = () => {
 
         // 4. Pegar a polyline mais próxima
         const closest = distancesPerLine.reduce((min, current) =>
-          current.distance < min.distance ? current : min
+          current.distance < min.distance ? current : min,
         );
 
         // 5. Calcular lado em relação à polyline mais próxima
@@ -266,6 +267,7 @@ const DistanceTool = () => {
         };
       });
     update({ distanceResults });
+    analytics.track("dxf_tools");
   };
 
   const handleExport = () => {
@@ -276,8 +278,8 @@ const DistanceTool = () => {
         r.side === "Left"
           ? "Esquerda"
           : r.side === "Right"
-          ? "Direita"
-          : "Sobre",
+            ? "Direita"
+            : "Sobre",
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
@@ -430,7 +432,7 @@ const DistanceTool = () => {
                               update({
                                 selectedInsertLayers:
                                   selectedInsertLayers.filter(
-                                    (l) => l !== layer
+                                    (l) => l !== layer,
                                   ),
                               });
                             }
@@ -500,15 +502,15 @@ const DistanceTool = () => {
                           row.side === "Left"
                             ? "bg-primary"
                             : row.side === "Right"
-                            ? "bg-success"
-                            : "bg-secondary"
+                              ? "bg-success"
+                              : "bg-secondary"
                         }`}
                       >
                         {row.side === "Left"
                           ? "Esquerda"
                           : row.side === "Right"
-                          ? "Direita"
-                          : "Sobre"}
+                            ? "Direita"
+                            : "Sobre"}
                       </span>
                     ),
                   },

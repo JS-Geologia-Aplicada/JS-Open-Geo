@@ -36,6 +36,7 @@ import { ToolControlSection } from "./ToolControlSection";
 import { FileDropzone } from "../FileDropzone";
 import { useToolState } from "@/hooks/useToolState";
 import { useDidMountEffect } from "@/hooks/useDidMountEffect";
+import { analytics } from "@/utils/analyticsUtils";
 
 const ExtractDxfTool = () => {
   const { state, update } = useToolState("extractDxfTool");
@@ -160,7 +161,7 @@ const ExtractDxfTool = () => {
       const insertsWithAtt: DxfInsert[] = [];
       inserts.forEach((entry) => {
         const matchingBlock = blocksAtt.find(
-          (block) => block.blockName === entry.blockName
+          (block) => block.blockName === entry.blockName,
         );
         insertsWithAtt.push({
           ...entry,
@@ -179,11 +180,11 @@ const ExtractDxfTool = () => {
       inserts.forEach((insert) => {
         const matchingMultileader = multileaders.find(
           (m) =>
-            Math.abs(m.x - insert.x) <= 0.8 && Math.abs(m.y - insert.y) <= 0.8 // Tolerância de 0.8
+            Math.abs(m.x - insert.x) <= 0.8 && Math.abs(m.y - insert.y) <= 0.8, // Tolerância de 0.8
         );
         if (
           !insertsWithId.find(
-            (entry) => entry.x === insert.x && entry.y === insert.y
+            (entry) => entry.x === insert.x && entry.y === insert.y,
           )
         ) {
           insertsWithId.push({
@@ -220,7 +221,7 @@ const ExtractDxfTool = () => {
     const excelData = filteredDxfData
       .filter(
         (insert) =>
-          (insert.attributes && insert.attributes.length > 0) || insert.id
+          (insert.attributes && insert.attributes.length > 0) || insert.id,
       ) // Só inserts com atributos ou ID
       .map((insert) => {
         const row: any = {};
@@ -249,6 +250,7 @@ const ExtractDxfTool = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sondagens");
     XLSX.writeFile(wb, "sondagens-dxf.xlsx");
+    analytics.track("dxf_tools");
   };
 
   const exportToKML = async (kmz = false) => {
@@ -335,12 +337,13 @@ const ExtractDxfTool = () => {
       link.click();
       URL.revokeObjectURL(url);
     }
+    analytics.track("dxf_tools");
   };
 
   const handleKMLExport = (kmz = false) => {
     if (dxfType === "block" && !selectedIdField) {
       const proceed = window.confirm(
-        "Nenhum campo de nome foi selecionado. As sondagens no arquivo não terão título. Deseja continuar?"
+        "Nenhum campo de nome foi selecionado. As sondagens no arquivo não terão título. Deseja continuar?",
       );
       if (!proceed) return;
     }
@@ -351,7 +354,7 @@ const ExtractDxfTool = () => {
   const handleDownlaodDxf = () => {
     if (!useNewName) {
       const proceed = window.confirm(
-        "Não há alterações no DXF, deseja exportar mesmo assim?"
+        "Não há alterações no DXF, deseja exportar mesmo assim?",
       );
       if (!proceed) return;
     }
@@ -365,6 +368,7 @@ const ExtractDxfTool = () => {
     link.download = "sondagens.dxf";
     link.click();
     URL.revokeObjectURL(url);
+    analytics.track("dxf_tools");
   };
 
   const handleRename = () => {
@@ -514,7 +518,7 @@ const ExtractDxfTool = () => {
                           } else {
                             update({
                               selectedLayers: selectedLayers.filter(
-                                (l) => l !== layer
+                                (l) => l !== layer,
                               ),
                             });
                           }
@@ -867,7 +871,7 @@ const ExtractDxfTool = () => {
                         <td>{item.layer}</td>
                         {attributeColumns.map((col) => {
                           const attr = item.attributes?.find(
-                            (a) => a.tag === col
+                            (a) => a.tag === col,
                           );
                           return <td key={col}>{attr?.value || "-"}</td>;
                         })}
