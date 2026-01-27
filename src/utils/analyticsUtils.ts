@@ -42,6 +42,7 @@ class AnalyticsService {
   private getEmptyCounters(): AnalyticsCounters {
     return {
       pageview: 0,
+      unique_daily_view: 0,
       extract_preview: 0,
       export_json: 0,
       export_excel: 0,

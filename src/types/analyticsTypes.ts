@@ -1,6 +1,7 @@
 export interface AnalyticsCounters {
   // Acesso
   pageview: number;
+  unique_daily_view: number;
 
   // Visualização
   extract_preview: number;

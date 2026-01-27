@@ -35,13 +35,18 @@ function App() {
     // 1. Envia dados órfãos de sessão anterior (se houver)
     const pending = analytics.getPendingData();
     if (pending) {
-      console.log("📊 Enviando dados pendentes:", pending);
       analytics.flush();
     }
 
     // 2. Registra pageview
     analytics.track("pageview");
-    console.log("Pageview registrado");
+
+    const lastView = localStorage.getItem("lastView");
+    const today = new Date().toISOString().split("T")[0];
+    if (!lastView || lastView !== today) {
+      analytics.track("unique_daily_view");
+      localStorage.setItem("lastView", today);
+    }
 
     // 3. Setup do beforeunload
     const handleUnload = () => {
