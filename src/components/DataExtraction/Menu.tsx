@@ -54,7 +54,7 @@ function Menu({ onDragEnd, onShowHelp }: MenuProps) {
 
   const handleCreateMissingAreas = () => {
     const typesToAdd = EASY_ADD_TYPES.filter(
-      (type) => !areas.find((area) => area.dataType === type)
+      (type) => !areas.find((area) => area.dataType === type),
     );
 
     if (areas.length + typesToAdd.length > 15) {
@@ -156,7 +156,6 @@ function Menu({ onDragEnd, onShowHelp }: MenuProps) {
             split
             variant="menu"
             type="button"
-            data-bs-toggle="dropdown"
             aria-expanded="false"
           >
             <span className="visually-hidden">Toggle Dropdown</span>
@@ -167,7 +166,7 @@ function Menu({ onDragEnd, onShowHelp }: MenuProps) {
             style={{ zIndex: 1001 }}
           >
             {EASY_ADD_TYPES.filter(
-              (type) => !areas.find((area) => area.dataType === type)
+              (type) => !areas.find((area) => area.dataType === type),
             ).map((type, index) => {
               return (
                 <Dropdown.Item
@@ -183,7 +182,7 @@ function Menu({ onDragEnd, onShowHelp }: MenuProps) {
             <Dropdown.Item
               onClick={handleCreateMissingAreas}
               disabled={EASY_ADD_TYPES.every((type) =>
-                areas.find((area) => area.dataType === type)
+                areas.find((area) => area.dataType === type),
               )}
             >
               Criar todos ausentes
