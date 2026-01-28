@@ -56,7 +56,7 @@ export const parseDxf = (input: string | string[]) => {
 export const parseBlockSection = (
   parsedDxf: CodedDxf[],
   section: string,
-  baseNumber: number = 0
+  baseNumber: number = 0,
 ) => {
   const attributeSections: CodedDxfSection[] = [];
   const entitiesIndexes = parsedDxf
@@ -66,7 +66,7 @@ export const parseBlockSection = (
   // Encontrar especificamente os ATTRIBs
   const attribIndexes = parsedDxf
     .map((item, index) =>
-      item.code === "0" && item.value === section ? index : -1
+      item.code === "0" && item.value === section ? index : -1,
     )
     .filter((index) => index !== -1);
 
@@ -143,14 +143,14 @@ export const extractMultileaders = (parsed: CodedDxf[]) => {
   // Encontrar índices onde começa MULTILEADER
   const mlIndexes = parsed
     .map((item, index) =>
-      item.code === "0" && item.value === "MULTILEADER" ? index : -1
+      item.code === "0" && item.value === "MULTILEADER" ? index : -1,
     )
     .filter((index) => index !== -1);
 
   mlIndexes.forEach((startIndex) => {
     // Procurar próxima entidade para delimitar
     const nextEntityIndex = parsed.findIndex(
-      (item, idx) => idx > startIndex && item.code === "0"
+      (item, idx) => idx > startIndex && item.code === "0",
     );
     const endIndex = nextEntityIndex !== -1 ? nextEntityIndex : parsed.length;
 
@@ -158,15 +158,15 @@ export const extractMultileaders = (parsed: CodedDxf[]) => {
     const mlData = parsed.slice(startIndex, endIndex);
     const layer = mlData.find((item) => item.code === "8")?.value || "";
     const leaderLineStartIndex = mlData.findIndex((item) =>
-      item.value.includes("LEADER_LINE")
+      item.value.includes("LEADER_LINE"),
     );
     const xItem =
       mlData.find(
-        (item, index) => index > leaderLineStartIndex && item.code === "10"
+        (item, index) => index > leaderLineStartIndex && item.code === "10",
       )?.value || "0";
     const yItem =
       mlData.find(
-        (item, index) => index > leaderLineStartIndex && item.code === "20"
+        (item, index) => index > leaderLineStartIndex && item.code === "20",
       )?.value || "0";
     const x = parseFloat(xItem);
     const y = parseFloat(yItem);
@@ -231,7 +231,7 @@ export const reconstructDxf = (parsed: CodedDxf[]): string => {
 
 export const sortByDirection = (
   data: DxfInsert[],
-  direction: CardinalDirection
+  direction: CardinalDirection,
 ): DxfInsert[] => {
   return data.sort((a, b) => {
     switch (direction) {
@@ -248,12 +248,15 @@ export const sortByDirection = (
 };
 
 export const groupBy = <T>(array: T[], key: keyof T): Record<string, T[]> => {
-  return array.reduce((result, item) => {
-    const group = String(item[key]);
-    if (!result[group]) result[group] = [];
-    result[group].push(item);
-    return result;
-  }, {} as Record<string, T[]>);
+  return array.reduce(
+    (result, item) => {
+      const group = String(item[key]);
+      if (!result[group]) result[group] = [];
+      result[group].push(item);
+      return result;
+    },
+    {} as Record<string, T[]>,
+  );
 };
 
 export const getPolylinesFromDxf = (fileText: string) => {
@@ -263,7 +266,7 @@ export const getPolylinesFromDxf = (fileText: string) => {
   try {
     const dxf = parser.parse(fileText) as DxfData;
     const plEntities = dxf.entities.filter(
-      (entity) => entity.type === "LWPOLYLINE" || entity.type === "POLYLINE"
+      (entity) => entity.type === "LWPOLYLINE" || entity.type === "POLYLINE",
     );
 
     plEntities.forEach((pl) => {
@@ -277,7 +280,6 @@ export const getPolylinesFromDxf = (fileText: string) => {
     });
     return polylines;
   } catch (err) {
-    console.log("Erro ao extrair polylines: ", err);
     return polylines;
   }
 };
@@ -287,7 +289,7 @@ export const subdivideArc = (
   p2: { x: number; y: number },
   bulge: number,
   maxError: number,
-  result: { x: number; y: number }[] = []
+  result: { x: number; y: number }[] = [],
 ) => {
   const dx = p2.x - p1.x;
   const dy = p2.y - p2.x;

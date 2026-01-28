@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Alert, Button, Form } from "react-bootstrap";
 import JSZip from "jszip";
 import { KmlBuilder, type KmlData } from "@/utils/kmlGenerator";
@@ -157,10 +157,6 @@ const XlsxToKml = () => {
     selectedZone,
     headers,
   ]);
-
-  useEffect(() => {
-    console.log(processedData);
-  }, [processedData]);
 
   const handleExport = async (kmz: boolean) => {
     if (processedData.valid.length === 0) return;

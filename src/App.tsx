@@ -50,7 +50,6 @@ function App() {
 
     // 3. Setup do beforeunload
     const handleUnload = () => {
-      console.log("Enviando dados antes de fechar...");
       analytics.flushSync();
     };
 

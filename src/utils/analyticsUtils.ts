@@ -143,8 +143,6 @@ class AnalyticsService {
 
       // Limpa localStorage apenas se enviou com sucesso
       localStorage.removeItem(this.STORAGE_KEY);
-
-      console.log("Analytics enviado com sucesso:", counters);
     } catch (error) {
       console.error("Erro ao enviar analytics:", error);
       // Mantém dados no localStorage para tentar depois

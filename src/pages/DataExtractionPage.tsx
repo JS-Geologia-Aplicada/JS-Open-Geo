@@ -162,7 +162,6 @@ function DataExtractionPage({ onShowHelp }: DataExtractionPageProps) {
 
       // Analytics
       analytics.track("extract_preview");
-      console.log("📊 Preview rastreado");
     } catch (error) {
       console.error("Erro na extração: ", error);
     } finally {

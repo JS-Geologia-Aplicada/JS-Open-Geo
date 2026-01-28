@@ -125,7 +125,6 @@ const DxfPage = () => {
 
   // Atualizar palito específico
   const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
-    console.log(`Atualizando palito ${index}:`, updatedPalito);
     const newData = palitoData.map((palito, i) =>
       index === i ? updatedPalito : palito,
     );
