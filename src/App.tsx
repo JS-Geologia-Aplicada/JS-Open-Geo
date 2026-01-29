@@ -4,7 +4,6 @@ import AppHeader from "./components/AppHeader";
 import DxfPage from "./pages/DxfPage";
 import AppNavigation from "./components/AppNavigation";
 import { Col, Container, Row } from "react-bootstrap";
-import type { PageType } from "./types";
 import HelpModal from "./components/HelpModal";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,10 +12,10 @@ import ChangelogPage from "./pages/ChangelogPage";
 import AppFooter from "./components/AppFooter";
 import { ToolsPage } from "./pages/ToolsPage";
 import { analytics } from "./utils/analyticsUtils";
+import { Route, Routes } from "react-router-dom";
+import HomePage from "./pages/HomePage";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<PageType>("extraction");
-
   // Lidando com o Modal de ajuda
   const [openHelpOnLoad, setOpenHelpOnLoad] = useState(() => {
     const saved = localStorage.getItem("showHelpOnLoad");
@@ -82,25 +81,21 @@ function App() {
           </Row>
           <Row className="justify-content-center">
             <Col className="px-0">
-              <AppNavigation
-                currentPage={currentPage}
-                onChangePage={setCurrentPage}
-              />
+              <AppNavigation />
             </Col>
           </Row>
-          {currentPage === "extraction" ? (
-            <DataExtractionPage onShowHelp={handleShowHelp} />
-          ) : currentPage === "dxf" ? (
-            <DxfPage />
-          ) : currentPage === "about" ? (
-            <AboutPage />
-          ) : currentPage === "changelog" ? (
-            <ChangelogPage />
-          ) : currentPage === "transform" ? (
-            <ToolsPage />
-          ) : (
-            <div>Erro: página não encontrada</div>
-          )}
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route
+              path="/dados_de_sondagem"
+              element={<DataExtractionPage onShowHelp={handleShowHelp} />}
+            />
+            <Route path="/palitos" element={<DxfPage />} />
+            <Route path="/ferramentas" element={<ToolsPage />} />
+            <Route path="/sobre" element={<AboutPage />} />
+            <Route path="/changelog" element={<ChangelogPage />} />
+            <Route path="*" element={<div>Erro: página não encontrada</div>} />
+          </Routes>
         </Container>
       </div>
       <AppFooter />
