@@ -14,6 +14,8 @@ import { ToolsPage } from "./pages/ToolsPage";
 import { analytics } from "./utils/analyticsUtils";
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
+import { ToolsGrid } from "./components/Tools/ToolsGrid";
+import ToolPageLayout from "./components/Tools/ToolPageLayout";
 
 function App() {
   // Lidando com o Modal de ajuda
@@ -91,7 +93,10 @@ function App() {
               element={<DataExtractionPage onShowHelp={handleShowHelp} />}
             />
             <Route path="/palitos" element={<DxfPage />} />
-            <Route path="/ferramentas" element={<ToolsPage />} />
+            <Route path="/ferramentas" element={<ToolsPage />}>
+              <Route index element={<ToolsGrid />} />
+              <Route path=":toolPath" element={<ToolPageLayout />} />
+            </Route>
             <Route path="/sobre" element={<AboutPage />} />
             <Route path="/changelog" element={<ChangelogPage />} />
             <Route path="*" element={<div>Erro: página não encontrada</div>} />
