@@ -1,6 +1,7 @@
 import { Container, Nav, Navbar } from "react-bootstrap";
 import { Link, NavLink } from "react-router-dom";
 import styles from "./AppNavigation.module.css";
+import changelogData from "@data/changelog.json";
 
 const AppNavigation = () => {
   const pages: { name: string; route: string }[] = [
@@ -10,6 +11,9 @@ const AppNavigation = () => {
     { name: "Sobre", route: "/sobre" },
     { name: "Histórico de versões", route: "/changelog" },
   ];
+
+  const currentVersion = changelogData.versions[0].version;
+
   return (
     <Navbar className="border-bottom">
       <Container fluid className="px-0">
@@ -20,7 +24,7 @@ const AppNavigation = () => {
               alt="JS OpenGeo"
               style={{ height: "40px" }}
             />
-            <span className="text-muted small mx-1">v2.1.0-beta</span>
+            <span className="text-muted small mx-1">{currentVersion}</span>
           </Link>
         </Navbar.Brand>
         <Nav className="mx-auto">
