@@ -12,7 +12,7 @@ import ChangelogPage from "./pages/ChangelogPage";
 import AppFooter from "./components/AppFooter";
 import { ToolsPage } from "./pages/ToolsPage";
 import { analytics } from "./utils/analyticsUtils";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import { ToolsGrid } from "./components/Tools/ToolsGrid";
 import ToolPageLayout from "./components/Tools/ToolPageLayout";
@@ -30,6 +30,11 @@ function App() {
   const toggleShowHelpOnLoad = (show: boolean) => {
     setOpenHelpOnLoad(show);
     localStorage.setItem("showHelpOnLoad", show.toString());
+  };
+
+  const currentPath = () => {
+    const location = useLocation();
+    return location.pathname;
   };
 
   useEffect(() => {
@@ -81,11 +86,13 @@ function App() {
               <AppHeader />
             </Col>
           </Row>
-          <Row className="justify-content-center">
-            <Col className="px-0">
-              <AppNavigation />
-            </Col>
-          </Row>
+          {currentPath() !== "/" && (
+            <Row className="justify-content-center">
+              <Col className="px-0">
+                <AppNavigation />
+              </Col>
+            </Row>
+          )}
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route
