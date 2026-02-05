@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, runTransaction } from "firebase/database";
+import { get, getDatabase, ref, runTransaction } from "firebase/database";
 import type {
   AnalyticsCounters,
   AnalyticsEvent,
@@ -200,6 +200,39 @@ class AnalyticsService {
     } catch (error) {
       console.error("Erro no flushSync:", error);
     }
+  }
+}
+
+/**
+ * Lê todos os dados de analytics de um ambiente específico
+ * @param environment - Ambiente desejado ('localhost' | 'vercel' | 'gh-pages')
+ * @returns Map com data como chave e contadores como valor
+ */
+export async function getAnalyticsData(
+  environment: "localhost" | "vercel" | "gh-pages",
+): Promise<Map<string, AnalyticsCounters>> {
+  const db = getDatabase();
+  const analyticsRef = ref(db, `analytics/${environment}/daily`);
+
+  try {
+    const snapshot = await get(analyticsRef);
+
+    if (!snapshot.exists()) {
+      return new Map();
+    }
+
+    const data = snapshot.val();
+    const result = new Map<string, AnalyticsCounters>();
+
+    // Converte objeto para Map
+    Object.entries(data).forEach(([date, counters]) => {
+      result.set(date, counters as AnalyticsCounters);
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Erro ao buscar analytics:", error);
+    throw error;
   }
 }
 
