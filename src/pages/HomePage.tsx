@@ -2,6 +2,9 @@ import { Container, Row, Image, Col, Card, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./HomePage.module.css";
 import changelogData from "@data/changelog.json";
+import type { AnalyticsCounters } from "@/types/analyticsTypes";
+import { useEffect, useMemo, useState } from "react";
+import { getAnalyticsData } from "@/utils/analyticsUtils";
 
 const HomePage = () => {
   const tools: { name: string; description: string; path: string }[] = [
@@ -24,6 +27,62 @@ const HomePage = () => {
         "Acesse uma variedade de ferramentas para operações e transformações de arquivos nos formatos DXF, XLSX, KML e KMZ.",
     },
   ];
+
+  const [analytics, setAnalytics] = useState<Map<string, AnalyticsCounters>>();
+
+  useEffect(() => {
+    getAnalyticsData("gh-pages").then(setAnalytics);
+  }, []);
+
+  const shownAnalytics = useMemo(() => {
+    if (!analytics) return null;
+
+    let totalVisits = 0,
+      monthlyVisits = 0,
+      dataExtractions = 0,
+      palitoToolUses = 0,
+      totalGeneratedPalitos = 0,
+      cadsigToolsUses = 0;
+
+    for (const [day, data] of analytics) {
+      const dataMonth = new Date(day).getMonth();
+      const dataYear = new Date(day).getFullYear();
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      if (dataMonth === currentMonth && dataYear === currentYear) {
+        monthlyVisits += data.unique_daily_view;
+      }
+      if (data.unique_daily_view) {
+        totalVisits += data.unique_daily_view;
+      }
+      const totalExtractions =
+        data.extract_preview +
+        data.export_ags +
+        data.export_csv +
+        data.export_excel +
+        data.export_json;
+      dataExtractions += totalExtractions;
+      palitoToolUses += data.generate_dxf_count;
+      totalGeneratedPalitos += data.generate_dxf_sondagens;
+      const totalToolUses =
+        data.distance_tool +
+        data.dxf_tools +
+        data.kml_to_xlsx +
+        data.xlsx_to_dxf_profile +
+        data.xlsx_to_kml;
+      cadsigToolsUses += totalToolUses;
+    }
+
+    return {
+      totalVisits,
+      monthlyVisits,
+      dataExtractions,
+      palitoToolUses,
+      totalGeneratedPalitos,
+      cadsigToolsUses,
+    };
+  }, [analytics]);
 
   const navigate = useNavigate();
 
@@ -90,7 +149,26 @@ const HomePage = () => {
               backgroundColor: "#003380",
             }}
           >
-            Área de estatísticas
+            <h3>Uso do JS OpenGeo</h3>
+            <p>
+              O JS OpenGeo já foi acessado {shownAnalytics?.totalVisits} vezes,
+              sendo {shownAnalytics?.monthlyVisits} acessos neste mês.
+            </p>
+            <p>Em todos esses acessos, nossos usuários realizaram:</p>
+            <ul>
+              <li>
+                {shownAnalytics?.dataExtractions} extrações de dados de
+                sondagens.
+              </li>
+              <li>
+                {shownAnalytics?.cadsigToolsUses} usos de ferramentas CAD/SIG
+              </li>
+              <li>
+                {shownAnalytics?.palitoToolUses} usos da ferramenta de geração
+                de palitos, com um total de{" "}
+                {shownAnalytics?.totalGeneratedPalitos} palitos gerados.
+              </li>
+            </ul>
           </Col>
           <Col xs={9}>
             <Row>
