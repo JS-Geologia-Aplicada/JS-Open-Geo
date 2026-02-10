@@ -91,7 +91,7 @@ const HomePage = () => {
   return (
     <>
       {/* Seção com logo e resumo */}
-      <Container fluid style={{ backgroundColor: "#1D1D1D" }}>
+      <Container fluid className={styles.headerContainer}>
         <Row className="justify-content-center" style={{ paddingTop: "64px" }}>
           <Col xs={4}>
             <div className="d-flex flex-column align-items-end">
@@ -139,38 +139,31 @@ const HomePage = () => {
         </Row>
       </Container>
 
-      <Container fluid>
-        <Row>
-          <Col
-            xs={3}
-            style={{
-              // height: "100%",
-              color: "white",
-              backgroundColor: "#003380",
-            }}
-          >
-            <h3>Uso do JS OpenGeo</h3>
-            <p>
-              O JS OpenGeo já foi acessado {shownAnalytics?.totalVisits} vezes,
-              sendo {shownAnalytics?.monthlyVisits} acessos neste mês.
-            </p>
-            <p>Em todos esses acessos, nossos usuários realizaram:</p>
-            <ul>
-              <li>
-                {shownAnalytics?.dataExtractions} extrações de dados de
-                sondagens.
-              </li>
-              <li>
-                {shownAnalytics?.cadsigToolsUses} usos de ferramentas CAD/SIG
-              </li>
-              <li>
-                {shownAnalytics?.palitoToolUses} usos da ferramenta de geração
-                de palitos, com um total de{" "}
-                {shownAnalytics?.totalGeneratedPalitos} palitos gerados.
-              </li>
-            </ul>
-          </Col>
-          <Col xs={9}>
+      <Row className={styles.contentRow}>
+        <Col xs={4} className={styles.statsColumn}>
+          <h3 className="text-center">Uso do JS OpenGeo</h3>
+          <p className="text-end">
+            O JS OpenGeo já foi acessado {shownAnalytics?.totalVisits} vezes,
+            sendo {shownAnalytics?.monthlyVisits} acessos neste mês.
+            <br />
+            Em todos esses acessos, nossos usuários realizaram:
+          </p>
+          <ul>
+            <li>
+              {shownAnalytics?.dataExtractions} extrações de dados de sondagens.
+            </li>
+            <li>
+              {shownAnalytics?.cadsigToolsUses} usos de ferramentas CAD/SIG
+            </li>
+            <li>
+              {shownAnalytics?.palitoToolUses} usos da ferramenta de geração de
+              palitos, com um total de {shownAnalytics?.totalGeneratedPalitos}{" "}
+              palitos gerados.
+            </li>
+          </ul>
+        </Col>
+        <Col xs={8} className={styles.toolsColumn}>
+          <div className={styles.toolsContent}>
             <Row>
               <Col>
                 <h2 className={styles.toolsTitle}>Ferramentas</h2>
@@ -193,49 +186,46 @@ const HomePage = () => {
                 </Col>
               ))}
             </Row>
-            <Row
-              className="justify-content-center"
-              style={{ marginTop: "4rem" }}
-            >
-              <Col xs={10} lg={8}>
-                <Alert variant="secondary" className="text-center">
-                  <div>
-                    Acompanhe a JS Geologia Aplicada nas redes sociais para
-                    ficar por dentro de novidades no JS OpenGeo, cursos e mais
-                    ações
-                  </div>
-                  <div className="d-flex justify-content-center align-items-center gap-3 mt-1">
-                    <a
-                      href="https://www.linkedin.com/company/js-geologia-aplicada"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-decoration-none text-dark"
-                      title="LinkedIn"
-                    >
-                      <i
-                        className="bi bi-linkedin"
-                        style={{ fontSize: "1.5rem" }}
-                      ></i>
-                    </a>
-                    <a
-                      href="https://www.instagram.com/js.geologia/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-decoration-none text-dark"
-                      title="Instagram"
-                    >
-                      <i
-                        className="bi bi-instagram"
-                        style={{ fontSize: "1.5rem" }}
-                      ></i>
-                    </a>
-                  </div>
-                </Alert>
-              </Col>{" "}
-            </Row>
-          </Col>
-        </Row>
-      </Container>
+          </div>
+
+          <Row className="justify-content-center" style={{ marginTop: "4rem" }}>
+            <Col xs={10} lg={8}>
+              <Alert variant="secondary" className={styles.socialAlert}>
+                <div>
+                  Acompanhe a JS Geologia Aplicada nas redes sociais para ficar
+                  por dentro de novidades no JS OpenGeo, cursos e mais ações
+                </div>
+                <div className="d-flex justify-content-center align-items-center gap-3 mt-1">
+                  <a
+                    href="https://www.linkedin.com/company/js-geologia-aplicada"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-decoration-none text-dark"
+                    title="LinkedIn"
+                  >
+                    <i
+                      className="bi bi-linkedin"
+                      style={{ fontSize: "1.5rem" }}
+                    ></i>
+                  </a>
+                  <a
+                    href="https://www.instagram.com/js.geologia/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-decoration-none text-dark"
+                    title="Instagram"
+                  >
+                    <i
+                      className="bi bi-instagram"
+                      style={{ fontSize: "1.5rem" }}
+                    ></i>
+                  </a>
+                </div>
+              </Alert>
+            </Col>{" "}
+          </Row>
+        </Col>
+      </Row>
     </>
   );
 };

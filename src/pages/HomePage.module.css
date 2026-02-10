@@ -47,3 +47,70 @@
 .toolCard:hover::after {
   width: 100%;
 }
+
+.headerContainer {
+  background-color: #000000dd;
+  position: relative;
+  padding: 0;
+}
+
+.headerContainer::before {
+  content: "";
+  display: block;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+  background-image: url("OpenGeo_Perfil.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.contentRow {
+  flex: 1;
+  display: flex;
+  margin: 0;
+  height: 100%;
+}
+
+.statsColumn {
+  background-color: #003380;
+  color: white;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.statsColumn > h3 {
+  margin-bottom: 2rem;
+}
+
+.statsColumn > p {
+  font-weight: 700;
+}
+
+.statsColumn > ul {
+  text-align: end;
+  list-style-type: none;
+  padding-left: 30%;
+}
+
+.statsColumn > ul > li {
+  padding-bottom: 12px;
+}
+
+.toolsColumn {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.toolsContent {
+  flex: 1;
+}
+
+.socialAlert {
+  margin-top: auto;
+  padding-bottom: 2rem;
+  text-align: center;
+}
