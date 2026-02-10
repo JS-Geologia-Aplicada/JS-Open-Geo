@@ -16,6 +16,7 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import { ToolsGrid } from "./components/Tools/ToolsGrid";
 import ToolPageLayout from "./components/Tools/ToolPageLayout";
+import styles from "./App.module.css";
 
 function App() {
   // Lidando com o Modal de ajuda
@@ -67,8 +68,8 @@ function App() {
   }, []);
 
   return (
-    <div className="app-container">
-      <div className="main-content">
+    <div className={styles.appContainer}>
+      <div className={styles.mainContent}>
         <Container fluid className="text-center p-0">
           <ToastContainer
             position="top-right"
@@ -93,6 +94,9 @@ function App() {
               </Col>
             </Row>
           )}
+        </Container>
+
+        <div className={styles.routesContainer}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route
@@ -108,7 +112,7 @@ function App() {
             <Route path="/changelog" element={<ChangelogPage />} />
             <Route path="*" element={<div>Erro: página não encontrada</div>} />
           </Routes>
-        </Container>
+        </div>
       </div>
       <AppFooter />
     </div>
