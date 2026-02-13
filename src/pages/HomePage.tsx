@@ -166,7 +166,7 @@ const HomePage = () => {
       <Row className={styles.contentRow}>
         <Col xs={4} className={styles.statsColumn}>
           <h3>Uso do JS OpenGeo</h3>
-          <p className="text-end">
+          <p>
             O JS OpenGeo já foi acessado{" "}
             <span className={styles.analyticsHighlight}>
               {shownAnalytics?.totalVisits} vezes
@@ -207,36 +207,12 @@ const HomePage = () => {
                 getTimeSaved(shownAnalytics.totalGeneratedPalitos)}
             </li>
           </ul>
-        </Col>
-        <Col xs={8} className={styles.toolsColumn}>
-          <div className={styles.toolsContent}>
-            <Row>
-              <Col>
-                <h2 className={styles.toolsTitle}>Ferramentas</h2>
-              </Col>
-            </Row>
-            <Row>
-              {tools.map((tool, index) => (
-                <Col xs={12} lg={6} key={index}>
-                  <Card
-                    className={styles.toolCard}
-                    onClick={() => navigate(tool.path)}
-                  >
-                    <Card.Title>{tool.name}</Card.Title>
-                    <Card.Text className={styles.toolCardWrapper}>
-                      <span className={styles.toolCardText}>
-                        {tool.description}
-                      </span>
-                    </Card.Text>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </div>
-
-          <Row className="justify-content-center" style={{ marginTop: "4rem" }}>
-            <Col xs={10} lg={8}>
-              <Alert variant="secondary" className={styles.socialAlert}>
+          <Row
+            className="justify-content-center align-items-end"
+            style={{ marginTop: "4rem", height: "100%" }}
+          >
+            <Col xs={12}>
+              <Alert className={styles.socialAlert}>
                 <div>
                   Acompanhe a JS Geologia Aplicada nas redes sociais para ficar
                   por dentro de novidades no JS OpenGeo, cursos e mais ações
@@ -270,6 +246,32 @@ const HomePage = () => {
               </Alert>
             </Col>{" "}
           </Row>
+        </Col>
+        <Col xs={8} className={styles.toolsColumn}>
+          <div className={styles.toolsContent}>
+            <Row>
+              <Col>
+                <h2 className={styles.toolsTitle}>Ferramentas</h2>
+              </Col>
+            </Row>
+            <Row>
+              {tools.map((tool, index) => (
+                <Col xs={12} lg={6} key={index}>
+                  <Card
+                    className={styles.toolCard}
+                    onClick={() => navigate(tool.path)}
+                  >
+                    <Card.Title>{tool.name}</Card.Title>
+                    <Card.Text className={styles.toolCardWrapper}>
+                      <span className={styles.toolCardText}>
+                        {tool.description}
+                      </span>
+                    </Card.Text>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </div>
         </Col>
       </Row>
     </>
