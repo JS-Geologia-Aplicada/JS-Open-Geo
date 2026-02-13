@@ -92,11 +92,24 @@ const HomePage = () => {
     const totalMinutes = boreholes * 4;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = boreholes % 60;
-    return hours && minutes
-      ? `${hours} horas e ${minutes} minutos`
-      : hours
-        ? `${hours} horas`
-        : `${minutes} minutos`;
+    return hours && minutes ? (
+      <>
+        <span className={styles.analyticsHighlight}>
+          {hours} horas e {minutes} minutos
+        </span>{" "}
+        de trabalho economizados.
+      </>
+    ) : hours ? (
+      <>
+        <span className={styles.analyticsHighlight}>{hours} horas</span> de
+        trabalho economizadas.
+      </>
+    ) : (
+      <>
+        <span className={styles.analyticsHighlight}>{minutes} minutos</span> de
+        trabalho economizados.
+      </>
+    );
   };
 
   return (
@@ -152,32 +165,46 @@ const HomePage = () => {
 
       <Row className={styles.contentRow}>
         <Col xs={4} className={styles.statsColumn}>
-          <h3 className="text-center">Uso do JS OpenGeo</h3>
+          <h3>Uso do JS OpenGeo</h3>
           <p className="text-end">
-            O JS OpenGeo já foi acessado {shownAnalytics?.totalVisits} vezes,
-            sendo {shownAnalytics?.monthlyVisits} acessos neste mês.
+            O JS OpenGeo já foi acessado{" "}
+            <span className={styles.analyticsHighlight}>
+              {shownAnalytics?.totalVisits} vezes
+            </span>
+            , sendo{" "}
+            <span className={styles.analyticsHighlight}>
+              {shownAnalytics?.monthlyVisits} acessos
+            </span>{" "}
+            apenas neste mês.
             <br />
-            Em todos esses acessos, nossos usuários realizaram:
+            Em todos esses acessos, tivemos:
           </p>
           <ul>
             <li>
-              {shownAnalytics?.dataExtractions} sondagens processadas e com
-              dados extraídos.
+              <span className={styles.analyticsHighlight}>
+                {shownAnalytics?.dataExtractions} sondagens
+              </span>{" "}
+              processadas e com dados extraídos.
             </li>
             <li>
-              {shownAnalytics?.cadsigToolsUses} usos de ferramentas CAD/SIG
+              <span className={styles.analyticsHighlight}>
+                {shownAnalytics?.cadsigToolsUses} usos
+              </span>{" "}
+              de ferramentas CAD/SIG
             </li>
             <li>
-              {shownAnalytics?.palitoToolUses} usos da ferramenta de geração de
-              palitos,
+              <span className={styles.analyticsHighlight}>
+                {shownAnalytics?.palitoToolUses} usos
+              </span>{" "}
+              da ferramenta de geração de palitos,
               <br />
-              com um total de {shownAnalytics?.totalGeneratedPalitos} palitos
-              gerados,
+              <span className={styles.analyticsHighlight}>
+                {shownAnalytics?.totalGeneratedPalitos} palitos
+              </span>{" "}
+              gerados no total e
               <br />
-              economizando{" "}
               {shownAnalytics &&
                 getTimeSaved(shownAnalytics.totalGeneratedPalitos)}
-              .
             </li>
           </ul>
         </Col>

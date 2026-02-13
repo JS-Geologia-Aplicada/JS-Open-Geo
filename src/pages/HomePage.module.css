@@ -83,20 +83,19 @@
 
 .statsColumn > h3 {
   margin-bottom: 2rem;
+  text-align: end;
 }
 
 .statsColumn > p {
-  font-weight: 700;
+  color: #ddd;
+  padding-left: 15%;
 }
 
 .statsColumn > ul {
+  color: #ddd;
   text-align: end;
   list-style-type: none;
-  padding-left: 30%;
-}
-
-.statsColumn > ul > li {
-  padding-bottom: 12px;
+  padding-left: 15%;
 }
 
 .toolsColumn {
@@ -113,4 +112,9 @@
   margin-top: auto;
   padding-bottom: 2rem;
   text-align: center;
+}
+
+.analyticsHighlight {
+  color: white;
+  font-weight: 900;
 }
