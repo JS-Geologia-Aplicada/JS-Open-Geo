@@ -169,8 +169,12 @@ const HomePage = () => {
             </li>
             <li>
               {shownAnalytics?.palitoToolUses} usos da ferramenta de geração de
-              palitos, com um total de {shownAnalytics?.totalGeneratedPalitos}{" "}
-              palitos gerados, economizando{" "}
+              palitos,
+              <br />
+              com um total de {shownAnalytics?.totalGeneratedPalitos} palitos
+              gerados,
+              <br />
+              economizando{" "}
               {shownAnalytics &&
                 getTimeSaved(shownAnalytics.totalGeneratedPalitos)}
               .
