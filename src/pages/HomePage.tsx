@@ -51,10 +51,10 @@ const HomePage = () => {
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
       if (dataMonth === currentMonth && dataYear === currentYear) {
-        monthlyVisits += data.unique_daily_view;
+        monthlyVisits += data.pageview;
       }
-      if (data.unique_daily_view) {
-        totalVisits += data.unique_daily_view;
+      if (data.pageview) {
+        totalVisits += data.pageview;
       }
       const totalExtractions =
         data.extract_preview +
@@ -87,6 +87,17 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   const currentVersion = changelogData.versions[0].version;
+
+  const getTimeSaved = (boreholes: number) => {
+    const totalMinutes = boreholes * 4;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = boreholes % 60;
+    return hours && minutes
+      ? `${hours} horas e ${minutes} minutos`
+      : hours
+        ? `${hours} horas`
+        : `${minutes} minutos`;
+  };
 
   return (
     <>
@@ -150,7 +161,8 @@ const HomePage = () => {
           </p>
           <ul>
             <li>
-              {shownAnalytics?.dataExtractions} extrações de dados de sondagens.
+              {shownAnalytics?.dataExtractions} sondagens processadas e com
+              dados extraídos.
             </li>
             <li>
               {shownAnalytics?.cadsigToolsUses} usos de ferramentas CAD/SIG
@@ -158,7 +170,10 @@ const HomePage = () => {
             <li>
               {shownAnalytics?.palitoToolUses} usos da ferramenta de geração de
               palitos, com um total de {shownAnalytics?.totalGeneratedPalitos}{" "}
-              palitos gerados.
+              palitos gerados, economizando{" "}
+              {shownAnalytics &&
+                getTimeSaved(shownAnalytics.totalGeneratedPalitos)}
+              .
             </li>
           </ul>
         </Col>
