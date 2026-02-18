@@ -91,7 +91,7 @@ const HomePage = () => {
   const getTimeSaved = (boreholes: number) => {
     const totalMinutes = boreholes * 4;
     const hours = Math.floor(totalMinutes / 60);
-    const minutes = boreholes % 60;
+    const minutes = totalMinutes % 60;
     return hours && minutes ? (
       <>
         <span className={styles.analyticsHighlight}>
@@ -116,48 +116,39 @@ const HomePage = () => {
     <>
       {/* Seção com logo e resumo */}
       <Container fluid className={styles.headerContainer}>
-        <Row className="justify-content-center" style={{ paddingTop: "64px" }}>
-          <Col xs={4}>
-            <div className="d-flex flex-column align-items-end">
-              <Image src="js_open_geo_logo.png" style={{ width: "100%" }} />
-              <span
-                style={{
-                  color: "#888",
-                  paddingRight: "30px",
-                  fontWeight: "600",
-                  fontSize: "20px",
-                  marginTop: "-20px",
-                }}
+        <Row className="justify-content-center">
+          <Col xs={6}>
+            <div className={styles.headerHero}>
+              <div className="d-flex flex-column align-items-end">
+                <Image src="/JSOpenGeo_white.png" style={{ width: "100%" }} />
+                <span
+                  style={{
+                    color: "#888",
+                    paddingRight: "30px",
+                    fontWeight: "600",
+                    fontSize: "20px",
+                    marginTop: "-20px",
+                  }}
+                >
+                  {currentVersion}
+                </span>
+              </div>
+              <p className="text-center" style={{ color: "#ddd" }}>
+                Um programa totalmente on-line, gratuito e de código aberto da
+                JS Geologia Aplicada, desenvolvido para facilitar e agilizar a
+                organização e análise de dados geológico-geotécnicos.
+              </p>
+              <div
+                className="d-flex justify-content-around"
+                style={{ color: "#fff" }}
               >
-                {currentVersion}
-              </span>
-            </div>
-          </Col>
-        </Row>
-        <Row className="justify-content-center" style={{ marginTop: "2rem" }}>
-          <Col xs={4}>
-            <p className="text-center" style={{ color: "#ddd" }}>
-              Um programa totalmente on-line, gratuito e de código aberto da JS
-              Geologia Aplicada, desenvolvido para facilitar e agilizar a
-              organização e análise de dados geológico-geotécnicos.
-            </p>
-          </Col>
-        </Row>
-        <Row
-          className="justify-content-center"
-          style={{ marginTop: "1rem", paddingBottom: "1rem" }}
-        >
-          <Col xs={4}>
-            <div
-              className="d-flex justify-content-around"
-              style={{ color: "#fff" }}
-            >
-              <Link className={styles.headerLink} to="/sobre">
-                Sobre
-              </Link>
-              <Link className={styles.headerLink} to="/changelog">
-                Histórico de versões
-              </Link>
+                <Link className={styles.headerLink} to="/sobre">
+                  Sobre
+                </Link>
+                <Link className={styles.headerLink} to="/changelog">
+                  Histórico de versões
+                </Link>
+              </div>
             </div>
           </Col>
         </Row>
