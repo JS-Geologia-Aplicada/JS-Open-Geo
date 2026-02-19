@@ -137,19 +137,6 @@ export const textItemToString = (
     return yDiff; // ordenar por Y se linhas diferentes
   });
 
-  console.group("=== INÍCIO textItemToString ===");
-  console.log("Total de items:", items.length);
-  console.log(
-    "Items ordenados:",
-    items.map((item, idx) => ({
-      index: idx,
-      texto: item.str,
-      y: item.transform[5].toFixed(2),
-      x: item.transform[4].toFixed(2),
-      height: item.height.toFixed(2),
-    })),
-  );
-
   // Função auxiliar para buscar próximo item com conteúdo
   const getNextNonEmptyItem = (startIndex: number): TextItem | null => {
     for (let i = startIndex + 1; i < items.length; i++) {
@@ -167,17 +154,6 @@ export const textItemToString = (
     const lineThreshold = item.height * 1.5;
 
     const nextItem = getNextNonEmptyItem(index);
-    const distanceToNext = nextItem
-      ? Math.abs(item.transform[5] - nextItem.transform[5])
-      : null;
-
-    console.log(`\n--- Item ${index}: "${item.str.trim()}" ---`);
-    console.log("Threshold da linha:", lineThreshold.toFixed(2));
-    if (nextItem) {
-      console.log("Distância para próximo:", distanceToNext?.toFixed(2));
-      console.log("Próximo item:", nextItem.str.trim());
-      console.log("Vai agrupar?", distanceToNext! <= lineThreshold);
-    }
 
     if (startedNspt) {
       incompleteTexts.push(item.str.trim());
@@ -212,8 +188,6 @@ export const textItemToString = (
         areaToNextItem,
         horizontalLines,
       );
-
-      console.log("areaBelow: ", areaBelowItem);
 
       // Se a próxima linha está a uma distância menor que o limite de 1,5 * altura da linha e não há uma linha horizontal antes da próxima linha, o texto atual será adicionado a uma array de textos imcompletos
       if (
@@ -252,9 +226,6 @@ export const textItemToString = (
   if (incompleteTexts.length > 0) {
     textArr.push(incompleteTexts.join(" "));
   }
-  console.log("\n=== RESULTADO FINAL ===");
-  console.log("Textos agrupados:", textArr);
-  console.groupEnd();
   return textArr;
 };
 
@@ -273,18 +244,6 @@ export const areaHasHorizontalLines = (
   const areaXMax = area.x + area.width;
   const areaYMin = area.y;
   const areaYMax = area.y + area.height;
-
-  const areaLines = horizontalLines.filter(
-    (line) =>
-      line.x1 <= areaXMax &&
-      line.x2 >= areaXMin &&
-      line.y >= areaYMin &&
-      line.y <= areaYMax &&
-      (Math.abs(line.x2 - line.x1) <= 15 || !onlyShortLine) &&
-      (Math.abs(line.x2 - line.x1) >= area.y / 6 || onlyShortLine),
-  );
-
-  console.log("areaLines: ", areaLines);
 
   return horizontalLines.some(
     (line) =>

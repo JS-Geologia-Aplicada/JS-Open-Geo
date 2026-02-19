@@ -253,8 +253,6 @@ export const extractText = async (
                       b.transform[5] - a.transform[5],
                   );
 
-                  console.log("filteredTexts: ", filteredTexts);
-
                   textArr =
                     area.dataType === "nspt"
                       ? nsptToString(filteredTexts)
@@ -303,41 +301,6 @@ export const extractText = async (
 
           for (const area of nonRepeatDataAreas) {
             if (area.coordinates) {
-              const areaCoords = convertCoordinates(
-                area.coordinates,
-                1,
-                1,
-                originalViewport,
-              );
-              console.group(`=== Linhas horizontais - área: ${area.name} ===`);
-              console.log("Coordenadas da área (PDF):", {
-                x: areaCoords.x.toFixed(2),
-                y: areaCoords.y.toFixed(2),
-                width: areaCoords.width.toFixed(2),
-                height: areaCoords.height.toFixed(2),
-              });
-              console.log(
-                "Total de linhas na página:",
-                pageHorizontalLines.length,
-              );
-              console.log(
-                "Linhas dentro da área:",
-                pageHorizontalLines
-                  .filter(
-                    (line) =>
-                      line.x1 <= areaCoords.x + areaCoords.width &&
-                      line.x2 >= areaCoords.x &&
-                      line.y >= areaCoords.y &&
-                      line.y <= areaCoords.y + areaCoords.height,
-                  )
-                  .map((l) => ({
-                    comprimento: (l.x2 - l.x1).toFixed(2),
-                    x1: l.x1.toFixed(2),
-                    x2: l.x2.toFixed(2),
-                    y: l.y.toFixed(2),
-                  })),
-              );
-              console.groupEnd();
               try {
                 let textArr: string[] = [];
                 if (area.ocr) {
