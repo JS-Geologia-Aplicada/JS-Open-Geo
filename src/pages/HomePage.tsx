@@ -89,7 +89,7 @@ const HomePage = () => {
   const currentVersion = changelogData.versions[0].version;
 
   const getTimeSaved = (boreholes: number) => {
-    const totalMinutes = boreholes * 4;
+    const totalMinutes = boreholes * 10;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return hours && minutes ? (
