@@ -38,8 +38,11 @@ const AboutPage = () => {
           </p>
           <ul>
             <li>Seus arquivos e dados não são enviados para nenhum servidor</li>
-            <li>Nada é armazenado em nuvem ou bancos de dados</li>
-            <li>Não utilizamos nenhuma ferramenta de rastreamento</li>
+            <li>
+              Nenhum dado pessoal e/ou dado contido nos documentos e arquivos
+              que usuário realiza upload no site é armazenado em nuvem ou bancos
+              de dados
+            </li>
             <li>
               Após o carregamento inicial da página, é possível utilizar o
               programa mesmo sem acesso à internet

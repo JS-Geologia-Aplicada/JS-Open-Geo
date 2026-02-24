@@ -117,8 +117,8 @@ const HomePage = () => {
       {/* Seção com logo e resumo */}
       <Container fluid className={styles.headerContainer}>
         <Row className="justify-content-center">
-          <Col xs={6} className="d-flex justify-content-center">
-            <div className={styles.headerHero}>
+          <Col xs={6}>
+            <div className={`${styles.headerHero} mx-auto`}>
               <div className="d-flex flex-column align-items-end">
                 <Image src="JSOpenGeo_white.png" style={{ width: "100%" }} />
                 <span
@@ -139,7 +139,7 @@ const HomePage = () => {
                 organização e análise de dados geológico-geotécnicos.
               </p>
               <div
-                className="d-flex justify-content-around"
+                className="d-flex justify-content-around w-100"
                 style={{ color: "#fff" }}
               >
                 <Link className={styles.headerLink} to="/sobre">

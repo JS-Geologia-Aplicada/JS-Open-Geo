@@ -7,7 +7,8 @@
       "summary": "Criação de página inicial",
       "features": [
         "Criação de página inicial.",
-        "Implementação de React Router Dom para cada página ter uma URL única."
+        "Implementação de React Router Dom para cada página ter uma URL única.",
+        "Implementação de contagem das estatísticas de uso"
       ],
       "improvements": [],
       "bugfixes": [],
