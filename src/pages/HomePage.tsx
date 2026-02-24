@@ -117,17 +117,17 @@ const HomePage = () => {
       {/* Seção com logo e resumo */}
       <Container fluid className={styles.headerContainer}>
         <Row className="justify-content-center">
-          <Col xs={6}>
+          <Col xs={6} className="d-flex justify-content-center">
             <div className={styles.headerHero}>
               <div className="d-flex flex-column align-items-end">
-                <Image src="/JSOpenGeo_white.png" style={{ width: "100%" }} />
+                <Image src="JSOpenGeo_white.png" style={{ width: "100%" }} />
                 <span
                   style={{
                     color: "#888",
                     paddingRight: "30px",
                     fontWeight: "600",
                     fontSize: "20px",
-                    marginTop: "-20px",
+                    marginTop: "-1vw",
                   }}
                 >
                   {currentVersion}

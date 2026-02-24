@@ -58,6 +58,8 @@
 .headerHero {
   display: flex;
   flex-direction: column;
+  max-width: 750px;
+  align-items: center;
   /* background: linear-gradient(
     90deg,
     rgba(0, 0, 0, 0) 0%,
