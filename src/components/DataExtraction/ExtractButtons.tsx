@@ -17,7 +17,7 @@ import {
   getDropdownItemClass,
 } from "@utils/downloadUtils";
 import { validateExportRequirements } from "@utils/leapfrogExport";
-import { ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { millisecondsToTimerFormat } from "@utils/helpers";
 import {
   Button,
@@ -534,7 +534,6 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                 onClick={() => setShowSettings(!showSettings)}
                 title="Configurações"
               >
-                <Settings size={18} className="me-1" />
                 {showSettings ? (
                   <ChevronUp size={18} />
                 ) : (

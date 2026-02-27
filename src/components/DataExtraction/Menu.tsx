@@ -8,7 +8,7 @@ import {
 import AreaItem from "./AreaItem";
 import UploadFile from "./UploadFile";
 import PresetManager from "./PresetManager";
-import { Folder, HelpCircle, Plus, X } from "lucide-react";
+import { FileText, Folder, HelpCircle, Plus, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
   Button,
@@ -80,6 +80,13 @@ function Menu({ onDragEnd, onShowHelp }: MenuProps) {
     }
   };
 
+  const downloadTemplate = () => {
+    const link = document.createElement("a");
+    link.href = "templates/SondagemModelo_JSOpenGeo.pdf";
+    link.download = "SondagemModelo_JSOpenGeo.pdf";
+    link.click();
+  };
+
   const helpRef = useRef(null);
   const helpTarget = useRef(null);
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
@@ -87,7 +94,20 @@ function Menu({ onDragEnd, onShowHelp }: MenuProps) {
   return (
     <>
       <UploadFile />
-      <div className="d-flex justify-content-end gap-2 my-3">
+
+      <div style={{ padding: "12px" }}>
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          onClick={downloadTemplate}
+          className="d-flex align-items-center justify-content-center gap-2 w-100"
+        >
+          <FileText size={16} />
+          Baixar arquivo modelo
+        </Button>
+      </div>
+
+      <div className="d-flex justify-content-end gap-2 mb-3">
         <Form.Select
           className="form-select form-select-sm"
           defaultValue={"text"}
