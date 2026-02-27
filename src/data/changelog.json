@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "2.2.1-beta",
+      "date": "2026-02-27",
+      "title": "Melhorias",
+      "summary": "Melhorias na paǵina de dados de sondagem e atualização das estatísticas de uso",
+      "features": [],
+      "improvements": [
+        "Inclusão de modelo de arquivo de dados de sondagem.",
+        "Alteração sutil no design dos botões de dados de sondagem",
+        "Inclusão de novos parâmetros nas estatísticas de uso"
+      ],
+      "bugfixes": [],
+      "known_issues": []
+    },
+    {
       "version": "2.2.0-beta",
       "date": "2026-02-24",
       "title": "Página inicial",

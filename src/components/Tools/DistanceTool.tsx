@@ -267,7 +267,7 @@ const DistanceTool = () => {
         };
       });
     update({ distanceResults });
-    analytics.track("dxf_tools");
+    analytics.track("distance_tool_calculate");
   };
 
   const handleExport = () => {
@@ -286,7 +286,13 @@ const DistanceTool = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Distâncias");
     XLSX.writeFile(wb, "distancias-sondagens.xlsx");
+    analytics.track("distance_tool_save");
+    analytics.track("cadsig_total_uses");
   };
+
+  useEffect(() => {
+    analytics.track("distance_tool_view");
+  }, []);
 
   return (
     <>

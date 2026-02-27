@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   detectDxfType,
   extractMultileaders,
@@ -250,7 +250,8 @@ const ExtractDxfTool = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sondagens");
     XLSX.writeFile(wb, "sondagens-dxf.xlsx");
-    analytics.track("dxf_tools");
+    analytics.track("dxf_tools_save_xlsx");
+    analytics.track("cadsig_total_uses");
   };
 
   const exportToKML = async (kmz = false) => {
@@ -337,7 +338,9 @@ const ExtractDxfTool = () => {
       link.click();
       URL.revokeObjectURL(url);
     }
-    analytics.track("dxf_tools");
+    const tracker = kmz ? "dxf_tools_save_kmz" : "dxf_tools_save_kml";
+    analytics.track(tracker);
+    analytics.track("cadsig_total_uses");
   };
 
   const handleKMLExport = (kmz = false) => {
@@ -368,7 +371,8 @@ const ExtractDxfTool = () => {
     link.download = "sondagens.dxf";
     link.click();
     URL.revokeObjectURL(url);
-    analytics.track("dxf_tools");
+    analytics.track("dxf_tools_save_dxf");
+    analytics.track("cadsig_total_uses");
   };
 
   const handleRename = () => {
@@ -429,6 +433,10 @@ const ExtractDxfTool = () => {
     }
     update({ useNewName: e.target.checked });
   };
+
+  useEffect(() => {
+    analytics.track("dxf_tools_view");
+  }, []);
 
   return (
     <ToolLayout

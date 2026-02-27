@@ -38,25 +38,30 @@ export interface AnalyticsCounters {
   leapfrog_to_palito: number;
 
   // Ferramentas CAD/SIG
-  dxf_tools_view: number; // adicionar
-  dxf_tools_save_dxf: number; // adicionar
-  dxf_tools_save_xlsx: number; // adicionar
-  dxf_tools_save_kml: number; // adicionar
-  distance_tool_view: number; // adicionar
-  distance_tool_save: number; // adicionar
-  kml_to_xlsx_view: number; // adicionar
-  kml_to_xlsx_save: number; // adicionar
-  xlsx_to_dxf_profile_view: number; // adicionar
-  xlsx_to_dxf_profile_save: number; // adicionar
-  xlsx_to_kml_view: number; // adicionar
-  xlsx_to_kml_save: number; // adicionar
-  cadsig_open_templates: number; // adicionar
+  dxf_tools_view: number;
+  dxf_tools_save_dxf: number;
+  dxf_tools_save_xlsx: number;
+  dxf_tools_save_kml: number;
+  dxf_tools_save_kmz: number;
+  distance_tool_view: number;
+  distance_tool_save: number;
+  distance_tool_calculate: number;
+  kml_to_xlsx_view: number;
+  kml_to_xlsx_save: number;
+  xlsx_to_dxf_profile_view: number;
+  xlsx_to_dxf_profile_save: number;
+  xlsx_to_kml_view: number;
+  xlsx_to_kml_save_kmz: number;
+  xlsx_to_kml_save_kml: number;
+  cadsig_open_templates: number;
 
-  dxf_tools: number;
-  distance_tool: number;
-  xlsx_to_kml: number;
-  xlsx_to_dxf_profile: number;
-  kml_to_xlsx: number;
+  cadsig_total_uses: number;
+
+  // dxf_tools: number;
+  // distance_tool: number;
+  // xlsx_to_kml: number;
+  // xlsx_to_dxf_profile: number;
+  // kml_to_xlsx: number;
 }
 
 export type AnalyticsEvent = keyof AnalyticsCounters;

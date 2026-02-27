@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal, Nav, Tab, Card, Button } from "react-bootstrap";
 import { Download } from "lucide-react";
 import { FILE_TEMPLATES } from "@/data/fileTemplates";
+import { analytics } from "@/utils/analyticsUtils";
 
 interface FileTemplatesModalProps {
   show: boolean;
@@ -21,6 +22,7 @@ const FileTemplatesModal = ({
     if (defaultTab) {
       setActiveTab(defaultTab);
     }
+    analytics.track("cadsig_open_templates");
   };
 
   const handleDownload = (fileUrl: string, fileName: string) => {
@@ -72,7 +74,7 @@ const FileTemplatesModal = ({
                             onClick={() =>
                               handleDownload(
                                 template.fileUrl,
-                                template.fileName
+                                template.fileName,
                               )
                             }
                           >

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { processXlsxData, readXlsxFile, type XlsxRow } from "@/utils/xlsxUtils";
@@ -87,8 +87,13 @@ const XlsxToDxfProfile = () => {
 
   const handleExportDxf = () => {
     generateDxfProfile(sondagens, fontSize, textRotation);
-    analytics.track("xlsx_to_dxf_profile");
+    analytics.track("xlsx_to_dxf_profile_save");
+    analytics.track("cadsig_total_uses");
   };
+
+  useEffect(() => {
+    analytics.track("xlsx_to_dxf_profile_view");
+  }, []);
 
   return (
     <>

@@ -65,13 +65,7 @@ const HomePage = () => {
       dataExtractions += totalExtractions;
       palitoToolUses += data.generate_dxf_count;
       totalGeneratedPalitos += data.generate_dxf_sondagens;
-      const totalToolUses =
-        data.distance_tool +
-        data.dxf_tools +
-        data.kml_to_xlsx +
-        data.xlsx_to_dxf_profile +
-        data.xlsx_to_kml;
-      cadsigToolsUses += totalToolUses;
+      if (data.cadsig_total_uses) cadsigToolsUses += data.cadsig_total_uses;
     }
 
     return {

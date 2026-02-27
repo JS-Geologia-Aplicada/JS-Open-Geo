@@ -81,16 +81,15 @@ class AnalyticsService {
       dxf_tools_save_dxf: 0,
       dxf_tools_save_xlsx: 0,
       dxf_tools_save_kml: 0,
+      dxf_tools_save_kmz: 0,
+      distance_tool_calculate: 0,
       distance_tool_save: 0,
       kml_to_xlsx_save: 0,
       xlsx_to_dxf_profile_save: 0,
-      xlsx_to_kml_save: 0,
+      xlsx_to_kml_save_kml: 0,
+      xlsx_to_kml_save_kmz: 0,
       cadsig_open_templates: 0,
-      dxf_tools: 0,
-      distance_tool: 0,
-      xlsx_to_kml: 0,
-      xlsx_to_dxf_profile: 0,
-      kml_to_xlsx: 0,
+      cadsig_total_uses: 0,
     };
   }
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Alert, Button, Form } from "react-bootstrap";
 import JSZip from "jszip";
 import { KmlBuilder, type KmlData } from "@/utils/kmlGenerator";
@@ -203,7 +203,9 @@ const XlsxToKml = () => {
       link.click();
       URL.revokeObjectURL(url);
     }
-    analytics.track("xlsx_to_kml");
+    const tracker = kmz ? "xlsx_to_kml_save_kmz" : "xlsx_to_kml_save_kml";
+    analytics.track(tracker);
+    analytics.track("cadsig_total_uses");
   };
 
   // Recarregar quando mudar hasHeader
@@ -229,6 +231,10 @@ const XlsxToKml = () => {
     selectedDatum &&
     (selectedDatum === "WGS84" || selectedZone) &&
     processedData.valid.length > 0;
+
+  useEffect(() => {
+    analytics.track("xlsx_to_kml_view");
+  }, []);
 
   return (
     <ToolLayout

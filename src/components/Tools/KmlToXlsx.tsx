@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Button, Form } from "react-bootstrap";
 import * as XLSX from "xlsx";
 import { parseKmlFile } from "@/utils/kmlParser";
@@ -114,12 +114,17 @@ const KmlToXlsx = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sondagens");
     XLSX.writeFile(wb, "sondagens-kml.xlsx");
-    analytics.track("kml_to_xlsx");
+    analytics.track("kml_to_xlsx_save");
+    analytics.track("cadsig_total_uses");
   };
 
   const extendedDataColumns = Array.from(
     new Set(sondagens.flatMap((s) => Object.keys(s.extendedData))),
   );
+
+  useEffect(() => {
+    analytics.track("kml_to_xlsx_view");
+  }, []);
 
   return (
     <ToolLayout
