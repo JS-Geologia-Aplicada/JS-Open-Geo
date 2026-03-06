@@ -91,7 +91,7 @@ generate_boreholes_dxf(data)
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `sondagens_${Date.now()}.dxf`;
+      link.download = `sondagens.dxf`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
