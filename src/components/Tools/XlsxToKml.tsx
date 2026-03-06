@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Form } from "react-bootstrap";
 import JSZip from "jszip";
 import { KmlBuilder, type KmlData } from "@/utils/kmlGenerator";
@@ -17,6 +17,9 @@ import { ToolControlSection } from "./ToolControlSection";
 import { DataTable } from "../DataTable";
 import { useToolState } from "@/hooks/useToolState";
 import { analytics } from "@/utils/analyticsUtils";
+import { usePyodide } from "@/contexts/PyodideContext";
+
+import sondagensPy from "@/python/dxf_generators/sondagens.py?raw";
 
 interface ParsedSondagem {
   name: string;
@@ -39,6 +42,62 @@ const XlsxToKml = () => {
     selectedDatum,
     selectedZone,
   } = state;
+
+  const { pyodide, isReady, initialize, runPythonCode } = usePyodide();
+  const [moduleLoaded, setModuleLoaded] = useState(false);
+
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        // Aguarda Pyodide ficar pronto
+        await initialize();
+
+        // Carrega módulo (já aguarda automaticamente)
+        await runPythonCode(sondagensPy, "python/dxf_generators/sondagens");
+
+        setModuleLoaded(true);
+      } catch (err) {
+        console.error("❌ Erro no setup:", err);
+      }
+    };
+
+    setup();
+  }, []);
+
+  const handleGerar = async () => {
+    if (!isReady || !moduleLoaded || !pyodide) return;
+
+    const boreholes = processedData.valid.map((entry) => {
+      return {
+        id: entry.name,
+        x: entry.lon,
+        y: entry.lat,
+      };
+    });
+
+    const dados = [{ layer: "Pontos", color: 3, boreholes }];
+
+    try {
+      const dxfString = await pyodide.runPythonAsync(`
+import json
+from dxf_generators.sondagens import generate_boreholes_dxf
+
+data = json.loads('''${JSON.stringify(dados)}''')
+generate_boreholes_dxf(data)
+    `);
+
+      // Download
+      const blob = new Blob([dxfString], { type: "application/dxf" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `sondagens_${Date.now()}.dxf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao gerar DXF:", error);
+    }
+  };
 
   const handleFileChange = async (files: File[]) => {
     if (!files || files.length === 0) return;
@@ -72,6 +131,55 @@ const XlsxToKml = () => {
 
   // Processar dados com conversão
   const processedData = useMemo((): {
+    valid: ParsedSondagem[];
+    invalid: { row: XlsxRow; reason: string }[];
+  } => {
+    // Se faltar alguma config, retorna vazio
+    if (
+      nameColumnIndex === undefined ||
+      xColumnIndex === undefined ||
+      yColumnIndex === undefined ||
+      rawData.length === 0
+    ) {
+      return { valid: [], invalid: [] };
+    }
+
+    const nameCol = headers[nameColumnIndex];
+    const xCol = headers[xColumnIndex];
+    const yCol = headers[yColumnIndex];
+
+    const valid: ParsedSondagem[] = [];
+    const invalid: { row: XlsxRow; reason: string }[] = [];
+
+    rawData.forEach((row) => {
+      let xRaw = row[xCol];
+      let yRaw = row[yCol];
+      const name = String(row[nameCol] || "Sem nome");
+
+      const lon = parseFloat(xRaw);
+      const lat = parseFloat(yRaw);
+
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+        invalid.push({
+          row,
+          reason: `Coordenadas inválidas: X=${xRaw}, Y=${yRaw}`,
+        });
+        return;
+      }
+
+      valid.push({ name, lon, lat, extraData: [] });
+    });
+    return { valid, invalid };
+  }, [
+    rawData,
+    nameColumnIndex !== undefined,
+    xColumnIndex !== undefined,
+    yColumnIndex !== undefined,
+    headers,
+  ]);
+
+  // Processar dados com conversão
+  const geoprocessedData = useMemo((): {
     valid: ParsedSondagem[];
     invalid: { row: XlsxRow; reason: string }[];
   } => {
@@ -159,11 +267,11 @@ const XlsxToKml = () => {
   ]);
 
   const handleExport = async (kmz: boolean) => {
-    if (processedData.valid.length === 0) return;
+    if (geoprocessedData.valid.length === 0) return;
 
     const kml = new KmlBuilder("Sondagens XLSX");
 
-    processedData.valid.forEach((sondagem) => {
+    geoprocessedData.valid.forEach((sondagem) => {
       const data: KmlData[] = Object.entries(sondagem.extraData)
         .filter(
           ([_, value]) => value !== null && value !== undefined && value !== "",
@@ -224,12 +332,18 @@ const XlsxToKml = () => {
     }
   };
 
-  const canExport =
+  const canExportKml =
     nameColumnIndex !== undefined &&
     xColumnIndex !== undefined &&
     yColumnIndex !== undefined &&
     selectedDatum &&
     (selectedDatum === "WGS84" || selectedZone) &&
+    geoprocessedData.valid.length > 0;
+
+  const canExportDxf =
+    nameColumnIndex !== undefined &&
+    xColumnIndex !== undefined &&
+    yColumnIndex !== undefined &&
     processedData.valid.length > 0;
 
   useEffect(() => {
@@ -383,27 +497,34 @@ const XlsxToKml = () => {
                 </>
               </ToolControlSection>
               <ToolControlSection title="Exportar">
-                {processedData.invalid.length > 0 && (
+                {geoprocessedData.invalid.length > 0 && (
                   <Alert variant="warning">
-                    {processedData.invalid.length == 1
+                    {geoprocessedData.invalid.length == 1
                       ? `1 linha da planilha não pôde ser processada e não será exportada.`
-                      : `${processedData.invalid.length} linhas da planilha não puderam ser processadas e não serão exportadas.`}
+                      : `${geoprocessedData.invalid.length} linhas da planilha não puderam ser processadas e não serão exportadas.`}
                   </Alert>
                 )}
                 <div className="d-flex gap-2">
                   <Button
                     onClick={() => handleExport(false)}
-                    disabled={!canExport}
+                    disabled={!canExportKml}
                     className="flex-fill"
                   >
                     KML
                   </Button>
                   <Button
                     onClick={() => handleExport(true)}
-                    disabled={!canExport}
+                    disabled={!canExportKml}
                     className="flex-fill"
                   >
                     KMZ
+                  </Button>
+                  <Button
+                    onClick={handleGerar}
+                    disabled={!canExportDxf}
+                    className="flex-fill"
+                  >
+                    DXF
                   </Button>
                 </div>
               </ToolControlSection>
@@ -426,7 +547,7 @@ const XlsxToKml = () => {
               title={`Planilha carregada (${rawData.length} linhas)`}
               rowClassName={(row) => {
                 // Verificar se a linha está na lista de inválidas
-                const isInvalid = processedData.invalid.some(
+                const isInvalid = geoprocessedData.invalid.some(
                   (inv) => inv.row === row,
                 );
                 return isInvalid ? "table-danger" : ""; // ← Bootstrap class

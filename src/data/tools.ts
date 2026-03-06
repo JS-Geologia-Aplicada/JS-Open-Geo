@@ -60,6 +60,7 @@ export const TOOLS: Tool[] = [
   {
     id: "pyodide-playground",
     name: "Playground Pyodide",
+    path: "pyodide",
     description: "Testar funções do ezdxf via Pyodide",
     component: PyodidePlayground,
     icon: new URL("@/assets/icons/DxfTools.png", import.meta.url).href,
