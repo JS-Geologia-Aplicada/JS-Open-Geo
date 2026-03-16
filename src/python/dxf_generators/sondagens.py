@@ -6,6 +6,7 @@ from ezdxf.layouts.blocklayout import BlockLayout
 from ezdxf.layouts.layout import Modelspace 
 from  ezdxf.entities.mleader import MLeaderStyle
 from io import StringIO
+from ezdxf import zoom
 from ezdxf.math import Vec2
 from ezdxf.render.mleader import HorizontalConnection, VerticalConnection, ConnectionSide, TextAlignment
 
@@ -340,6 +341,9 @@ def generate_boreholes_dxf(
                 label_segment_length=label_length
             )
     
+    # 7. Definir zoom
+    zoom.extents(msp)
+
     # 7. Retornar arquivo como string
     stream = StringIO()
     doc.write(stream)
