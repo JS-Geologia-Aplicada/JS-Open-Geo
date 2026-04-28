@@ -18,9 +18,9 @@ import { toast } from "react-toastify";
 import LeapfrogToJsonModal from "@/components/Palitos/LeapfrogToJsonModal";
 import { useExtractionContext } from "@/contexts/ExtractionContext";
 import { analytics } from "@/utils/analyticsUtils";
-import { FileDropzone } from "@/components/FileDropzone";
 import { useDropzone } from "react-dropzone";
 import { FileText } from "lucide-react";
+import ModelPreviewModal from "@/components/Palitos/ModelPreviewModal";
 
 const DxfPage = () => {
   const { extractionState, updateExtractionState } = useExtractionContext();
@@ -31,6 +31,7 @@ const DxfPage = () => {
     text: string;
   } | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<string>("padrao-1");
+  const [showTemplates, setShowTemplates] = useState(false)
 
   // Carregar JSON de teste do public
   const loadExtractedData = async () => {
@@ -178,6 +179,7 @@ const DxfPage = () => {
   }, []);
 
   return (
+    <>
     <Container>
       <Row className="justify-content-center">
         <Col lg={5} xl={3}>
@@ -311,6 +313,7 @@ const DxfPage = () => {
                     variant="outline-secondary"
                     size="sm"
                     className="d-flex align-items-center justify-content-center gap-2 w-100 mt-1"
+                    onClick={() => setShowTemplates(true)}
                   >
                     <FileText size={16} />
                     Ver padrões
@@ -471,6 +474,9 @@ const DxfPage = () => {
         </Col>
       </Row>
     </Container>
+    <ModelPreviewModal show={showTemplates} onHide={() => setShowTemplates(false)}    
+    />
+    </>
   );
 };
 
