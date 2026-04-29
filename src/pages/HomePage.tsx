@@ -82,8 +82,8 @@ const HomePage = () => {
 
   const currentVersion = changelogData.versions[0].version;
 
-  const getTimeSaved = (boreholes: number) => {
-    const totalMinutes = boreholes * 10;
+  const getTimeSaved = (boreholes: number, cadsigUses: number) => {
+    const totalMinutes = (boreholes + cadsigUses) * 10;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return hours && minutes ? (
@@ -189,7 +189,10 @@ const HomePage = () => {
               gerados no total e
               <br />
               {shownAnalytics &&
-                getTimeSaved(shownAnalytics.totalGeneratedPalitos)}
+                getTimeSaved(
+                  shownAnalytics.totalGeneratedPalitos,
+                  shownAnalytics.cadsigToolsUses,
+                )}
             </li>
           </ul>
           <Row
