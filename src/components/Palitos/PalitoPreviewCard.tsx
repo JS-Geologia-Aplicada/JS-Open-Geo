@@ -2,6 +2,7 @@ import { Card, Form, Button, Row, Col, ButtonGroup } from "react-bootstrap";
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { PalitoData } from "@types";
 import { useState } from "react";
+import styles from "./PalitoPreviewCard.module.css";
 
 interface PalitoPreviewCardProps {
   palitoData: PalitoData[];
@@ -56,13 +57,13 @@ const PalitoPreviewCard = ({
 
   const handlePrevious = () => {
     setSelectedIndex((prev: number) =>
-      prev > 0 ? prev - 1 : palitoData.length - 1
+      prev > 0 ? prev - 1 : palitoData.length - 1,
     );
   };
 
   const handleNext = () => {
     setSelectedIndex((prev: number) =>
-      prev < palitoData.length - 1 ? prev + 1 : 0
+      prev < palitoData.length - 1 ? prev + 1 : 0,
     );
   };
 
@@ -118,6 +119,45 @@ const PalitoPreviewCard = ({
 
       <Card.Body>
         <Row>
+          <Col sm={12}>
+            {palitoData.length === 0
+              ? "Nenhuma sondagem carregada"
+              : `${palitoData.length} sondagens carregada(s)`}
+          </Col>
+          <Col sm={12}>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                className={styles.changeBoreholeButton}
+                onClick={handlePrevious}
+                disabled={palitoData.length <= 1}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <Form.Select
+                size="sm"
+                style={{ width: "200px" }}
+                value={selectedIndex}
+                onChange={(e) => setSelectedIndex(parseInt(e.target.value))}
+              >
+                {palitoData.map((palito, index) => (
+                  <option key={index} value={index}>
+                    {palito.hole_id || `Sondagem ${index + 1}`}
+                  </option>
+                ))}
+              </Form.Select>
+
+              <button
+                className={styles.changeBoreholeButton}
+                onClick={handleNext}
+                disabled={palitoData.length <= 1}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </Col>
+        </Row>
+        <Row>
           <Col xs={9} className="mb-3">
             <Row className="text-start g-0">
               <Col xs={7} className="pb-1 pe-1">
@@ -134,7 +174,7 @@ const PalitoPreviewCard = ({
                         style={{ width: "100px" }}
                         onChange={(e) => {
                           setEditedPalito((prev) =>
-                            prev ? { ...prev, hole_id: e.target.value } : null
+                            prev ? { ...prev, hole_id: e.target.value } : null,
                           );
                         }}
                       ></Form.Control>
@@ -159,7 +199,7 @@ const PalitoPreviewCard = ({
                         setEditedPalito((prev) =>
                           prev
                             ? { ...prev, z: parseFloat(e.target.value) }
-                            : null
+                            : null,
                         );
                       }}
                     ></Form.Control>
@@ -186,7 +226,7 @@ const PalitoPreviewCard = ({
                                 ...prev,
                                 water_level: parseFloat(e.target.value),
                               }
-                            : null
+                            : null,
                         );
                       }}
                     ></Form.Control>
@@ -221,7 +261,7 @@ const PalitoPreviewCard = ({
                             const newDepths = prev.depths.map((d, i) =>
                               i === editedPalito.depths.length - 1
                                 ? parseFloat(e.target.value) || 0
-                                : d
+                                : d,
                             );
                             return { ...prev, depths: newDepths };
                           });
@@ -326,7 +366,7 @@ const PalitoPreviewCard = ({
                                   const newDepths = prev.depths.map((d, i) =>
                                     i === index
                                       ? parseFloat(e.target.value) || 0
-                                      : d
+                                      : d,
                                   );
                                   return { ...prev, depths: newDepths };
                                 });
@@ -352,7 +392,7 @@ const PalitoPreviewCard = ({
                                   const newDepths = prev.depths.map((d, i) =>
                                     i === index + 1
                                       ? parseFloat(e.target.value) || 0
-                                      : d
+                                      : d,
                                   );
                                   return { ...prev, depths: newDepths };
                                 });
@@ -381,7 +421,7 @@ const PalitoPreviewCard = ({
                                 const newGeology = prev.geology.map((g, i) =>
                                   i === index
                                     ? e.target.value || "Sem descrição"
-                                    : g
+                                    : g,
                                 );
                                 return { ...prev, geology: newGeology };
                               });
