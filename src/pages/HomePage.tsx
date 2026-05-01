@@ -45,8 +45,9 @@ const HomePage = () => {
       cadsigToolsUses = 0;
 
     for (const [day, data] of analytics) {
-      const dataMonth = new Date(day).getMonth();
-      const dataYear = new Date(day).getFullYear();
+      const correctedDay = day + "T03:00:00";
+      const dataMonth = new Date(correctedDay).getMonth();
+      const dataYear = new Date(correctedDay).getFullYear();
       const now = new Date();
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
