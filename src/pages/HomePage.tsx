@@ -43,7 +43,6 @@ const HomePage = () => {
       palitoToolUses = 0,
       totalGeneratedPalitos = 0,
       cadsigToolsUses = 0;
-
     for (const [day, data] of analytics) {
       const dataMonth = new Date(day).getMonth();
       const dataYear = new Date(day).getFullYear();

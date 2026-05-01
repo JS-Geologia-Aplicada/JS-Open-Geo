@@ -81,16 +81,26 @@ const PalitoPreviewCard = ({
       <Card.Header>
         <div className="d-flex align-items-center justify-content-between">
           <h5 className="card-title mb-0">Preview dos Dados</h5>
+        </div>
+      </Card.Header>
 
+      <Card.Body>
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <span className="text-muted small">
+            {palitoData.length === 0
+              ? "Nenhuma sondagem carregada"
+              : `${palitoData.length} sondagens carregada(s)`}
+          </span>
+        </div>
+        <div className="d-flex justify-content-between align-items-center mb-2">
           <div className="d-flex align-items-center gap-2">
-            <Button
-              variant="outline-secondary"
-              size="sm"
+            <button
+              className={styles.changeBoreholeButton}
               onClick={handlePrevious}
               disabled={palitoData.length <= 1}
             >
               <ChevronLeft size={16} />
-            </Button>
+            </button>
 
             <Form.Select
               size="sm"
@@ -105,58 +115,55 @@ const PalitoPreviewCard = ({
               ))}
             </Form.Select>
 
-            <Button
-              variant="outline-secondary"
-              size="sm"
+            <button
+              className={styles.changeBoreholeButton}
               onClick={handleNext}
               disabled={palitoData.length <= 1}
             >
               <ChevronRight size={16} />
-            </Button>
+            </button>
           </div>
-        </div>
-      </Card.Header>
 
-      <Card.Body>
-        <Row>
-          <Col sm={12}>
-            {palitoData.length === 0
-              ? "Nenhuma sondagem carregada"
-              : `${palitoData.length} sondagens carregada(s)`}
-          </Col>
-          <Col sm={12}>
+          {isMassEditingNSPT ? (
             <div className="d-flex align-items-center gap-2">
-              <button
-                className={styles.changeBoreholeButton}
-                onClick={handlePrevious}
-                disabled={palitoData.length <= 1}
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <Form.Select
+              <Form.Control
+                type="number"
                 size="sm"
-                style={{ width: "200px" }}
-                value={selectedIndex}
-                onChange={(e) => setSelectedIndex(parseInt(e.target.value))}
+                placeholder="Início NSPT (m)"
+                value={massEditValue}
+                onChange={(e) => setMassEditValue(e.target.value)}
+                style={{ width: "140px" }}
+                autoFocus
+              />
+              <Button
+                variant="success"
+                size="sm"
+                onClick={handleConfirmMassEdit}
               >
-                {palitoData.map((palito, index) => (
-                  <option key={index} value={index}>
-                    {palito.hole_id || `Sondagem ${index + 1}`}
-                  </option>
-                ))}
-              </Form.Select>
-
-              <button
-                className={styles.changeBoreholeButton}
-                onClick={handleNext}
-                disabled={palitoData.length <= 1}
+                <Check size={14} />
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setIsMassEditingNSPT(false);
+                  setMassEditValue("");
+                }}
               >
-                <ChevronRight size={16} />
-              </button>
+                <X size={14} />
+              </Button>
             </div>
-          </Col>
-        </Row>
+          ) : (
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => setIsMassEditingNSPT(true)}
+            >
+              Definir NSPT inicial
+            </Button>
+          )}
+        </div>
+        <hr />
         <Row>
           <Col xs={9} className="mb-3">
             <Row className="text-start g-0">
