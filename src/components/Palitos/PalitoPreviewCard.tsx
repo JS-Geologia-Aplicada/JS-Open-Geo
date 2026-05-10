@@ -75,6 +75,16 @@ const PalitoPreviewCard = () => {
     });
   };
 
+  const handleAddNspt = () => {
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      nspt: {
+        ...currentPalito.nspt,
+        values: [...currentPalito.nspt.values, "-"],
+      },
+    });
+  };
+
   return (
     <Card className="mt-2">
       <Card.Header>
@@ -418,6 +428,14 @@ const PalitoPreviewCard = () => {
                       </div>
                     );
                   })}
+                </div>
+                <div className={styles.addLayerDiv}>
+                  <button
+                    className={styles.addLayerBtn}
+                    onClick={handleAddNspt}
+                  >
+                    <Plus />
+                  </button>
                 </div>
               </>
             )}
