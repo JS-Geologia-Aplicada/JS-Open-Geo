@@ -3,3 +3,29 @@
   background-color: white;
   border: none;
 }
+
+.descriptionDiv {
+  padding-left: 32px;
+}
+
+.addLayerDiv {
+  width: 100%;
+  padding: 6px 30px;
+}
+
+.addLayerBtn {
+  border: 2px dashed rgb(204, 204, 204);
+  color: #333;
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  background-color: rgb(227, 242, 253);
+  opacity: 70%;
+  transition: opacity 0.2s;
+  width: 100%;
+}
+
+.addLayerBtn:hover {
+  opacity: 100%;
+}

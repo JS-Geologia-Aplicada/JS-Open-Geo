@@ -1,0 +1,18 @@
+.editableField {
+  color: #333;
+  text-decoration: none;
+  padding: 0 6px;
+  margin-right: 12px;
+  text-align: left;
+  min-width: 3rem;
+}
+
+.editableField:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #333;
+  border-radius: 4px;
+}
+
+.editableField:disabled {
+  color: #666;
+}

@@ -1,42 +1,39 @@
-import { Card, Form, Button, Row, Col, ButtonGroup } from "react-bootstrap";
-import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
-import type { PalitoData } from "@types";
-import { useState } from "react";
+import { Card, Form, Row, Col } from "react-bootstrap";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
 import styles from "./PalitoPreviewCard.module.css";
+import { useExtractionContext } from "@/contexts/ExtractionContext";
+import PalitoEditableField from "./PalitoEditableField";
+import { parseNumber } from "@/utils/helpers";
 
-interface PalitoPreviewCardProps {
-  palitoData: PalitoData[];
-  onUpdatePalito: (index: number, updatedPalito: PalitoData) => void;
-  onUpdateAllNspt: (newValue: number) => void;
-}
+const PalitoPreviewCard = () => {
+  const { extractionState, updatePalito, updateAllNsptStartDepth } =
+    useExtractionContext();
+  const { palitoData } = extractionState;
 
-const PalitoPreviewCard = ({
-  palitoData,
-  onUpdatePalito,
-  onUpdateAllNspt,
-}: PalitoPreviewCardProps) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedPalito, setEditedPalito] = useState<PalitoData | null>(null);
+  const [activeField, setActiveField] = useState<string | null>(null);
 
-  const [isMassEditingNSPT, setIsMassEditingNSPT] = useState(false);
-  const [massEditValue, setMassEditValue] = useState<string>("");
+  const currentPalito = palitoData[selectedIndex];
 
-  const handleStartEdit = () => {
-    setEditedPalito(JSON.parse(JSON.stringify(currentPalito)));
-    setIsEditing(true);
-  };
-  const handleConfirmEdit = () => {
-    setIsEditing(false);
-    if (editedPalito) {
-      onUpdatePalito(selectedIndex, editedPalito);
+  const layerCount = useMemo(
+    () =>
+      currentPalito && currentPalito.depths
+        ? currentPalito.depths.length - 1
+        : 1,
+    [currentPalito],
+  );
+
+  const firstNsptDepth = useMemo(() => {
+    if (!palitoData) return undefined;
+    const nsptStartDepths = palitoData.map(
+      (palitoData) => palitoData.nspt.start_depth,
+    );
+    if (nsptStartDepths.some((depth) => depth !== nsptStartDepths[0])) {
+      return undefined;
     }
-    setEditedPalito(null);
-  };
-  const handleCancelEdit = () => {
-    setEditedPalito(null);
-    setIsEditing(false);
-  };
+    return nsptStartDepths[0];
+  }, [palitoData]);
 
   if (palitoData.length === 0) {
     return (
@@ -53,8 +50,6 @@ const PalitoPreviewCard = ({
     );
   }
 
-  const currentPalito = palitoData[selectedIndex];
-
   const handlePrevious = () => {
     setSelectedIndex((prev: number) =>
       prev > 0 ? prev - 1 : palitoData.length - 1,
@@ -67,13 +62,17 @@ const PalitoPreviewCard = ({
     );
   };
 
-  const handleConfirmMassEdit = () => {
-    const newStartDepth = parseFloat(massEditValue) || 1;
+  const handleAddLayer = () => {
+    const depths = currentPalito.depths ?? [];
+    const lastDepth =
+      depths.length > 0
+        ? depths[depths.length - 1]
+        : (currentPalito.max_depth ?? 0);
 
-    onUpdateAllNspt(newStartDepth);
-
-    setIsMassEditingNSPT(false);
-    setMassEditValue("");
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      depths: [...depths, lastDepth + 1],
+    });
   };
 
   return (
@@ -89,253 +88,167 @@ const PalitoPreviewCard = ({
           <span className="text-muted small">
             {palitoData.length === 0
               ? "Nenhuma sondagem carregada"
-              : `${palitoData.length} sondagens carregada(s)`}
+              : palitoData.length === 1
+                ? "1 sondagem carregada"
+                : `${palitoData.length} sondagens carregadas`}
           </span>
         </div>
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <div className="d-flex align-items-center gap-2">
-            <button
-              className={styles.changeBoreholeButton}
-              onClick={handlePrevious}
-              disabled={palitoData.length <= 1}
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            <Form.Select
-              size="sm"
-              style={{ width: "200px" }}
-              value={selectedIndex}
-              onChange={(e) => setSelectedIndex(parseInt(e.target.value))}
-            >
-              {palitoData.map((palito, index) => (
-                <option key={index} value={index}>
-                  {palito.hole_id || `Sondagem ${index + 1}`}
-                </option>
-              ))}
-            </Form.Select>
-
-            <button
-              className={styles.changeBoreholeButton}
-              onClick={handleNext}
-              disabled={palitoData.length <= 1}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-
-          {isMassEditingNSPT ? (
-            <div className="d-flex align-items-center gap-2">
-              <Form.Control
-                type="number"
-                size="sm"
-                placeholder="Início NSPT (m)"
-                value={massEditValue}
-                onChange={(e) => setMassEditValue(e.target.value)}
-                style={{ width: "140px" }}
-                autoFocus
-              />
-              <Button
-                variant="success"
-                size="sm"
-                onClick={handleConfirmMassEdit}
-              >
-                <Check size={14} />
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setIsMassEditingNSPT(false);
-                  setMassEditValue("");
-                }}
-              >
-                <X size={14} />
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={() => setIsMassEditingNSPT(true)}
-            >
-              Definir NSPT inicial
-            </Button>
-          )}
-        </div>
-        <hr />
         <Row>
-          <Col xs={9} className="mb-3">
-            <Row className="text-start g-0">
-              <Col xs={7} className="pb-1 pe-1">
-                <div className="d-flex align-items-centerjustify-content-start gap-1">
-                  <span className="fw-bold" style={{ width: "120px" }}>
-                    {"Sondagem: "}
-                  </span>
-                  {isEditing ? (
-                    <>
-                      <Form.Control
-                        type="text"
-                        size="sm"
-                        value={editedPalito?.hole_id || ""}
-                        style={{ width: "100px" }}
-                        onChange={(e) => {
-                          setEditedPalito((prev) =>
-                            prev ? { ...prev, hole_id: e.target.value } : null,
-                          );
-                        }}
-                      ></Form.Control>
-                    </>
-                  ) : (
-                    <span>{currentPalito.hole_id}</span>
-                  )}
-                </div>
-              </Col>
-              <Col xs={5} className="pb-1 pe-1">
-                <div className="d-flex align-items-centerjustify-content-start gap-1">
-                  <span className="fw-bold" style={{ width: "120px" }}>
-                    {"Cota: "}
-                  </span>
-                  {isEditing ? (
-                    <Form.Control
-                      type="number"
-                      size="sm"
-                      value={editedPalito?.z || "0"}
-                      style={{ width: "100px" }}
-                      onChange={(e) => {
-                        setEditedPalito((prev) =>
-                          prev
-                            ? { ...prev, z: parseFloat(e.target.value) }
-                            : null,
-                        );
-                      }}
-                    ></Form.Control>
-                  ) : (
-                    <span>{currentPalito.z ?? 0}m</span>
-                  )}
-                </div>
-              </Col>
-              <Col xs={7} className="pb-1 pe-1">
-                <div className="d-flex align-items-centerjustify-content-start gap-1">
-                  <span className="fw-bold" style={{ width: "120px" }}>
-                    {"Nível d'água: "}
-                  </span>
-                  {isEditing ? (
-                    <Form.Control
-                      type="number"
-                      size="sm"
-                      value={editedPalito?.water_level || "SECO"}
-                      style={{ width: "100px" }}
-                      onChange={(e) => {
-                        setEditedPalito((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                water_level: parseFloat(e.target.value),
-                              }
-                            : null,
-                        );
-                      }}
-                    ></Form.Control>
-                  ) : (
-                    <span>
-                      {currentPalito.water_level
-                        ? currentPalito.water_level.toString() + "m"
-                        : "SECO"}
-                    </span>
-                  )}
-                </div>
-              </Col>
-              <Col xs={5} className="pb-1 pe-1">
-                <div className="d-flex align-items-centerjustify-content-start gap-1">
-                  <span className="fw-bold" style={{ width: "120px" }}>
-                    {"Prof. Total: "}
-                  </span>
-                  <span>
-                    {isEditing ? (
-                      <Form.Control
-                        style={{ width: "100px" }}
-                        type="number"
-                        size="sm"
-                        value={
-                          editedPalito?.depths[
-                            editedPalito?.depths.length - 1
-                          ] || "0"
-                        }
-                        onChange={(e) => {
-                          setEditedPalito((prev) => {
-                            if (!prev || !editedPalito) return null;
-                            const newDepths = prev.depths.map((d, i) =>
-                              i === editedPalito.depths.length - 1
-                                ? parseFloat(e.target.value) || 0
-                                : d,
-                            );
-                            return { ...prev, depths: newDepths };
-                          });
-                        }}
-                      ></Form.Control>
-                    ) : (
-                      currentPalito.depths[currentPalito.depths.length - 1] +
-                      "m"
-                    )}
-                  </span>
-                </div>
-              </Col>
-            </Row>
+          <Col xs={6}>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                className={styles.changeBoreholeButton}
+                onClick={handlePrevious}
+                disabled={palitoData.length <= 1}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <Form.Select
+                size="sm"
+                style={{ width: "200px" }}
+                value={selectedIndex}
+                onChange={(e) => setSelectedIndex(parseInt(e.target.value))}
+              >
+                {palitoData.map((palito, index) => (
+                  <option key={index} value={index}>
+                    {palito.hole_id || `Sondagem ${index + 1}`}
+                  </option>
+                ))}
+              </Form.Select>
+
+              <button
+                className={styles.changeBoreholeButton}
+                onClick={handleNext}
+                disabled={palitoData.length <= 1}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </Col>
-          <Col xs={3}>
-            {isEditing ? (
-              <ButtonGroup>
-                <Button variant="success" onClick={handleConfirmEdit}>
-                  <Check size={16} />
-                </Button>
-                <Button variant="danger" onClick={handleCancelEdit}>
-                  <X size={16} />
-                </Button>
-              </ButtonGroup>
-            ) : isMassEditingNSPT ? (
-              <div className="d-flex flex-column gap-1">
-                <Form.Control
-                  type="number"
-                  size="sm"
-                  placeholder="Início NSPT"
-                  value={massEditValue}
-                  onChange={(e) => setMassEditValue(e.target.value)}
-                  step="0.1"
-                  autoFocus
-                />
-                <div className="d-flex gap-1">
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={handleConfirmMassEdit}
-                  >
-                    <Check size={14} />
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setIsMassEditingNSPT(false);
-                      setMassEditValue("");
-                    }}
-                  >
-                    <X size={14} />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="d-flex flex-column gap-1">
-                <Button onClick={handleStartEdit}>Editar</Button>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() => setIsMassEditingNSPT(true)}
-                >
-                  Editar NSPT em massa
-                </Button>
-              </div>
-            )}
+          <Col xs={6}>
+            <div className="d-flex align-items-centerjustify-content-start gap-1">
+              <span className="fw-bold">
+                {"Profundidade inicial dos NSPTs: "}
+              </span>
+              <PalitoEditableField
+                value={
+                  firstNsptDepth === undefined
+                    ? "VARIÁVEL"
+                    : firstNsptDepth.toFixed(2).replace(".", ",")
+                }
+                unit="m"
+                fieldKey="initial_nspt"
+                activeField={activeField}
+                setActiveField={setActiveField}
+                onConfirm={(newValue) =>
+                  updateAllNsptStartDepth(parseNumber(newValue))
+                }
+              />
+            </div>
+          </Col>
+        </Row>
+        <hr />
+        <Row className="text-start g-0">
+          <Col xs={6} className="pb-1 pe-1">
+            <div className="d-flex align-items-centerjustify-content-start gap-1">
+              <span className="fw-bold" style={{ width: "120px" }}>
+                {"Sondagem: "}
+              </span>
+              <PalitoEditableField
+                value={currentPalito.hole_id}
+                fieldKey="hole_id"
+                activeField={activeField}
+                setActiveField={setActiveField}
+                onConfirm={(newValue) =>
+                  updatePalito(selectedIndex, {
+                    ...currentPalito,
+                    hole_id: newValue,
+                  })
+                }
+              />
+            </div>
+          </Col>
+          <Col xs={6} className="pb-1 pe-1">
+            <div className="d-flex align-items-centerjustify-content-start gap-1">
+              <span className="fw-bold" style={{ width: "120px" }}>
+                {"Cota: "}
+              </span>
+              <PalitoEditableField
+                value={
+                  currentPalito.z
+                    ? currentPalito.z.toFixed(2).replace(".", ",")
+                    : "0"
+                }
+                unit="m"
+                fieldKey="z"
+                activeField={activeField}
+                setActiveField={setActiveField}
+                onConfirm={(newValue) =>
+                  updatePalito(selectedIndex, {
+                    ...currentPalito,
+                    z: parseNumber(newValue),
+                  })
+                }
+              />
+            </div>
+          </Col>
+          <Col xs={6} className="pb-1 pe-1">
+            <div className="d-flex align-items-centerjustify-content-start gap-1">
+              <span className="fw-bold" style={{ width: "120px" }}>
+                {"Nível d'água: "}
+              </span>
+              <PalitoEditableField
+                value={
+                  currentPalito.water_level
+                    ? currentPalito.water_level.toFixed(2).replace(".", ",")
+                    : "SECO"
+                }
+                unit={currentPalito.water_level ? "m" : undefined}
+                fieldKey="water_level"
+                activeField={activeField}
+                setActiveField={setActiveField}
+                onConfirm={(newValue) =>
+                  updatePalito(selectedIndex, {
+                    ...currentPalito,
+                    water_level: parseNumber(newValue),
+                  })
+                }
+              />
+            </div>
+          </Col>
+          <Col xs={6} className="pb-1 pe-1">
+            <div className="d-flex align-items-centerjustify-content-start gap-1">
+              <span className="fw-bold" style={{ width: "120px" }}>
+                {"Prof. Total: "}
+              </span>
+              <PalitoEditableField
+                value={
+                  currentPalito.depths
+                    ? currentPalito.depths[currentPalito.depths.length - 1]
+                        .toFixed(2)
+                        .replace(".", ",")
+                    : currentPalito.max_depth
+                      ? currentPalito.max_depth.toString().replace(".", ",")
+                      : "0"
+                }
+                unit="m"
+                fieldKey="max_depth"
+                activeField={activeField}
+                setActiveField={setActiveField}
+                onConfirm={(newValue) => {
+                  const parsed = parseNumber(newValue.replace(",", ".")) || 0;
+                  const newDepths = currentPalito.depths.map((d, i) =>
+                    i === currentPalito.depths.length - 1 ? parsed : d,
+                  );
+                  updatePalito(selectedIndex, {
+                    ...currentPalito,
+                    depths: newDepths,
+                    max_depth: parsed,
+                  });
+                }}
+              />
+            </div>
           </Col>
         </Row>
 
@@ -349,212 +262,165 @@ const PalitoPreviewCard = ({
               className="mt-2"
               style={{ maxHeight: "50vh", overflowY: "auto" }}
             >
-              {currentPalito.depths.map((depth, index) => {
-                const nextDepth = currentPalito.depths[index + 1];
-                const description = currentPalito.geology[index];
-
-                if (!nextDepth) return null; // Skip último depth
+              {Array.from({ length: layerCount }, (_, index) => {
+                const description = currentPalito.geology[index] || "";
+                const depthFrom = currentPalito.depths[index];
+                const depthTo = currentPalito.depths[index + 1];
 
                 return (
-                  <div key={index} className="border rounded mb-2 bg-light">
-                    <Row className="g-0 ps-3 mt-1">
-                      <Col sm={4} className="text-start">
-                        <div className="d-flex align-items-start">
-                          <span className="pe-2">{"Início: "}</span>
-                          {isEditing ? (
-                            <Form.Control
-                              style={{ width: "50px", marginLeft: "10px" }}
-                              type="number"
-                              size="sm"
-                              value={editedPalito?.depths[index] || "0"}
-                              onChange={(e) => {
-                                setEditedPalito((prev) => {
-                                  if (!prev) return null;
-                                  const newDepths = prev.depths.map((d, i) =>
-                                    i === index
-                                      ? parseFloat(e.target.value) || 0
-                                      : d,
-                                  );
-                                  return { ...prev, depths: newDepths };
-                                });
-                              }}
-                            ></Form.Control>
-                          ) : (
-                            <span className="fw-bold">{depth}m</span>
-                          )}
-                        </div>
-                      </Col>
-                      <Col sm={4} className="text-start">
-                        <div className="d-flex align-items-start">
-                          <span className="pe-2">{"Fim: "}</span>
-                          {isEditing ? (
-                            <Form.Control
-                              style={{ width: "50px", marginLeft: "10px" }}
-                              type="number"
-                              size="sm"
-                              value={editedPalito?.depths[index + 1] || "0"}
-                              onChange={(e) => {
-                                setEditedPalito((prev) => {
-                                  if (!prev) return null;
-                                  const newDepths = prev.depths.map((d, i) =>
-                                    i === index + 1
-                                      ? parseFloat(e.target.value) || 0
-                                      : d,
-                                  );
-                                  return { ...prev, depths: newDepths };
-                                });
-                              }}
-                            ></Form.Control>
-                          ) : (
-                            <span className="fw-bold">{nextDepth}m</span>
-                          )}
-                        </div>
-                      </Col>
-                    </Row>
-                    <Row className="g-0 ps-3">
-                      <Col
-                        xs={12}
-                        className="my-1 text-start text-muted small pe-2"
-                      >
-                        {isEditing ? (
-                          <Form.Control
-                            type="text"
-                            as="textarea"
-                            size="sm"
-                            value={editedPalito?.geology[index] || "0"}
-                            onChange={(e) => {
-                              setEditedPalito((prev) => {
-                                if (!prev) return null;
-                                const newGeology = prev.geology.map((g, i) =>
-                                  i === index
-                                    ? e.target.value || "Sem descrição"
-                                    : g,
-                                );
-                                return { ...prev, geology: newGeology };
-                              });
-                            }}
-                          ></Form.Control>
-                        ) : (
-                          description || "Sem descrição"
-                        )}
-                      </Col>
-                    </Row>
+                  <div key={index}>
+                    {/* Profundidade de cima */}
+                    <div className="d-flex align-items-center">
+                      <PalitoEditableField
+                        value={depthFrom.toFixed(2).replace(".", ",")}
+                        fieldKey={`depth_${index}`}
+                        unit="m"
+                        activeField={activeField}
+                        setActiveField={setActiveField}
+                        onConfirm={(newValue) => {
+                          const parsed = parseNumber(newValue) || 0;
+                          const newDepths = currentPalito.depths.map((d, i) =>
+                            i === index ? parsed : d,
+                          );
+                          updatePalito(selectedIndex, {
+                            ...currentPalito,
+                            depths: newDepths,
+                          });
+                        }}
+                      />
+                    </div>
+
+                    {/* Descrição */}
+                    <div className={styles.descriptionDiv}>
+                      <PalitoEditableField
+                        value={description || "Sem descrição"}
+                        fieldKey={`geology_${index}`}
+                        multiline
+                        activeField={activeField}
+                        setActiveField={setActiveField}
+                        onConfirm={(newValue) => {
+                          const newGeology = currentPalito.geology.map(
+                            (g, i) => (i === index ? newValue : g),
+                          );
+                          updatePalito(selectedIndex, {
+                            ...currentPalito,
+                            geology: newGeology,
+                          });
+                        }}
+                      />
+                    </div>
+
+                    {/* Última profundidade */}
+                    {index === layerCount - 1 && (
+                      <div className="d-flex align-items-center">
+                        <PalitoEditableField
+                          value={depthTo.toFixed(2).replace(".", ",")}
+                          fieldKey={`depth_${index + 1}`}
+                          unit="m"
+                          activeField={activeField}
+                          setActiveField={setActiveField}
+                          onConfirm={(newValue) => {
+                            const parsed = parseNumber(newValue) || 0;
+                            const newDepths = currentPalito.depths.map(
+                              (d, i) => (i === index + 1 ? parsed : d),
+                            );
+                            updatePalito(selectedIndex, {
+                              ...currentPalito,
+                              depths: newDepths,
+                            });
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
+              <div className={styles.addLayerDiv}>
+                <button className={styles.addLayerBtn} onClick={handleAddLayer}>
+                  <Plus />
+                </button>
+              </div>
             </div>
           </Col>
           {/* NSPTs */}
           <Col xs={3}>
             <strong>NSPT:</strong>
-            {/* No topo colocar a profundidade do primeiro, editável. Fazer parecido com as descrições geológicas, colocar profundidade e NSPT. Aqui só o NSPT é editável. NSPTs em uma profundidade superior à última profundidade da sondagem aparecem em uma cor diferente, indicando que não vão aparecer no palito */}
-            {/* Configuração do primeiro NSPT - editável */}
-            <div className="mt-2 mb-3 p-2 border rounded bg-light">
-              <div className="d-flex align-items-center justify-content-between">
-                {currentPalito.nspt.values.length === 0 ? (
-                  <span className="small">Não possui</span>
-                ) : (
-                  <>
-                    <span className="small">Inicia em:</span>
-                    {isEditing ? (
-                      <Form.Control
-                        type="number"
-                        size="sm"
-                        style={{ width: "60px" }}
-                        value={
-                          editedPalito?.nspt.start_depth ??
-                          currentPalito.nspt.start_depth
-                        }
-                        onChange={(e) => {
-                          setEditedPalito((prev) => {
-                            if (!prev) return null;
-                            return {
-                              ...prev,
-                              nspt: {
-                                ...prev.nspt,
-                                start_depth: parseFloat(e.target.value) || 0,
-                              },
-                            };
-                          });
+
+            {currentPalito.nspt.values.length === 0 ? (
+              <p className="small text-muted mt-2">Não possui</p>
+            ) : (
+              <>
+                {/* Start depth individual */}
+                <div className="d-flex align-items-center gap-1 mt-2">
+                  <span className="fw-bold">Inicia em:</span>
+                  <PalitoEditableField
+                    value={currentPalito.nspt.start_depth
+                      .toFixed(2)
+                      .replace(".", ",")}
+                    unit="m"
+                    fieldKey="nspt_start_depth"
+                    activeField={activeField}
+                    setActiveField={setActiveField}
+                    onConfirm={(newValue) =>
+                      updatePalito(selectedIndex, {
+                        ...currentPalito,
+                        nspt: {
+                          ...currentPalito.nspt,
+                          start_depth: parseNumber(newValue),
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Lista de NSPTs */}
+                <div
+                  className="mt-2"
+                  style={{ maxHeight: "50vh", overflowY: "auto" }}
+                >
+                  {currentPalito.nspt.values.map((nsptValue, index) => {
+                    const nsptDepth =
+                      currentPalito.nspt.start_depth +
+                      index * currentPalito.nspt.interval;
+                    const maxDepth =
+                      currentPalito.depths[currentPalito.depths.length - 1];
+                    const isOutOfRange = nsptDepth > maxDepth;
+
+                    return (
+                      <div
+                        key={index}
+                        className="d-flex align-items-center gap-1 mb-1"
+                        style={{
+                          color: isOutOfRange ? "orangered" : "inherit",
                         }}
-                      />
-                    ) : (
-                      <span className="fw-bold">
-                        {currentPalito.nspt.start_depth}m
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Lista de NSPTs */}
-            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
-              {currentPalito.nspt.values.map((nsptValue, index) => {
-                const nsptDepth =
-                  currentPalito.nspt.start_depth +
-                  index * currentPalito.nspt.interval;
-                const maxDepth =
-                  currentPalito.depths[currentPalito.depths.length - 1];
-                const isOutOfRange = nsptDepth > maxDepth;
-
-                return (
-                  <div
-                    key={index}
-                    className={`border rounded mb-2 p-2 ${
-                      isOutOfRange
-                        ? "bg-warning-subtle border-warning"
-                        : "bg-light"
-                    }`}
-                  >
-                    <div className="d-flex align-items-center justify-content-between">
-                      <span
-                        className={`small ${
-                          isOutOfRange ? "text-warning-emphasis" : ""
-                        }`}
                       >
-                        {nsptDepth}m:
-                      </span>
-                      {isEditing ? (
-                        <Form.Control
-                          type="text"
-                          size="sm"
-                          style={{ width: "60px" }}
-                          value={editedPalito?.nspt.values[index] ?? nsptValue}
-                          onChange={(e) => {
-                            setEditedPalito((prev) => {
-                              if (!prev) return null;
-                              const newValues = [...prev.nspt.values];
-                              newValues[index] = e.target.value;
-                              return {
-                                ...prev,
-                                nspt: {
-                                  ...prev.nspt,
-                                  values: newValues,
-                                },
-                              };
+                        <span className="fw-bold" style={{ width: "50px" }}>
+                          {nsptDepth}m:
+                        </span>
+                        <PalitoEditableField
+                          value={nsptValue.toString()}
+                          fieldKey={`nspt_${index}`}
+                          activeField={activeField}
+                          setActiveField={setActiveField}
+                          onConfirm={(newValue) => {
+                            const newValues = currentPalito.nspt.values.map(
+                              (v, i) => (i === index ? newValue : v),
+                            );
+                            updatePalito(selectedIndex, {
+                              ...currentPalito,
+                              nspt: {
+                                ...currentPalito.nspt,
+                                values: newValues,
+                              },
                             });
                           }}
                         />
-                      ) : (
-                        <span
-                          className={`fw-bold ${
-                            isOutOfRange ? "text-warning-emphasis" : ""
-                          }`}
-                        >
-                          {nsptValue}
-                        </span>
-                      )}
-                    </div>
-                    {isOutOfRange && (
-                      <small className="text-warning-emphasis">
-                        Fora da sondagem
-                      </small>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </Col>
         </Row>
       </Card.Body>
