@@ -75,6 +75,24 @@ const PalitoPreviewCard = () => {
     });
   };
 
+  const handleEditGeology = (index: number, newValue: string) => {
+    const newGeology = currentPalito.geology.map((g, i) =>
+      i === index ? newValue : g,
+    );
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      geology: newGeology,
+    });
+  };
+
+  const handleDeleteGeology = (index: number) => {
+    const newGeology = currentPalito.geology.filter((_, i) => i !== index);
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      geology: newGeology,
+    });
+  };
+
   const handleAddNspt = () => {
     updatePalito(selectedIndex, {
       ...currentPalito,
@@ -83,6 +101,84 @@ const PalitoPreviewCard = () => {
         values: [...currentPalito.nspt.values, "-"],
       },
     });
+  };
+
+  const handleEditNspt = (index: number, newValue: string) => {
+    const newValues = currentPalito.nspt.values.map((v, i) =>
+      i === index ? newValue : v,
+    );
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      nspt: {
+        ...currentPalito.nspt,
+        values: newValues,
+      },
+    });
+  };
+
+  const handleEditStartDepth = (newValue: string) => {
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      nspt: {
+        ...currentPalito.nspt,
+        start_depth: parseNumber(newValue),
+      },
+    });
+  };
+
+  const handleDeleteNspt = (index: number) => {
+    const newValues = currentPalito.nspt.values.filter((_, i) => i !== index);
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      nspt: {
+        ...currentPalito.nspt,
+        values: newValues,
+      },
+    });
+  };
+
+  const handleEditDepth = (index: number, newValue: string) => {
+    const parsed = parseNumber(newValue) || 0;
+    const newDepths = currentPalito.depths.map((d, i) =>
+      i === index ? parsed : d,
+    );
+    newDepths.sort((a, b) => a - b);
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      depths: newDepths,
+      max_depth: newDepths.at(-1),
+    });
+  };
+
+  const handleDeleteDepth = (index: number) => {
+    const newDepths = currentPalito.depths.filter((_, i) => index !== i);
+    updatePalito(selectedIndex, {
+      ...currentPalito,
+      depths: newDepths,
+    });
+  };
+
+  const handleMoveGeology = (
+    index: number,
+    movement: number,
+    currentEditValue: string,
+  ) => {
+    let geology = currentPalito.geology;
+    if (currentEditValue !== undefined) {
+      geology = geology.map((g, i) => (i === index ? currentEditValue : g));
+    }
+    const newGeology = moveArrayElement(index, movement, geology);
+    updatePalito(selectedIndex, { ...currentPalito, geology: newGeology });
+    setActiveField(`geology_${index + movement}`);
+  };
+
+  const moveArrayElement = (index: number, movement: number, arr: any[]) => {
+    const newArr = [...arr];
+    const targetIndex = index + movement;
+    if (targetIndex < 0 || targetIndex >= newArr.length) return newArr;
+    const element = newArr.splice(index, 1)[0];
+    newArr.splice(targetIndex, 0, element);
+    return newArr;
   };
 
   return (
@@ -288,14 +384,10 @@ const PalitoPreviewCard = () => {
                         activeField={activeField}
                         setActiveField={setActiveField}
                         onConfirm={(newValue) => {
-                          const parsed = parseNumber(newValue) || 0;
-                          const newDepths = currentPalito.depths.map((d, i) =>
-                            i === index ? parsed : d,
-                          );
-                          updatePalito(selectedIndex, {
-                            ...currentPalito,
-                            depths: newDepths,
-                          });
+                          handleEditDepth(index, newValue);
+                        }}
+                        onDelete={() => {
+                          handleDeleteDepth(index);
                         }}
                       />
                     </div>
@@ -309,13 +401,20 @@ const PalitoPreviewCard = () => {
                         activeField={activeField}
                         setActiveField={setActiveField}
                         onConfirm={(newValue) => {
-                          const newGeology = currentPalito.geology.map(
-                            (g, i) => (i === index ? newValue : g),
-                          );
-                          updatePalito(selectedIndex, {
-                            ...currentPalito,
-                            geology: newGeology,
-                          });
+                          handleEditGeology(index, newValue);
+                        }}
+                        onDelete={() => {
+                          handleDeleteGeology(index);
+                        }}
+                        listInfo={{
+                          position: index + 1,
+                          total: currentPalito.depths.length - 1,
+                        }}
+                        onMove={(
+                          movement: number,
+                          currentEditValue: string,
+                        ) => {
+                          handleMoveGeology(index, movement, currentEditValue);
                         }}
                       />
                     </div>
@@ -330,15 +429,9 @@ const PalitoPreviewCard = () => {
                           activeField={activeField}
                           setActiveField={setActiveField}
                           onConfirm={(newValue) => {
-                            const parsed = parseNumber(newValue) || 0;
-                            const newDepths = currentPalito.depths.map(
-                              (d, i) => (i === index + 1 ? parsed : d),
-                            );
-                            updatePalito(selectedIndex, {
-                              ...currentPalito,
-                              depths: newDepths,
-                            });
+                            handleEditDepth(index + 1, newValue);
                           }}
+                          onDelete={() => handleDeleteDepth(index + 1)}
                         />
                       </div>
                     )}
@@ -371,15 +464,7 @@ const PalitoPreviewCard = () => {
                     fieldKey="nspt_start_depth"
                     activeField={activeField}
                     setActiveField={setActiveField}
-                    onConfirm={(newValue) =>
-                      updatePalito(selectedIndex, {
-                        ...currentPalito,
-                        nspt: {
-                          ...currentPalito.nspt,
-                          start_depth: parseNumber(newValue),
-                        },
-                      })
-                    }
+                    onConfirm={(newValue) => handleEditStartDepth(newValue)}
                   />
                 </div>
 
@@ -413,16 +498,14 @@ const PalitoPreviewCard = () => {
                           activeField={activeField}
                           setActiveField={setActiveField}
                           onConfirm={(newValue) => {
-                            const newValues = currentPalito.nspt.values.map(
-                              (v, i) => (i === index ? newValue : v),
-                            );
-                            updatePalito(selectedIndex, {
-                              ...currentPalito,
-                              nspt: {
-                                ...currentPalito.nspt,
-                                values: newValues,
-                              },
-                            });
+                            handleEditNspt(index, newValue);
+                          }}
+                          onDelete={() => {
+                            handleDeleteNspt(index);
+                          }}
+                          listInfo={{
+                            position: index + 1,
+                            total: currentPalito.nspt.values.length,
                           }}
                         />
                       </div>

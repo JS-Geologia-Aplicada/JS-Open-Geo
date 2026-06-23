@@ -16,3 +16,15 @@
 .editableField:disabled {
   color: #666;
 }
+
+.moveButton {
+  background: none;
+  border: none;
+  color: #999;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.moveButton:hover {
+  color: #444;
+}
