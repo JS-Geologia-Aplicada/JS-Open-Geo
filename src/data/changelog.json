@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "2.2.2-beta",
+      "date": "2026-02-27",
+      "title": "Leapfrog XLSX",
+      "summary": "Criação de função para baixar XLSX no formato Leapfrog",
+      "features": [],
+      "improvements": [
+        "Criação de função para baixar XLSX no formato Leapfrog."
+      ],
+      "bugfixes": [],
+      "known_issues": []
+    },
+    {
       "version": "2.2.1-beta",
       "date": "2026-02-27",
       "title": "Melhorias",
