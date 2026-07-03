@@ -458,3 +458,18 @@ export const millisecondsToTimerFormat = (
 
   return `${mm}:${ss},${ms}`;
 };
+
+export const sanitizeSheetName = (name: string, used: Set<string>): string => {
+  let sanitized = (name || "SEM_ID").replace(/[:\\/?*[\]]/g, "_").slice(0, 31);
+  if (!sanitized) sanitized = "SEM_ID";
+
+  let finalName = sanitized;
+  let counter = 1;
+  while (used.has(finalName)) {
+    const suffix = `_${counter}`;
+    finalName = sanitized.slice(0, 31 - suffix.length) + suffix;
+    counter++;
+  }
+  used.add(finalName);
+  return finalName;
+};

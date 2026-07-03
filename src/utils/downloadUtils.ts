@@ -1,5 +1,6 @@
 import {
   DATA_TYPE_CONFIGS,
+  LEAPFROG_LABELS,
   LEAPFROG_TYPES,
   type Area,
   type PageTextData,
@@ -11,6 +12,7 @@ import {
   getMultipleValuesFromEntry,
   getSingleValueFromEntry,
   parseNumber,
+  sanitizeSheetName,
 } from "./helpers";
 import * as XLSX from "xlsx";
 import {
@@ -38,7 +40,7 @@ export const exportJSON = (areas: Area[], extractedTexts: PageTextData[]) => {
 
 export const convertToPalitoData = (
   areas: Area[],
-  extractedTexts: PageTextData[]
+  extractedTexts: PageTextData[],
 ): PalitoData[] => {
   const typeToAreaName = createTypeToAreaNameMap(areas);
   const structuredData: PalitoData[] = [];
@@ -83,7 +85,7 @@ export const convertToPalitoData = (
     const waterLevel = getSingleValueFromEntry(
       entry,
       typeToAreaName,
-      "water_level"
+      "water_level",
     );
     if (waterLevel) {
       const naNumber = parseNumber(waterLevel, -1);
@@ -96,7 +98,7 @@ export const convertToPalitoData = (
     const depths = getMultipleValuesFromEntry(
       entry,
       typeToAreaName,
-      "depth_from_to"
+      "depth_from_to",
     )
       .map((d) => parseNumber(d))
       .filter((d) => d !== -1)
@@ -112,7 +114,7 @@ export const convertToPalitoData = (
     const geology = getMultipleValuesFromEntry(
       entry,
       typeToAreaName,
-      "geology"
+      "geology",
     );
     if (geology.length > 0) {
       palitoEntry.geology = geology;
@@ -128,7 +130,7 @@ export const convertToPalitoData = (
     const nsptValues = getMultipleValuesFromEntry(
       entry,
       typeToAreaName,
-      "nspt"
+      "nspt",
     );
     if (nsptValues.length > 0) {
       palitoEntry.nspt = {
@@ -148,7 +150,7 @@ export const convertToPalitoData = (
 export const exportCSV = (
   areas: Area[],
   extractedTexts: PageTextData[],
-  commaAsSeparator: boolean = true
+  commaAsSeparator: boolean = true,
 ) => {
   const headers = ["Página", ...areas.map((area) => area.name)];
 
@@ -167,7 +169,7 @@ export const exportCSV = (
       row.push(
         commaAsSeparator && typeof formattedValue === "number"
           ? formattedValue.toString().replace(".", ",")
-          : formattedValue
+          : formattedValue,
       );
     });
     return row;
@@ -237,7 +239,7 @@ export const downloadSingleCSV = (
   areas: Area[],
   extractedTexts: PageTextData[],
   type: string,
-  commaAsSeparator: boolean = true
+  commaAsSeparator: boolean = true,
 ) => {
   const leapfrogData = getLeapfrogData(extractedTexts, areas, type);
   if (!leapfrogData) {
@@ -250,7 +252,7 @@ export const downloadSingleCSV = (
     generateCSVString(
       leapfrogData.data,
       leapfrogData.headers,
-      commaAsSeparator
+      commaAsSeparator,
     );
 
   // Download
@@ -263,11 +265,70 @@ export const downloadSingleCSV = (
   URL.revokeObjectURL(url);
 };
 
+export const downloadLeapfrogAsXlsx = (
+  areas: Area[],
+  extractedTexts: PageTextData[],
+) => {
+  const leapfrogTypes = ["collar", "nspt", "na", "geology", "interp"];
+  const types = leapfrogTypes.filter(
+    (type) => validateExportRequirements(areas, type).isValid,
+  );
+
+  const typeToAreaName = createTypeToAreaNameMap(areas);
+  const holeIdsRepeated = extractedTexts.map((data) =>
+    getSingleValueFromEntry(data, typeToAreaName, "hole_id"),
+  );
+  const uniqueHoleIds = [...new Set(holeIdsRepeated)].filter(Boolean);
+
+  const wb = XLSX.utils.book_new();
+  const usedSheetNames = new Set<string>();
+
+  uniqueHoleIds.forEach((hole) => {
+    const holeData = extractedTexts.filter(
+      (entry) =>
+        getSingleValueFromEntry(entry, typeToAreaName, "hole_id") === hole,
+    );
+
+    const sheet: any = {};
+    const merges: any[] = [];
+    let currentLine = 1;
+
+    types.forEach((type) => {
+      const leapfrogResult = getLeapfrogData(holeData, areas, type);
+      const leapfrogData = leapfrogResult?.data;
+      if (!leapfrogData || leapfrogData.length === 0) return;
+
+      const columnCount = leapfrogResult!.headers.length;
+
+      XLSX.utils.sheet_add_aoa(sheet, [[LEAPFROG_LABELS[type] ?? type]], {
+        origin: `A${currentLine}`,
+      });
+      merges.push({
+        s: { r: currentLine - 1, c: 0 },
+        e: { r: currentLine - 1, c: columnCount - 1 },
+      });
+      currentLine += 1;
+
+      XLSX.utils.sheet_add_json(sheet, leapfrogData, {
+        origin: `A${currentLine}`,
+      });
+      currentLine += leapfrogData.length + 2; // +1 de cabeçalhos, +1 para pular linha
+    });
+
+    sheet["!merges"] = merges;
+    const sheetName = sanitizeSheetName(hole as string, usedSheetNames);
+
+    XLSX.utils.book_append_sheet(wb, sheet, sheetName);
+  });
+  XLSX.writeFile(wb, "dados-leapfrog.xlsx");
+  // Salvar XLSX
+};
+
 export const downloadZip = async (
   areas: Area[],
   extractedTexts: PageTextData[],
   advancedDownload?: boolean,
-  commaAsSeparator: boolean = true
+  commaAsSeparator: boolean = true,
 ) => {
   const zip = new JSZip();
   const BOM = "\uFEFF";
@@ -300,7 +361,7 @@ export const downloadZip = async (
 export const getDropdownItemClass = (
   areas: Area[],
   type: string,
-  advancedDownload?: boolean
+  advancedDownload?: boolean,
 ) =>
   `dropdown-item${
     validateExportRequirements(areas, type).isValid || advancedDownload
@@ -310,12 +371,12 @@ export const getDropdownItemClass = (
 
 export const downloadAllValidation = (areas: Area[]) => {
   const validExports = LEAPFROG_TYPES.filter(
-    (type) => validateExportRequirements(areas, type).isValid
+    (type) => validateExportRequirements(areas, type).isValid,
   );
   return {
     validExports: validExports,
     nonValidExports: LEAPFROG_TYPES.filter(
-      (type) => !validExports.includes(type)
+      (type) => !validExports.includes(type),
     ),
     someValid: validExports.length > 0,
     allValid: validExports.length === LEAPFROG_TYPES.length,

@@ -9,6 +9,7 @@ import {
 import {
   convertToPalitoData,
   downloadAllValidation,
+  downloadLeapfrogAsXlsx,
   downloadSingleCSV,
   downloadZip,
   exportCSV,
@@ -114,6 +115,7 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       console.error("Download cancelado:", error);
     }
   };
+
   const handleDownloadAllLeapfrog = async () => {
     try {
       const extractedTexts = await onExtractTexts();
@@ -134,6 +136,23 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
       console.error("Download cancelado:", error);
     }
   };
+
+  const handleDownloadXlsxLeapfrog = async () => {
+    try {
+      const extractedTexts = await onExtractTexts();
+      downloadLeapfrogAsXlsx(areas, extractedTexts);
+      analytics.track("export_leapfrog_zip");
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Extração cancelada pelo usuário"
+      ) {
+        return;
+      }
+      console.error("Download cancelado:", error);
+    }
+  };
+
   const handleDownloadSingleCSV = async (type: string) => {
     try {
       const extractedTexts = await onExtractTexts();
@@ -521,6 +540,24 @@ const ExtractButtons: React.FC<ExtractButtonProps> = ({
                           </OverlayTrigger>
                         );
                       })}
+                      <OverlayTrigger
+                        placement="left"
+                        overlay={
+                          <Tooltip id="leapfrog-tooltip">
+                            Exportar .xlsx com os dados do leapfrog agrupados
+                            por sondagem.
+                          </Tooltip>
+                        }
+                      >
+                        <div>
+                          <Dropdown.Item
+                            className="dropdown-item"
+                            onClick={handleDownloadXlsxLeapfrog}
+                          >
+                            Xlsx único
+                          </Dropdown.Item>
+                        </div>
+                      </OverlayTrigger>
                     </Dropdown.Menu>
                   </Dropdown>
                 </div>
