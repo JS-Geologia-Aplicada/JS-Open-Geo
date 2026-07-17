@@ -34,7 +34,7 @@ export const TOOLS: Tool[] = [
   },
   {
     id: "xlsx-to-kmz",
-    name: "XLSX → KMZ/KML",
+    name: "XLSX → KMZ/KML/DXF",
     path: "xlsx_para_kmz",
     description: "Converter planilha com sondagens para KMZ/KML",
     component: XlsxToKml,
@@ -50,7 +50,7 @@ export const TOOLS: Tool[] = [
   },
   {
     id: "kml-to-xlsx",
-    name: "KMZ/KML → XLSX",
+    name: "KMZ/KML → XLSX/DXF",
     path: "kmz_para_xlsx",
     description: "Extrair dados de KMZ para planilha",
     component: KmlToXlsx,
