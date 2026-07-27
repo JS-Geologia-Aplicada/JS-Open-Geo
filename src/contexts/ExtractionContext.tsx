@@ -23,7 +23,7 @@ interface ExtractionState {
 }
 
 const ExtractionContext = createContext<ExtractionContextType | undefined>(
-  undefined
+  undefined,
 );
 
 const initialState: ExtractionState = {
@@ -46,6 +46,8 @@ interface ExtractionContextType {
   resetExtractionState: () => void;
   updateArea: (areaId: string, updates: Partial<Area>) => void;
   handleSelectedFileChange: (file: File) => void;
+  updatePalito: (index: number, updatedPalito: PalitoData) => void;
+  updateAllNsptStartDepth: (newValue: number) => void;
 }
 
 export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
@@ -64,7 +66,7 @@ export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
     setExtractionState((prev) => ({
       ...prev,
       areas: prev.areas.map((area) =>
-        area.id === areaId ? { ...area, ...updates } : area
+        area.id === areaId ? { ...area, ...updates } : area,
       ),
     }));
   };
@@ -72,8 +74,27 @@ export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
   const handleSelectedFileChange = (file: File) => {
     updateExtractionState({
       selectedFile: file,
-      excludedPages: new Set<number>(), // 👈 Limpa ao trocar
+      excludedPages: new Set<number>(),
     });
+  };
+
+  const updatePalito = (index: number, updatedPalito: PalitoData) => {
+    setExtractionState((prev) => ({
+      ...prev,
+      palitoData: prev.palitoData.map((palito, i) =>
+        index === i ? updatedPalito : palito,
+      ),
+    }));
+  };
+
+  const updateAllNsptStartDepth = (newValue: number) => {
+    setExtractionState((prev) => ({
+      ...prev,
+      palitoData: prev.palitoData.map((palito) => ({
+        ...palito,
+        nspt: { ...palito.nspt, start_depth: newValue },
+      })),
+    }));
   };
 
   return (
@@ -84,6 +105,8 @@ export const ExtractionProvider = ({ children }: { children: ReactNode }) => {
         resetExtractionState,
         updateArea,
         handleSelectedFileChange,
+        updatePalito,
+        updateAllNsptStartDepth,
       }}
     >
       {children}
@@ -95,7 +118,7 @@ export const useExtractionContext = () => {
   const context = useContext(ExtractionContext);
   if (!context) {
     throw new Error(
-      "useExtractionContext deve ser utilizado com ExtractionProvider"
+      "useExtractionContext deve ser utilizado com ExtractionProvider",
     );
   }
   return context;

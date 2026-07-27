@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import * as XLSX from "xlsx";
 import { parseKmlFile } from "@/utils/kmlParser";
@@ -16,6 +16,9 @@ import { FileDropzone } from "../FileDropzone";
 import { DataTable } from "../DataTable";
 import { useToolState } from "@/hooks/useToolState";
 import { analytics } from "@/utils/analyticsUtils";
+import { usePyodide } from "@/contexts/PyodideContext";
+
+import sondagensPy from "@/python/dxf_generators/sondagens.py?raw";
 
 const KmlToXlsx = () => {
   const { state, update } = useToolState("kmlToXlsx");
@@ -26,6 +29,27 @@ const KmlToXlsx = () => {
     selectedZone,
     sondagens,
   } = state;
+
+  const { pyodide, isReady, initialize, runPythonCode } = usePyodide();
+  const [moduleLoaded, setModuleLoaded] = useState(false);
+
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        // Aguarda Pyodide ficar pronto
+        await initialize();
+
+        // Carrega módulo (já aguarda automaticamente)
+        await runPythonCode(sondagensPy, "python/dxf_generators/sondagens");
+
+        setModuleLoaded(true);
+      } catch (err) {
+        console.error("❌ Erro no setup:", err);
+      }
+    };
+
+    setup();
+  }, []);
 
   const processedSondagens = useMemo(() => {
     if (!convertCoordinates || !selectedDatum) {
@@ -118,9 +142,44 @@ const KmlToXlsx = () => {
     analytics.track("cadsig_total_uses");
   };
 
+  const handleExportDxf = async () => {
+    if (!isReady || !moduleLoaded || !pyodide) return;
+    if (sondagens.length === 0) return;
+
+    const boreholes = processedSondagens.map((s) => ({
+      id: s.name,
+      x: s.displayCoords.x,
+      y: s.displayCoords.y,
+    }));
+    const data = [{ layer: "Pontos", color: 3, boreholes }];
+
+    try {
+      const dxfString = await pyodide.runPythonAsync(`
+import json
+from dxf_generators.sondagens import generate_boreholes_dxf
+
+data = json.loads('''${JSON.stringify(data)}''')
+generate_boreholes_dxf(data)
+    `);
+
+      // Download
+      const blob = new Blob([dxfString], { type: "application/dxf" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `sondagens.dxf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao gerar DXF:", error);
+    }
+  };
+
   const extendedDataColumns = Array.from(
     new Set(sondagens.flatMap((s) => Object.keys(s.extendedData))),
   );
+
+  const canExportDxf = processedSondagens.length > 0;
 
   useEffect(() => {
     analytics.track("kml_to_xlsx_view");
@@ -195,13 +254,22 @@ const KmlToXlsx = () => {
                 </>
               </ToolControlSection>
               <ToolControlSection title="Exportar">
-                <Button
-                  onClick={handleExportXlsx}
-                  disabled={sondagens.length === 0}
-                  className="w-100"
-                >
-                  XLSX
-                </Button>
+                <div className="d-flex gap-2">
+                  <Button
+                    onClick={handleExportXlsx}
+                    disabled={sondagens.length === 0}
+                    className="flex-fill"
+                  >
+                    XLSX
+                  </Button>
+                  <Button
+                    onClick={handleExportDxf}
+                    disabled={!canExportDxf}
+                    className="flex-fill"
+                  >
+                    DXF
+                  </Button>
+                </div>
               </ToolControlSection>
             </>
           )}

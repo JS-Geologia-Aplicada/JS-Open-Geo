@@ -308,7 +308,6 @@ const DistanceTool = () => {
               }}
               templateTab="distanceTool"
             />
-
             <Alert variant="info" className="mt-2 p-2">
               O arquivo .dxf deve conter pontos em bloco ou multileader.
             </Alert>

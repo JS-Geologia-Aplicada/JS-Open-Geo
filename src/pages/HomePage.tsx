@@ -43,7 +43,6 @@ const HomePage = () => {
       palitoToolUses = 0,
       totalGeneratedPalitos = 0,
       cadsigToolsUses = 0;
-
     for (const [day, data] of analytics) {
       const correctedDay = new Date(day + "T03:00:00");
       const dataMonth = correctedDay.getMonth();

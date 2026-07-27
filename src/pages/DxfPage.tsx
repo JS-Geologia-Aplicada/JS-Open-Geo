@@ -5,7 +5,9 @@ import {
   Col,
   Container,
   Form,
+  OverlayTrigger,
   Row,
+  Tooltip,
 } from "react-bootstrap";
 import { generateDxfJs, generateDXFMetro } from "../utils/dxfPalitoGenerator";
 import { useEffect, useState } from "react";
@@ -16,6 +18,9 @@ import { toast } from "react-toastify";
 import LeapfrogToJsonModal from "@/components/Palitos/LeapfrogToJsonModal";
 import { useExtractionContext } from "@/contexts/ExtractionContext";
 import { analytics } from "@/utils/analyticsUtils";
+import { useDropzone } from "react-dropzone";
+import { FileText } from "lucide-react";
+import ModelPreviewModal from "@/components/Palitos/ModelPreviewModal";
 
 const DxfPage = () => {
   const { extractionState, updateExtractionState } = useExtractionContext();
@@ -26,6 +31,7 @@ const DxfPage = () => {
     text: string;
   } | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<string>("padrao-1");
+  const [showTemplates, setShowTemplates] = useState(false);
 
   // Carregar JSON de teste do public
   const loadExtractedData = async () => {
@@ -47,9 +53,8 @@ const DxfPage = () => {
     }
   };
 
-  // Upload de arquivo JSON
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUploadDrag = (files: File[]) => {
+    const file = files[0];
     if (!file) return;
 
     const reader = new FileReader();
@@ -66,6 +71,11 @@ const DxfPage = () => {
     reader.readAsText(file);
   };
 
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: { "application/json": [".json"] },
+    onDropAccepted: handleFileUploadDrag,
+    maxFiles: 1,
+  });
   // Gerar DXF
   const handleGenerateDXF = async () => {
     if (palitoData.length === 0) {
@@ -124,161 +134,182 @@ const DxfPage = () => {
     );
   };
 
-  // Atualizar palito específico
-  const handleUpdatePalito = (index: number, updatedPalito: PalitoData) => {
-    const newData = palitoData.map((palito, i) =>
-      index === i ? updatedPalito : palito,
-    );
-    updateExtractionState({ palitoData: newData });
-  };
-
-  const handleUpdateAllNspt = (newValue: number) => {
-    const newData = palitoData.map((palito) => {
-      return {
-        ...palito,
-        nspt: {
-          ...palito.nspt,
-          start_depth: newValue,
-        },
-      };
-    });
-    updateExtractionState({ palitoData: newData });
-  };
-
   useEffect(() => {
     analytics.track("palitos_page_view");
   }, []);
 
   return (
-    <Container fluid>
-      <Row className="justify-content-center">
-        <Col md={6} lg={5}>
-          <Card>
-            <Card.Header>
-              <h3 className="mb-0">Palitos de sondagem</h3>
-            </Card.Header>
-            <Card.Body>
-              {/* Mensagens */}
-              {message && (
-                <Alert
-                  variant={
-                    message.type === "success"
-                      ? "success"
-                      : message.type === "warning"
-                        ? "warning"
-                        : "danger"
-                  }
-                  onClose={() => setMessage(null)}
-                  dismissible
-                >
-                  {message.text}
-                </Alert>
-              )}
+    <>
+      <Container>
+        <Row className="justify-content-center">
+          <Col lg={5} xl={3}>
+            <Card>
+              <Card.Header>
+                <h3 className="mb-0">Palitos de sondagem</h3>
+              </Card.Header>
+              <Card.Body>
+                {/* Mensagens */}
+                {message && (
+                  <Alert
+                    variant={
+                      message.type === "success"
+                        ? "success"
+                        : message.type === "warning"
+                          ? "warning"
+                          : "danger"
+                    }
+                    onClose={() => setMessage(null)}
+                    dismissible
+                  >
+                    {message.text}
+                  </Alert>
+                )}
 
-              {/* Seção de carregamento de dados */}
-              <div className="mb-4">
-                <Row>
-                  <Col md={4}>
-                    <Button
-                      variant="outline-primary"
-                      onClick={loadExtractedData}
-                      disabled={isLoading}
-                      className="w-100 mb-2"
+                {/* Seção de carregamento de dados */}
+                <div className="mb-4">
+                  <Card.Title>Seleção de dados</Card.Title>
+                  <Alert variant="info small">
+                    É possível criar um arquivo dxf de palitos de sondagem a
+                    partir dos dados extraídos na ferramenta de dados de
+                    sondagem, de um arquivo JSON gerado pelo JS OpenGeo ou de
+                    arquivos no formato Leapfrog.
+                  </Alert>
+                  <div className="d-flex flex-column gap-2 mt-2">
+                    <OverlayTrigger
+                      placement="right"
+                      overlay={
+                        <Tooltip id="json-tooltip">
+                          Utilize arquivos JSON criados na ferramenta de Dados
+                          de Sondagem.
+                        </Tooltip>
+                      }
                     >
-                      {isLoading ? "Carregando..." : "Usar Dados Extraídos"}
-                    </Button>
-                  </Col>
-                  <Col md={4}>
-                    <Form.Group>
-                      <Form.Label>Upload de JSON:</Form.Label>
-                      <Form.Control
-                        type="file"
-                        accept=".json"
-                        onChange={handleFileUpload}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={4}>
+                      <div
+                        {...getRootProps()}
+                        style={{
+                          border: "2px dashed #ccc",
+                          borderRadius: "4px",
+                          padding: "20px",
+                          textAlign: "center",
+                          cursor: "pointer",
+                          backgroundColor: "#e3f2fd",
+                          transition: "background-color 0.2s ease",
+                        }}
+                      >
+                        <input {...getInputProps()} />
+                        <div>
+                          <p className="mb-0">Faça upload de um arquivo JSON</p>
+                        </div>
+                      </div>
+                    </OverlayTrigger>
+
                     <LeapfrogToJsonModal
                       onDataProcessed={handleImportLeapfrog}
                     />
-                  </Col>
-                </Row>
-              </div>
-
-              {/* Botão de gerar DXF */}
-              <div className="d-flex gap-3 justify-content-between align-items-center">
-                <div>
-                  <h6>Padrão do palito</h6>
-                  <div>
-                    <Form>
-                      <Form.Check
-                        className="small"
-                        inline
-                        type="radio"
-                        name="palito-variant"
-                        label="Padrão JS"
-                        value="padrao-1"
-                        checked={selectedVariant === "padrao-1"}
-                        onChange={(e) => {
-                          setSelectedVariant(e.target.value);
-                        }}
-                      />
-                      <Form.Check
-                        className="small"
-                        inline
-                        type="radio"
-                        name="palito-variant"
-                        label="Padrão 2 JS"
-                        value="padrao-2"
-                        checked={selectedVariant === "padrao-2"}
-                        onChange={(e) => {
-                          setSelectedVariant(e.target.value);
-                        }}
-                      />
-                      <Form.Check
-                        className="small"
-                        inline
-                        type="radio"
-                        name="palito-variant"
-                        label="Padrão Metrô"
-                        value="metro"
-                        checked={selectedVariant === "metro"}
-                        onChange={(e) => {
-                          setSelectedVariant(e.target.value);
-                        }}
-                      />
-                    </Form>
+                    <OverlayTrigger
+                      placement="right"
+                      overlay={
+                        <Tooltip id="json-tooltip">
+                          Carregue os dados extraídos na ferramenta de Dados de
+                          Sondagem na sessão atual.
+                        </Tooltip>
+                      }
+                    >
+                      <Button
+                        variant="secondary"
+                        onClick={loadExtractedData}
+                        disabled={isLoading}
+                        className="w-100 mb-2"
+                      >
+                        {isLoading ? "Carregando..." : "Usar dados extraídos"}
+                      </Button>
+                    </OverlayTrigger>
                   </div>
                 </div>
-                <div>
-                  <Button
-                    variant="success"
-                    size="lg"
-                    onClick={handleGenerateDXF}
-                    disabled={isLoading || palitoData.length === 0}
-                    className="w-100"
-                  >
-                    {isLoading
-                      ? "Gerando..."
-                      : `Gerar DXF (${palitoData.length} palito${
-                          palitoData.length !== 1 ? "s" : ""
-                        })`}
-                  </Button>
+
+                {/* Botão de gerar DXF */}
+                <Card.Title>Gerar arquivo DXF</Card.Title>
+                <div className="d-flex flex-column gap-3 justify-content-between align-items-center">
+                  <div>
+                    <div>
+                      <Form>
+                        <Form.Check
+                          className="small"
+                          inline
+                          type="radio"
+                          name="palito-variant"
+                          label="Padrão JS"
+                          value="padrao-1"
+                          checked={selectedVariant === "padrao-1"}
+                          onChange={(e) => {
+                            setSelectedVariant(e.target.value);
+                          }}
+                        />
+                        <Form.Check
+                          className="small"
+                          inline
+                          type="radio"
+                          name="palito-variant"
+                          label="Padrão 2 JS"
+                          value="padrao-2"
+                          checked={selectedVariant === "padrao-2"}
+                          onChange={(e) => {
+                            setSelectedVariant(e.target.value);
+                          }}
+                        />
+                        <Form.Check
+                          className="small"
+                          inline
+                          type="radio"
+                          name="palito-variant"
+                          label="Padrão Metrô"
+                          value="metro"
+                          checked={selectedVariant === "metro"}
+                          onChange={(e) => {
+                            setSelectedVariant(e.target.value);
+                          }}
+                        />
+                      </Form>
+                    </div>
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      className="d-flex align-items-center justify-content-center gap-2 w-100 mt-1"
+                      onClick={() => setShowTemplates(true)}
+                    >
+                      <FileText size={16} />
+                      Ver padrões
+                    </Button>
+                  </div>
+                  <div>
+                    <Button
+                      variant="success"
+                      size="lg"
+                      onClick={handleGenerateDXF}
+                      disabled={isLoading || palitoData.length === 0}
+                      className="w-100"
+                    >
+                      {isLoading
+                        ? "Gerando..."
+                        : `Gerar DXF (${palitoData.length} palito${
+                            palitoData.length !== 1 ? "s" : ""
+                          })`}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={6} lg={7}>
-          <PalitoPreviewCard
-            palitoData={palitoData}
-            onUpdatePalito={handleUpdatePalito}
-            onUpdateAllNspt={handleUpdateAllNspt}
-          />
-        </Col>
-      </Row>
-    </Container>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col lg={7} xl={9}>
+            <PalitoPreviewCard />
+          </Col>
+        </Row>
+      </Container>
+      <ModelPreviewModal
+        show={showTemplates}
+        onHide={() => setShowTemplates(false)}
+      />
+    </>
   );
 };
 

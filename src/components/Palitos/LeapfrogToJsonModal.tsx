@@ -276,17 +276,16 @@ const LeapfrogToJsonModal = ({ onDataProcessed }: LeapfrogToJsonModalProps) => {
   return (
     <>
       <OverlayTrigger
+        placement="right"
         overlay={
           <Tooltip id="json-tooltip">
             Importe arquivos CSV no formato Leapfrog para gerar os palitos
           </Tooltip>
         }
       >
-        <span className="d-inline-block">
-          <Button variant="secondary" onClick={handleShow}>
-            Importar Leapfrog
-          </Button>
-        </span>
+        <Button variant="secondary" onClick={handleShow}>
+          Importar Leapfrog
+        </Button>
       </OverlayTrigger>
       {/* Modal */}
       <Modal show={show} onHide={handleClose} size="xl">
