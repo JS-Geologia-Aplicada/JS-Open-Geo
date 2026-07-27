@@ -19,7 +19,7 @@ import LeapfrogToJsonModal from "@/components/Palitos/LeapfrogToJsonModal";
 import { useExtractionContext } from "@/contexts/ExtractionContext";
 import { analytics } from "@/utils/analyticsUtils";
 import { useDropzone } from "react-dropzone";
-import { FileText } from "lucide-react";
+// import { FileText } from "lucide-react";
 import ModelPreviewModal from "@/components/Palitos/ModelPreviewModal";
 
 const DxfPage = () => {
@@ -271,7 +271,7 @@ const DxfPage = () => {
                         />
                       </Form>
                     </div>
-                    <Button
+                    {/* <Button
                       variant="outline-secondary"
                       size="sm"
                       className="d-flex align-items-center justify-content-center gap-2 w-100 mt-1"
@@ -279,7 +279,7 @@ const DxfPage = () => {
                     >
                       <FileText size={16} />
                       Ver padrões
-                    </Button>
+                    </Button> */}
                   </div>
                   <div>
                     <Button
