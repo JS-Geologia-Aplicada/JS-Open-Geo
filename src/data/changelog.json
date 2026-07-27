@@ -9,7 +9,10 @@
       "improvements": [
         "Reorganização da interface de geração de palitos.",
         "Alteração no sistema de correção de dados para geração de palitos."
-      ]
+      ],
+
+      "bugfixes": [],
+      "known_issues": []
     },
     {
       "version": "2.2.2-beta",
