@@ -69,9 +69,11 @@ const PalitoPreviewCard = () => {
         ? depths[depths.length - 1]
         : (currentPalito.max_depth ?? 0);
 
+    const newDepths = depths.length === 0 ? [0, 1] : [...depths, lastDepth + 1];
+
     updatePalito(selectedIndex, {
       ...currentPalito,
-      depths: [...depths, lastDepth + 1],
+      depths: newDepths,
     });
   };
 
@@ -330,7 +332,7 @@ const PalitoPreviewCard = () => {
               </span>
               <PalitoEditableField
                 value={
-                  currentPalito.depths
+                  currentPalito.depths && currentPalito.depths.length > 0
                     ? currentPalito.depths[currentPalito.depths.length - 1]
                         .toFixed(2)
                         .replace(".", ",")
@@ -368,76 +370,81 @@ const PalitoPreviewCard = () => {
               className="mt-2"
               style={{ maxHeight: "50vh", overflowY: "auto" }}
             >
-              {Array.from({ length: layerCount }, (_, index) => {
-                const description = currentPalito.geology[index] || "";
-                const depthFrom = currentPalito.depths[index];
-                const depthTo = currentPalito.depths[index + 1];
+              {layerCount > 0 &&
+                Array.from({ length: layerCount }, (_, index) => {
+                  const description = currentPalito.geology[index] || "";
+                  const depthFrom = currentPalito.depths[index];
+                  const depthTo = currentPalito.depths[index + 1];
 
-                return (
-                  <div key={index}>
-                    {/* Profundidade de cima */}
-                    <div className="d-flex align-items-center">
-                      <PalitoEditableField
-                        value={depthFrom.toFixed(2).replace(".", ",")}
-                        fieldKey={`depth_${index}`}
-                        unit="m"
-                        activeField={activeField}
-                        setActiveField={setActiveField}
-                        onConfirm={(newValue) => {
-                          handleEditDepth(index, newValue);
-                        }}
-                        onDelete={() => {
-                          handleDeleteDepth(index);
-                        }}
-                      />
-                    </div>
-
-                    {/* Descrição */}
-                    <div className={styles.descriptionDiv}>
-                      <PalitoEditableField
-                        value={description || "Sem descrição"}
-                        fieldKey={`geology_${index}`}
-                        multiline
-                        activeField={activeField}
-                        setActiveField={setActiveField}
-                        onConfirm={(newValue) => {
-                          handleEditGeology(index, newValue);
-                        }}
-                        onDelete={() => {
-                          handleDeleteGeology(index);
-                        }}
-                        listInfo={{
-                          position: index + 1,
-                          total: currentPalito.depths.length - 1,
-                        }}
-                        onMove={(
-                          movement: number,
-                          currentEditValue: string,
-                        ) => {
-                          handleMoveGeology(index, movement, currentEditValue);
-                        }}
-                      />
-                    </div>
-
-                    {/* Última profundidade */}
-                    {index === layerCount - 1 && (
+                  return (
+                    <div key={index}>
+                      {/* Profundidade de cima */}
                       <div className="d-flex align-items-center">
                         <PalitoEditableField
-                          value={depthTo.toFixed(2).replace(".", ",")}
-                          fieldKey={`depth_${index + 1}`}
+                          value={depthFrom.toFixed(2).replace(".", ",")}
+                          fieldKey={`depth_${index}`}
                           unit="m"
                           activeField={activeField}
                           setActiveField={setActiveField}
                           onConfirm={(newValue) => {
-                            handleEditDepth(index + 1, newValue);
+                            handleEditDepth(index, newValue);
                           }}
-                          onDelete={() => handleDeleteDepth(index + 1)}
+                          onDelete={() => {
+                            handleDeleteDepth(index);
+                          }}
                         />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* Descrição */}
+                      <div className={styles.descriptionDiv}>
+                        <PalitoEditableField
+                          value={description || "Sem descrição"}
+                          fieldKey={`geology_${index}`}
+                          multiline
+                          activeField={activeField}
+                          setActiveField={setActiveField}
+                          onConfirm={(newValue) => {
+                            handleEditGeology(index, newValue);
+                          }}
+                          onDelete={() => {
+                            handleDeleteGeology(index);
+                          }}
+                          listInfo={{
+                            position: index + 1,
+                            total: layerCount,
+                          }}
+                          onMove={(
+                            movement: number,
+                            currentEditValue: string,
+                          ) => {
+                            handleMoveGeology(
+                              index,
+                              movement,
+                              currentEditValue,
+                            );
+                          }}
+                        />
+                      </div>
+
+                      {/* Última profundidade */}
+                      {index === layerCount - 1 && (
+                        <div className="d-flex align-items-center">
+                          <PalitoEditableField
+                            value={depthTo.toFixed(2).replace(".", ",")}
+                            fieldKey={`depth_${index + 1}`}
+                            unit="m"
+                            activeField={activeField}
+                            setActiveField={setActiveField}
+                            onConfirm={(newValue) => {
+                              handleEditDepth(index + 1, newValue);
+                            }}
+                            onDelete={() => handleDeleteDepth(index + 1)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               <div className={styles.addLayerDiv}>
                 <button className={styles.addLayerBtn} onClick={handleAddLayer}>
                   <Plus />

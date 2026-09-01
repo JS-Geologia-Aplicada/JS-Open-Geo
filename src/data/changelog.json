@@ -1,8 +1,22 @@
 {
   "versions": [
     {
+      "version": "2.2.4-beta",
+      "date": "2026-09-01",
+      "title": "Correção erro dados para palitos",
+      "summary": "Correção de erro decorrente de importar dados para geração de palitos sem informações de profundidades.",
+      "features": [],
+      "improvements": [
+        "Página de palitos exibe área de descrições geológicas vazia ao carregar dados sem profundidades, ao invés de travar o programa.",
+        "Adicionar uma nova camada em uma sondagem sem profundidades cria duas profundidades ao invés de apenas uma, permitindo a exibição de uma camada."
+      ],
+
+      "bugfixes": [],
+      "known_issues": []
+    },
+    {
       "version": "2.2.3-beta",
-      "date": "2026-02-27",
+      "date": "2026-07-27",
       "title": "Reorganização página de palitos de sondagem",
       "summary": "Página de palitos de sondagem foi reorganizada, facilitando a edição de dados",
       "features": [],
